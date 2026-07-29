@@ -1,0 +1,69 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import ArticleCard from '../../../../components/ArticleCard.astro';
+import { t } from '../../../../i18n/dict';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles-sk', ({ data }) => !data.draft);
+  const tagSet = new Set<string>();
+  for (const article of articles) {
+    for (const tag of article.data.tags) tagSet.add(tag);
+  }
+  return [...tagSet].map((tag) => ({ params: { tag } }));
+}
+
+const { tag } = Astro.params;
+const lang = 'sk' as const;
+const s = t(lang);
+
+const allArticles = await getCollection('articles-sk', ({ data }) => !data.draft);
+const articles = allArticles
+  .filter((a) => a.data.tags.includes(tag as string))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout lang={lang} title={`${s.tagged_with}: ${tag}`}>
+  <div class="wrap tag-page">
+    <a class="back-link mono" href={`/${lang}/tags/`}>&larr; {s.all_tags}</a>
+    <p class="eyebrow">{s.tagged_with}</p>
+    <h1>{tag}</h1>
+    <p class="count-line mono">{articles.length} {s.articles_in_tag}</p>
+    <hr class="gold-rule" />
+    <div class="article-grid">
+      {articles.map((article) => (
+        <ArticleCard
+          lang={lang}
+          slug={article.id}
+          title={article.data.title}
+          description={article.data.description}
+          date={article.data.date}
+          tags={article.data.tags}
+        />
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .tag-page { padding: 3rem 1.25rem 4rem; }
+  .back-link {
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+  .back-link:hover { color: var(--accent-3); }
+  h1 {
+    color: var(--accent-2);
+    margin-top: 0.2em;
+  }
+  .count-line {
+    color: var(--text-faint);
+    font-size: 0.8rem;
+  }
+  .article-grid {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+</style>

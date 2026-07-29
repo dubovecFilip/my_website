@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ---- Brand palette (sampled from BOGGELINO artwork) ---- */
+  --red: #ef3c39;
+  --red-dim: #c73330;
+  --teal: #2ea5ac;
+  --gold: #ffc93b;
+
+  /* ---- Dark theme (default) ---- */
+  --bg: #0b0e15;
+  --bg-raised: #12151f;
+  --bg-raised-2: #191d29;
+  --border: #262b3a;
+  --text: #f4f2ec;
+  --text-muted: #9aa0b4;
+  --text-faint: #676d82;
+  --accent: var(--red);
+  --accent-2: var(--teal);
+  --accent-3: var(--gold);
+
+  /* ---- Type scale ---- */
+  --font-display: 'Anton', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  --radius: 6px;
+  --max-width: 780px;
+}
+
+/* "Dim" mode: toggled variant. Stays dark, but lower-contrast / muted,
+   like the lights got turned down rather than switched on. */
+[data-theme='dim'] {
+  --bg: #1c1e26;
+  --bg-raised: #24262f;
+  --bg-raised-2: #2b2d38;
+  --border: #383a46;
+  --text: #e6e4dd;
+  --text-muted: #a7abb8;
+  --text-faint: #7d8090;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  margin: 0 0 0.5em 0;
+}
+
+h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); }
+h2 { font-size: clamp(1.5rem, 4vw, 2.1rem); }
+h3 { font-size: 1.25rem; }
+
+p { margin: 0 0 1.1em 0; }
+
+a {
+  color: var(--accent-3);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent-3);
+  outline-offset: 2px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.wrap {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.gold-rule {
+  height: 4px;
+  width: 64px;
+  background: linear-gradient(90deg, var(--gold), var(--red));
+  border-radius: 2px;
+  border: none;
+  margin: 0.9rem 0 0 0;
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: var(--accent-2);
+  background: color-mix(in srgb, var(--accent-2) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-2) 35%, transparent);
+  border-radius: 999px;
+  padding: 0.2em 0.7em;
+  text-decoration: none;
+}
+.tag:hover {
+  text-decoration: none;
+  border-color: var(--accent-2);
+}
+
+article :is(h2, h3) {
+  margin-top: 1.6em;
+}
+
+article img {
+  max-width: 100%;
+  border-radius: var(--radius);
+  display: block;
+  margin: 1.4em 0;
+}
+
+article pre {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1em;
+  overflow-x: auto;
+}
+
+article code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+article blockquote {
+  border-left: 3px solid var(--accent);
+  margin: 1.2em 0;
+  padding: 0.2em 1em;
+  color: var(--text-muted);
+}
+
+hr.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2.5rem 0;
+}

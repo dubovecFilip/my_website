@@ -1,0 +1,85 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import { t } from '../../i18n/dict';
+
+const lang = 'sk' as const;
+const s = t(lang);
+
+const allArticles = await getCollection('articles-sk', ({ data }) => !data.draft);
+const articles = allArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout lang={lang} title={s.nav_home}>
+  <section class="hero">
+    <div class="hero-bg" role="presentation"></div>
+    <div class="wrap hero-inner">
+      <p class="eyebrow">by BOGGELINO</p>
+      <h1>BOGGELINO</h1>
+      <hr class="gold-rule" />
+      <p class="hero-tagline">{s.tagline}</p>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <h2 class="section-title">{s.home_latest}</h2>
+    {articles.length === 0 ? (
+      <p class="empty">{s.home_empty}</p>
+    ) : (
+      <div class="article-grid">
+        {articles.map((article) => (
+          <ArticleCard
+            lang={lang}
+            slug={article.id}
+            title={article.data.title}
+            description={article.data.description}
+            date={article.data.date}
+            tags={article.data.tags}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: url('/images/hero-bg.jpg') center 30% / cover no-repeat;
+    opacity: 0.55;
+    mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+  }
+  .hero-inner {
+    position: relative;
+    padding: 4.5rem 1.25rem 3.5rem;
+  }
+  .hero h1 {
+    color: var(--text);
+    margin: 0.1em 0 0 0;
+  }
+  .hero-tagline {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin: 1.1rem 0 0 0;
+    max-width: 32ch;
+  }
+  .section-title {
+    margin-top: 3rem;
+  }
+  .article-grid {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0 3rem;
+  }
+  .empty {
+    color: var(--text-muted);
+    margin: 1.5rem 0 3rem;
+  }
+</style>

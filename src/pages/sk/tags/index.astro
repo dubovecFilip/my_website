@@ -1,0 +1,66 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { t } from '../../../i18n/dict';
+
+const lang = 'sk' as const;
+const s = t(lang);
+
+const articles = await getCollection('articles-sk', ({ data }) => !data.draft);
+const tagCounts = new Map<string, number>();
+for (const article of articles) {
+  for (const tag of article.data.tags) {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  }
+}
+const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout lang={lang} title={s.all_tags}>
+  <div class="wrap tags-page">
+    <h1>{s.all_tags}</h1>
+    <hr class="gold-rule" />
+    {tags.length === 0 ? (
+      <p class="empty">{s.home_empty}</p>
+    ) : (
+      <div class="tag-cloud">
+        {tags.map(([tag, count]) => (
+          <a class="tag-pill" href={`/${lang}/tags/${tag}/`}>
+            <span>{tag}</span>
+            <span class="count mono">{count}</span>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .tags-page { padding: 3rem 1.25rem 4rem; }
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 2rem;
+  }
+  .tag-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 0.45rem 1rem;
+    text-decoration: none;
+  }
+  .tag-pill:hover {
+    border-color: var(--accent-2);
+    text-decoration: none;
+  }
+  .count {
+    color: var(--text-faint);
+    font-size: 0.78rem;
+  }
+  .empty { color: var(--text-muted); margin-top: 2rem; }
+</style>
