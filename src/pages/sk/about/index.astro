@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { t } from '../../../i18n/dict';
+
+const lang = 'sk' as const;
+const s = t(lang);
+
+// Edit this list to add/remove/reorder your links.
+// icon accepts any short text/emoji — swap for an SVG later if you want.
+const links = [
+  { label: 'Ko-Fi', url: 'https://ko-fi.com/boggelino/', icon: '' },
+  { label: 'Kick (Streamovanie)', url: 'https://kick.com/boggelino', icon: '' },
+  { label: 'Steam', url: 'https://steamcommunity.com/id/boggelino', icon: '' },
+  { label: 'MakerWorld (3D výtlačky)', url: 'https://makerworld.com/en/@boggelino', icon: '' },
+  { label: 'YouTube (Hlavný Kanál)', url: 'https://youtube.com/@boggelino', icon: '' },
+  { label: 'YouTube (Vedľajší Kanál)', url: 'https://www.youtube.com/@BOGGELINO_Extra', icon: '' },
+  { label: 'TikTok', url: 'https://tiktok.com/@boggelino', icon: '' },
+  { label: 'X (Twitter)', url: 'https://x.com/boggelino', icon: '' },
+  { label: 'Twitch (Streamovanie)', url: 'https://twitch.tv/boggelino', icon: '' },
+];
+---
+
+<BaseLayout lang={lang} title={s.nav_about}>
+  <div class="wrap about-page">
+    <div class="about-header">
+      <img src="/images/mascot.png" alt="" class="about-mascot" width="88" height="88" />
+      <div>
+        <h1>{s.about_title}</h1>
+        <hr class="gold-rule" />
+      </div>
+    </div>
+
+    <p class="about-intro">{s.about_intro}</p>
+
+    <h2 class="links-title">{s.about_links_title}</h2>
+    <ul class="link-list">
+      {links.map((link) => (
+        <li>
+          <a href={link.url} target="_blank" rel="noopener noreferrer">
+            <span class="link-icon" aria-hidden="true">{link.icon}</span>
+            <span>{link.label}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .about-page { padding: 3rem 1.25rem 4rem; }
+  .about-header {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+  }
+  .about-mascot {
+    border-radius: 50%;
+    transform: rotate(-6deg);
+    flex-shrink: 0;
+  }
+  .about-header h1 { margin: 0; }
+  .about-intro {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 55ch;
+    margin-top: 1.6rem;
+  }
+  .links-title {
+    margin-top: 2.5rem;
+    font-size: 1rem;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+  .link-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.2rem 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    max-width: 420px;
+  }
+  .link-list a {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    border-radius: var(--radius);
+    padding: 0.85rem 1.1rem;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .link-list a:hover {
+    border-color: var(--accent);
+    transform: translateX(3px);
+  }
+  .link-icon { font-size: 1.2rem; }
+</style>
