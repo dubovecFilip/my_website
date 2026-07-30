@@ -10,7 +10,7 @@ interface Props {
   translationHref?: string;
 }
 
-const { lang, title, description = 'BOGGELINO: articles, opinions, and things I like.', translationHref } = Astro.props;
+const { lang, title, description = 'MOMENTUM: articles, opinions, and things I like.', translationHref } = Astro.props;
 const s = t(lang);
 const other = otherLang(lang);
 const flagCode: Record<Lang, 'sk' | 'gb'> = { sk: 'sk', en: 'gb' };
@@ -24,21 +24,21 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/png" href="/images/boggelino.png" />
-    <link rel="apple-touch-icon" href="/images/boggelino.png" />
-    <title>{title} · BOGGELINO</title>
+    <link rel="icon" type="image/png" href="/images/momentum.png" />
+    <link rel="apple-touch-icon" href="/images/momentum.png" />
+    <title>{title} · MOMENTUM</title>
     <meta name="description" content={description} />
     <script is:inline>
-      const saved = localStorage.getItem('boggelino-theme');
+      const saved = localStorage.getItem('momentum-theme');
       if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
     </script>
   </head>
   <body>
     <header class="site-header">
-      <div class="wrap header-inner">
+      <div class="wrap-wide header-inner">
         <a class="brand" href={`/${lang}/`}>
-          <img src="/images/boggelino.png" alt="" class="brand-boggelino" width="34" height="34" />
-          <span class="brand-word">BOGGELINO</span>
+          <img src="/images/momentum.png" alt="" class="brand-momentum" width="34" height="34" />
+          <span class="brand-word">MOMENTUM</span>
         </a>
         <nav class="site-nav">
           <a href={`/${lang}/`}>{s.nav_home}</a>
@@ -79,7 +79,7 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
     </main>
 
     <footer class="site-footer">
-      <div class="wrap footer-inner">
+      <div class="wrap-wide footer-inner">
         <span>&copy; {new Date().getFullYear()} BOGGELINO</span>
         <span class="footer-sep">·</span>
         <a href={`/${lang}/rss.xml`} class="footer-rss">{s.footer_rss}</a>
@@ -101,10 +101,10 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
         const isLight = html.getAttribute('data-theme') === 'light';
         if (isLight) {
           html.removeAttribute('data-theme');
-          localStorage.setItem('boggelino-theme', 'dark');
+          localStorage.setItem('momentum-theme', 'dark');
         } else {
           html.setAttribute('data-theme', 'light');
-          localStorage.setItem('boggelino-theme', 'light');
+          localStorage.setItem('momentum-theme', 'light');
         }
         syncIcon();
       });
@@ -141,7 +141,7 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
         color: var(--text);
       }
       .brand:hover { text-decoration: none; }
-      .brand-boggelino {
+      .brand-momentum {
         border-radius: 50%;
         display: block;
       }

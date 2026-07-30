@@ -2,72 +2,173 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleCard from '../../components/ArticleCard.astro';
+import Sidebar from '../../components/Sidebar.astro';
 import { t } from '../../i18n/dict';
+import { extractFirstImage } from '../../utils/extract-image';
 
 const lang = 'sk' as const;
 const s = t(lang);
 
 const allArticles = await getCollection('articles-sk', ({ data }) => !data.draft);
 const articles = allArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const [featured, ...rest] = articles;
+const gridArticles = rest.length > 0 ? rest : articles;
 ---
 
 <BaseLayout lang={lang} title={s.nav_home}>
-  <section class="hero">
-    <div class="wrap hero-inner">
-      <h1>BOGGELINO</h1>
-      <hr class="gold-rule" />
-      <p class="hero-tagline">{s.tagline}</p>
-    </div>
-  </section>
-
-  <div class="wrap">
-    <h2 class="section-title">{s.home_latest}</h2>
-    {articles.length === 0 ? (
-      <p class="empty">{s.home_empty}</p>
-    ) : (
-      <div class="article-grid">
-        {articles.map((article) => (
-          <ArticleCard
-            lang={lang}
-            slug={article.id}
-            title={article.data.title}
-            description={article.data.description}
-            date={article.data.date}
-            tags={article.data.tags}
-          />
-        ))}
-      </div>
+  <div class="wrap-wide home-page">
+    {featured && (
+      <section class="featured">
+        <div class="featured-text">
+          <span class="eyebrow">{s.featured_label}</span>
+          <h1>{featured.data.title}</h1>
+          <hr class="gold-rule" />
+          <p class="featured-desc">{featured.data.description}</p>
+          <a class="btn-read" href={`/${lang}/articles/${featured.id}/`}>{s.read_more}</a>
+        </div>
+        <div class="featured-art" aria-hidden="true">
+          <div
+            class="featured-image-bg"
+            style={`background-image: url(${extractFirstImage(featured.body)});`}
+          ></div>
+        </div>
+      </section>
     )}
+
+    <div class="home-layout">
+      <div class="home-main">
+        <h2 class="section-title">{s.home_latest}</h2>
+        {gridArticles.length === 0 ? (
+          <p class="empty">{s.home_empty}</p>
+        ) : (
+          <div class="article-grid">
+            {gridArticles.map((article) => (
+              <ArticleCard
+                lang={lang}
+                variant="grid"
+                slug={article.id}
+                title={article.data.title}
+                description={article.data.description}
+                date={article.data.date}
+                tags={article.data.tags}
+                image={extractFirstImage(article.body)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      <Sidebar lang={lang} excludeSlug={featured?.id} />
+    </div>
   </div>
 </BaseLayout>
 
 <style>
-  .hero {
-    border-bottom: 1px solid var(--border);
+  .home-page {
+    padding: 2.4rem 1.25rem 4rem;
   }
-  .hero-inner {
-    padding: 3.8rem 1.25rem 3rem;
+  .featured {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 2rem;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    border-radius: 10px;
+    padding: 2.4rem 2.4rem;
+    margin-bottom: 2.6rem;
+    position: relative;
+    overflow: hidden;
   }
-  .hero h1 {
+  .featured-text {
+    position: relative;
+    z-index: 2;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-3);
+  }
+  .featured h1 {
+    margin: 0.5rem 0 0 0;
     color: var(--text);
-    margin: 0;
   }
-  .hero-tagline {
+  .featured-desc {
     color: var(--text-muted);
-    font-size: 1.05rem;
-    margin: 1.1rem 0 0 0;
-    max-width: 32ch;
+    font-size: 1.02rem;
+    max-width: 48ch;
+    margin: 1.1rem 0 1.4rem 0;
+  }
+  .btn-read {
+    display: inline-block;
+    background: var(--accent-3);
+    color: var(--bg);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.3rem;
+    border-radius: 6px;
+  }
+  .btn-read:hover {
+    text-decoration: none;
+    filter: brightness(1.08);
+  }
+  
+  /* Nové štýly pre faded obrázok vpravo */
+  .featured-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 55%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .featured-image-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 40%);
+    mask-image: linear-gradient(to right, transparent, black 40%);
+    opacity: 1;
+  }
+
+  .home-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2.2rem;
+    align-items: start;
   }
   .section-title {
-    margin-top: 3rem;
+    margin: 0 0 1.3rem 0;
   }
   .article-grid {
     display: grid;
-    gap: 1rem;
-    margin: 1.5rem 0 3rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.1rem;
   }
   .empty {
     color: var(--text-muted);
-    margin: 1.5rem 0 3rem;
+  }
+
+  @media (max-width: 900px) {
+    .featured {
+      grid-template-columns: 1fr;
+    }
+    .featured-art {
+      display: none;
+    }
+    .home-layout {
+      grid-template-columns: 1fr;
+    }
+    .article-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

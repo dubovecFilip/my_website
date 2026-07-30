@@ -111,6 +111,14 @@ input:focus-visible {
   padding: 0 1.25rem;
 }
 
+/* Wider container used on the homepage, which needs room for the
+   two-column (content + sidebar) layout. */
+.wrap-wide {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
 .eyebrow {
   font-family: var(--font-mono);
   font-size: 0.75rem;
