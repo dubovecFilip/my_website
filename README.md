@@ -1,4 +1,6 @@
-# BOGGELINO — personal blog
+# MOMENTUM — personal blog
+
+Author/persona: BOGGELINO.
 
 Built with [Astro](https://astro.build). Bilingual (SK/EN), tags with filtering, RSS,
 dark/light theme toggle.
@@ -54,7 +56,7 @@ To hide a draft without deleting it, add `draft: true`.
 ## Authors
 
 Defined in `src/data/authors.ts`. Right now there's just `boggelino` (avatar =
-`/images/mascot.png`). If you ever open up article submissions to others, add them here
+`/images/boggelino.png`). If you ever open up article submissions to others, add them here
 and set `author: "their-id"` in their article's frontmatter — their avatar + name will
 show up automatically next to "Written by".
 

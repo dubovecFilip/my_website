@@ -43,6 +43,7 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
         <nav class="site-nav">
           <a href={`/${lang}/`}>{s.nav_home}</a>
           <a href={`/${lang}/tags/`}>{s.nav_tags}</a>
+          <a href={`/${lang}/gallery/`}>{s.nav_gallery}</a>
           <a href={`/${lang}/about/`}>{s.nav_about}</a>
           <button id="theme-toggle" class="icon-btn" aria-label={s.theme_toggle} title={s.theme_toggle}>
             <svg id="theme-icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -80,7 +81,7 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
 
     <footer class="site-footer">
       <div class="wrap-wide footer-inner">
-        <span>&copy; {new Date().getFullYear()} BOGGELINO</span>
+        <span>&copy; {new Date().getFullYear()} MOMENTUM</span>
         <span class="footer-sep">·</span>
         <a href={`/${lang}/rss.xml`} class="footer-rss">{s.footer_rss}</a>
       </div>
