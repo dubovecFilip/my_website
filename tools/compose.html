@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BOGGELINO — Editor článkov (lokálny nástroj)</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0e15; --bg-raised: #12151f; --border: #262b3a;
+    --text: #f4f2ec; --text-muted: #9aa0b4; --red: #ef3c39; --teal: #2ea5ac; --gold: #ffc93b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, sans-serif; padding: 1.5rem;
+  }
+  h1 { font-size: 1.4rem; margin: 0 0 0.3rem; }
+  .sub { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 1.5rem; }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  legend { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0 0.4rem; }
+  label { display: block; font-size: 0.82rem; color: var(--text-muted); margin: 0.6rem 0 0.25rem; }
+  input[type=text], input[type=date], input[type=number], textarea, select {
+    width: 100%; background: var(--bg-raised); border: 1px solid var(--border); color: var(--text);
+    padding: 0.5rem 0.6rem; border-radius: 5px; font-family: inherit; font-size: 0.92rem;
+  }
+  textarea#content { min-height: 400px; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.5; }
+  .row { display: flex; gap: 0.7rem; }
+  .row > div { flex: 1; }
+  button {
+    background: var(--red); color: white; border: none; border-radius: 5px;
+    padding: 0.55rem 1rem; font-weight: 600; cursor: pointer; font-size: 0.88rem;
+  }
+  button:hover { opacity: 0.9; }
+  button.secondary { background: var(--bg-raised); border: 1px solid var(--border); color: var(--text); }
+  .toolbar { display: flex; gap: 0.5rem; margin: 0.6rem 0; flex-wrap: wrap; }
+  .preview {
+    border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem;
+    background: var(--bg-raised); min-height: 400px; overflow-y: auto; max-height: 80vh;
+  }
+  .preview h1, .preview h2, .preview h3 { color: var(--gold); }
+  .preview a { color: var(--gold); }
+  .preview img { max-width: 100%; border-radius: 6px; }
+  .preview code { background: #191d29; padding: 0.15em 0.4em; border-radius: 3px; }
+  .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
+  .filename-preview { font-family: monospace; color: var(--teal); font-size: 0.85rem; margin-top: 0.4rem; }
+  #imgList { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+  #imgList code { color: var(--gold); }
+</style>
+</head>
+<body>
+  <h1>✏️ Editor článkov BOGGELINO</h1>
+  <p class="sub">Lokálny nástroj — nič sa neposiela na internet, beží len v tomto prehliadači. Vyplň, skontroluj náhľad, stiahni .md súbor.</p>
+
+  <div class="layout">
+    <div>
+      <fieldset>
+        <legend>Základné údaje</legend>
+        <div class="row">
+          <div>
+            <label>Jazyk</label>
+            <select id="lang">
+              <option value="sk">Slovensky (sk)</option>
+              <option value="en">English (en)</option>
+            </select>
+          </div>
+          <div>
+            <label>ID článku (rovnaké číslo pre SK aj EN preklad)</label>
+            <input type="text" id="articleId" placeholder="napr. 2" />
+          </div>
+        </div>
+
+        <label>Titulok</label>
+        <input type="text" id="title" placeholder="Názov článku" />
+
+        <label>Popis (krátky, zobrazí sa na homepage)</label>
+        <input type="text" id="description" placeholder="Jedna veta o čom článok je" />
+
+        <div class="row">
+          <div>
+            <label>Dátum</label>
+            <input type="date" id="date" />
+          </div>
+          <div>
+            <label>Autor (id z authors.ts)</label>
+            <input type="text" id="author" value="boggelino" />
+          </div>
+        </div>
+
+        <label>Štítky (oddelené čiarkou)</label>
+        <input type="text" id="tags" placeholder="napr. gaming, 3d-tlac" />
+
+        <label><input type="checkbox" id="draft" style="width:auto; margin-right:0.4rem;" /> Draft (neskryje sa na stránke, len ak toto zaškrtneš)</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Obrázky</legend>
+        <label>Pridaj obrázok do článku</label>
+        <input type="file" id="imageInput" accept="image/*" />
+        <p class="hint">
+          Obrázok sa nedá automaticky nahrať na server (bezpečnosť prehliadača) —
+          po kliknutí na "Vložiť" sa do textu pridá správna Markdown syntax a súbor
+          si sám skopíruj do priečinka <code>public/images/articles/&lt;ID&gt;/</code>
+          pod rovnakým menom.
+        </p>
+        <div id="imgList"></div>
+      </fieldset>
+
+      <label>Obsah článku (Markdown)</label>
+      <div class="toolbar">
+        <button type="button" class="secondary" onclick="wrapSelection('**','**')">Tučné</button>
+        <button type="button" class="secondary" onclick="wrapSelection('*','*')">Kurzíva</button>
+        <button type="button" class="secondary" onclick="insertAtCursor('\n## Nadpis\n')">Nadpis</button>
+        <button type="button" class="secondary" onclick="insertAtCursor('\n> citát\n')">Citácia</button>
+        <button type="button" class="secondary" onclick="insertAtCursor('[text](https://)')">Link</button>
+      </div>
+      <textarea id="content" placeholder="Píš článok tu, normálny Markdown funguje..."></textarea>
+
+      <div class="toolbar">
+        <button type="button" onclick="downloadMd()">⬇️ Stiahnuť .md súbor</button>
+        <button type="button" class="secondary" onclick="clearAll()">Vyčistiť</button>
+      </div>
+      <p class="filename-preview" id="filenamePreview"></p>
+    </div>
+
+    <div>
+      <label>Náhľad</label>
+      <div class="preview" id="preview"></div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const images = [];
+
+  function todayISO() {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+  $('date').value = todayISO();
+
+  function updatePreview() {
+    const md = $('content').value;
+    $('preview').innerHTML = window.marked ? marked.parse(md) : md;
+    const id = $('articleId').value.trim() || '<ID>';
+    const lang = $('lang').value;
+    $('filenamePreview').textContent = `→ src/content/articles/${lang}/${id}.md`;
+  }
+  document.querySelectorAll('input, select, textarea').forEach((el) => {
+    el.addEventListener('input', updatePreview);
+  });
+  updatePreview();
+
+  function insertAtCursor(text) {
+    const ta = $('content');
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
+    ta.focus();
+    ta.selectionStart = ta.selectionEnd = start + text.length;
+    updatePreview();
+  }
+
+  function wrapSelection(before, after) {
+    const ta = $('content');
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    const selected = ta.value.slice(start, end) || 'text';
+    ta.value = ta.value.slice(0, start) + before + selected + after + ta.value.slice(end);
+    ta.focus();
+    updatePreview();
+  }
+
+  $('imageInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const id = $('articleId').value.trim() || 'ID';
+    const path = `/images/articles/${id}/${file.name}`;
+    insertAtCursor(`\n![popis obrázka](${path})\n`);
+    images.push(file.name);
+    $('imgList').innerHTML = 'Obrázky použité v tomto článku: ' +
+      images.map((n) => `<code>${n}</code>`).join(', ') +
+      `<br>Skopíruj ich do <code>public/images/articles/${id}/</code>`;
+    e.target.value = '';
+  });
+
+  function buildFrontmatter() {
+    const title = $('title').value || 'Bez názvu';
+    const description = $('description').value || '';
+    const date = $('date').value || todayISO();
+    const author = $('author').value.trim() || 'boggelino';
+    const tags = $('tags').value.split(',').map((t) => t.trim()).filter(Boolean);
+    const draft = $('draft').checked;
+
+    let fm = '---\n';
+    fm += `title: "${title.replace(/"/g, '\\"')}"\n`;
+    fm += `description: "${description.replace(/"/g, '\\"')}"\n`;
+    fm += `date: ${date}\n`;
+    fm += `tags: [${tags.map((t) => `"${t}"`).join(', ')}]\n`;
+    fm += `author: "${author}"\n`;
+    if (draft) fm += `draft: true\n`;
+    fm += '---\n\n';
+    return fm;
+  }
+
+  function downloadMd() {
+    const id = $('articleId').value.trim();
+    if (!id) { alert('Vyplň ID článku (napr. 2) — použije sa ako názov súboru.'); return; }
+    const full = buildFrontmatter() + $('content').value.trim() + '\n';
+    const blob = new Blob([full], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${id}.md`;
+    a.click();
+    alert(`Stiahnuté ako ${id}.md — presuň ho do src/content/articles/${$('lang').value}/${id}.md`);
+  }
+
+  function clearAll() {
+    if (!confirm('Vyčistiť všetky polia?')) return;
+    document.querySelectorAll('input[type=text], textarea').forEach((el) => (el.value = ''));
+    $('draft').checked = false;
+    $('date').value = todayISO();
+    images.length = 0;
+    $('imgList').innerHTML = '';
+    updatePreview();
+  }
+</script>
+</body>
+</html>

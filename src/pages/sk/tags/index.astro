@@ -1,12 +1,15 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import ArticleCard from '../../../components/ArticleCard.astro';
 import { t } from '../../../i18n/dict';
 
 const lang = 'sk' as const;
 const s = t(lang);
 
-const articles = await getCollection('articles-sk', ({ data }) => !data.draft);
+const allArticles = await getCollection('articles-sk', ({ data }) => !data.draft);
+const articles = allArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
 const tagCounts = new Map<string, number>();
 for (const article of articles) {
   for (const tag of article.data.tags) {
@@ -20,47 +23,116 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
   <div class="wrap tags-page">
     <h1>{s.all_tags}</h1>
     <hr class="gold-rule" />
-    {tags.length === 0 ? (
+
+    {tags.length > 0 && (
+      <div class="filter-bar" role="group" aria-label={s.all_tags}>
+        <button class="chip is-active" data-filter-all>{s.all_tags}</button>
+        {tags.map(([tag, count]) => (
+          <button class="chip" data-tag={tag}>
+            {tag} <span class="count">{count}</span>
+          </button>
+        ))}
+      </div>
+    )}
+
+    {articles.length === 0 ? (
       <p class="empty">{s.home_empty}</p>
     ) : (
-      <div class="tag-cloud">
-        {tags.map(([tag, count]) => (
-          <a class="tag-pill" href={`/${lang}/tags/${tag}/`}>
-            <span>{tag}</span>
-            <span class="count mono">{count}</span>
-          </a>
+      <div class="article-list" id="filterable-list">
+        {articles.map((article) => (
+          <div class="filter-item" data-tags={article.data.tags.join(',')}>
+            <ArticleCard
+              lang={lang}
+              slug={article.id}
+              title={article.data.title}
+              description={article.data.description}
+              date={article.data.date}
+              tags={article.data.tags}
+            />
+          </div>
         ))}
       </div>
     )}
   </div>
 </BaseLayout>
 
+<script>
+  const chips = document.querySelectorAll<HTMLButtonElement>('.chip');
+  const items = document.querySelectorAll<HTMLElement>('.filter-item');
+  const allChip = document.querySelector<HTMLButtonElement>('[data-filter-all]');
+  const active = new Set<string>();
+
+  function render() {
+    if (active.size === 0) {
+      items.forEach((item) => (item.style.display = ''));
+      allChip?.classList.add('is-active');
+      return;
+    }
+    allChip?.classList.remove('is-active');
+    items.forEach((item) => {
+      const itemTags = (item.dataset.tags ?? '').split(',');
+      const match = itemTags.some((tag) => active.has(tag));
+      item.style.display = match ? '' : 'none';
+    });
+  }
+
+  chips.forEach((chip) => {
+    chip.addEventListener('click', () => {
+      if (chip.hasAttribute('data-filter-all')) {
+        active.clear();
+        chips.forEach((c) => c.classList.remove('is-active'));
+      } else {
+        const tag = chip.dataset.tag!;
+        if (active.has(tag)) {
+          active.delete(tag);
+          chip.classList.remove('is-active');
+        } else {
+          active.add(tag);
+          chip.classList.add('is-active');
+        }
+      }
+      render();
+    });
+  });
+</script>
+
 <style>
   .tags-page { padding: 3rem 1.25rem 4rem; }
-  .tag-cloud {
+  .filter-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.7rem;
-    margin-top: 2rem;
+    gap: 0.5rem;
+    margin: 2rem 0 2.2rem;
   }
-  .tag-pill {
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 999px;
+    padding: 0.4rem 0.85rem;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    border: 1px solid var(--border);
-    background: var(--bg-raised);
-    color: var(--text);
-    border-radius: 999px;
-    padding: 0.45rem 1rem;
-    text-decoration: none;
+    gap: 0.4rem;
   }
-  .tag-pill:hover {
+  .chip:hover {
     border-color: var(--accent-2);
-    text-decoration: none;
+    color: var(--text);
   }
-  .count {
+  .chip.is-active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--text);
+  }
+  .chip .count {
     color: var(--text-faint);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
+  }
+  .article-list {
+    display: grid;
+    gap: 1rem;
   }
   .empty { color: var(--text-muted); margin-top: 2rem; }
 </style>

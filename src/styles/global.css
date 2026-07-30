@@ -24,20 +24,26 @@
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
-  --radius: 6px;
+  --radius: 5px;
   --max-width: 780px;
 }
 
-/* "Dim" mode: toggled variant. Stays dark, but lower-contrast / muted,
-   like the lights got turned down rather than switched on. */
-[data-theme='dim'] {
-  --bg: #1c1e26;
-  --bg-raised: #24262f;
-  --bg-raised-2: #2b2d38;
-  --border: #383a46;
-  --text: #e6e4dd;
-  --text-muted: #a7abb8;
-  --text-faint: #7d8090;
+/* Proper light theme — bright background, dark ink, same brand accents
+   re-tuned for contrast against white instead of navy. */
+[data-theme='light'] {
+  --bg: #f7f4ec;
+  --bg-raised: #ffffff;
+  --bg-raised-2: #efe9da;
+  --border: #ddd5c0;
+  --text: #1b1a17;
+  --text-muted: #55524a;
+  --text-faint: #85806f;
+  --red: #d1291f;
+  --teal: #0f7c82;
+  --gold: #b8790a;
+  --accent: var(--red);
+  --accent-2: var(--teal);
+  --accent-3: var(--gold);
 }
 
 * {
@@ -47,6 +53,9 @@
 html {
   color-scheme: dark;
 }
+[data-theme='light'] {
+  color-scheme: light;
+}
 
 body {
   margin: 0;
@@ -55,7 +64,6 @@ body {
   font-family: var(--font-body);
   font-size: 17px;
   line-height: 1.6;
-  transition: background 0.25s ease, color 0.25s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {

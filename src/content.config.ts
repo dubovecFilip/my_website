@@ -7,6 +7,7 @@ const articleSchema = z.object({
   date: z.coerce.date(),
   tags: z.array(z.string()).default([]),
   draft: z.boolean().default(false),
+  author: z.string().default('boggelino'),
 });
 
 const articlesEn = defineCollection({

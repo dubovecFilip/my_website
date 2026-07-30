@@ -1,6 +1,7 @@
 # BOGGELINO — personal blog
 
-Built with [Astro](https://astro.build). Bilingual (SK/EN), tags, RSS, dark/dim theme toggle.
+Built with [Astro](https://astro.build). Bilingual (SK/EN), tags with filtering, RSS,
+dark/light theme toggle.
 
 ## Running it locally
 
@@ -11,53 +12,63 @@ npm run dev
 
 Then open http://localhost:4321 — it'll redirect to the Slovak homepage.
 
-## Adding an article
+## Adding an article (recommended way)
 
-Articles live as Markdown files in:
+Open `tools/compose.html` directly in your browser (just double-click it, no server
+needed). Fill in the fields, write in the big text box (Markdown, with a live preview
+on the right), and click **"Stiahnuť .md súbor"** — it downloads a properly formatted
+file. Move that file into:
 
-- `src/content/articles/sk/` — Slovak articles
-- `src/content/articles/en/` — English articles
+- `src/content/articles/sk/<ID>.md` — Slovak version
+- `src/content/articles/en/<ID>.md` — English version
 
-To add a new post, create a new `.md` file (filename becomes the URL slug — keep it
-lowercase, no spaces, e.g. `moj-novy-clanok.md`). At the top, add the frontmatter block,
-then write the article underneath in normal Markdown:
+Use the **same ID** for both language versions of the same article — that's how the
+language switcher on the article page knows they're the same post.
+
+### Adding images to an article
+In `tools/compose.html`, use the "Pridaj obrázok" file picker — it inserts the right
+Markdown into your text automatically. It can't upload the file for you (browsers can't
+write to your disk directly), so you'll need to manually copy the image file into
+`public/images/articles/<ID>/` under the same filename it inserted.
+
+## Adding an article manually (without the tool)
+
+Create a `.md` file in `src/content/articles/sk/` or `/en/`, filename = article ID
+(e.g. `2.md`):
 
 ```markdown
 ---
 title: "My New Article"
-description: "One sentence describing the article, shown on the homepage card."
+description: "One sentence shown on the homepage card."
 date: 2026-08-01
 tags: ["gaming", "music"]
+author: "boggelino"
 ---
 
-Write your article here. Normal Markdown works: **bold**, *italic*, [links](https://example.com),
-images, code blocks, > blockquotes, and so on.
+Write your article here. Normal Markdown: **bold**, *italic*, [links](https://example.com),
+![image](/images/articles/2/photo.jpg), code blocks, > blockquotes, etc.
 ```
 
-If you're translating the same article into both languages, just create matching files
-in both folders (the slugs don't have to match, but it's tidy if they do).
+To hide a draft without deleting it, add `draft: true`.
 
-To hide a draft without deleting it, add `draft: true` to the frontmatter — it won't show
-up on the site or in RSS until you remove that line.
+## Authors
 
-Tags are freeform — just list whatever words you want in the `tags` array, and pages for
-them (`/sk/tags/gaming/`) get generated automatically.
+Defined in `src/data/authors.ts`. Right now there's just `boggelino` (avatar =
+`/images/mascot.png`). If you ever open up article submissions to others, add them here
+and set `author: "their-id"` in their article's frontmatter — their avatar + name will
+show up automatically next to "Written by".
 
 ## Design
 
-All design tokens (colors, fonts) live in `src/styles/global.css` under `:root` and
-`[data-theme='dim']`. The layout/nav is in `src/layouts/BaseLayout.astro`. Ask Claude for
-help tweaking any of it — the CSS is written to be easy to hand-edit.
+Color/font tokens: `src/styles/global.css` (`:root` = dark theme, `[data-theme='light']`
+= light theme). Layout/nav: `src/layouts/BaseLayout.astro`. Icons: `src/components/SocialIcon.astro`
+and `src/components/FlagIcon.astro` — plain hand-drawn SVGs, not brand assets, easy to
+adjust.
 
 ## Deploying
 
-1. Push this repo to GitHub.
-2. Connect the repo on [Netlify](https://netlify.com) or
-   [Cloudflare Pages](https://pages.cloudflare.com) — build command `npm run build`,
-   output directory `dist`.
-3. Every `git push` after that auto-deploys.
-4. Once you have a real domain, update `site` in `astro.config.mjs` to match (this is used
-   for RSS/canonical links).
+Push to GitHub → connected to Netlify → every `git push` auto-deploys. Build command
+`npm run build`, output directory `dist`.
 
 ## Coming later
 
