@@ -12,8 +12,8 @@ const s = t(lang);
 const allArticles = await getCollection('articles-sk', ({ data }) => !data.draft);
 const articles = allArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
-const [featured, ...rest] = articles;
-const gridArticles = rest.length > 0 ? rest : articles;
+const featured = articles.find((a) => a.data.pinned) ?? articles[0];
+const gridArticles = featured ? articles.filter((a) => a !== featured) : articles;
 ---
 
 <BaseLayout lang={lang} title={s.nav_home}>

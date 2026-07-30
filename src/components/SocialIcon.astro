@@ -1,43 +1,47 @@
 ---
-// Simple hand-drawn icon set (not brand logo assets) matching global stroke style.
+import { 
+  siTwitch, 
+  siKick, 
+  siYoutube, 
+  siTiktok, 
+  siX, 
+  siKofi, 
+  siSteam 
+} from 'simple-icons';
+
 interface Props {
-  name: 'twitch' | 'kick' | 'youtube' | 'tiktok' | 'x' | 'kofi';
+  name: 'twitch' | 'kick' | 'youtube' | 'tiktok' | 'x' | 'kofi' | 'steam';
   size?: number;
 }
+
 const { name, size = 20 } = Astro.props;
+
+// Mapa ikon zo Simple Icons
+const icons = {
+  twitch: siTwitch,
+  kick: siKick,
+  youtube: siYoutube,
+  tiktok: siTiktok,
+  x: siX,
+  kofi: siKofi,
+  steam: siSteam,
+};
+
+const icon = icons[name];
 ---
 
-<svg width={size} height={size} viewBox="0 0 24 24" fill="none" class="social-icon" aria-hidden="true">
-  {name === 'twitch' && (
-    <>
-      <path d="M4 3h17v11l-5 5h-5l-3 3H6v-3H2V7l2-4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-      <path d="M13 7.5v5M17.5 7.5v5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-    </>
-  )}
-  {name === 'kick' && (
-    <path d="M5 3h4v6l6-6h5l-8 8 8 9h-5l-6-6.5V21H5V3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-  )}
-  {name === 'youtube' && (
-    <>
-      <rect x="2.5" y="5.5" width="19" height="13" rx="4" stroke="currentColor" stroke-width="1.6" />
-      <path d="M10.5 9.3v5.4l5-2.7-5-2.7z" fill="currentColor" />
-    </>
-  )}
-  {name === 'tiktok' && (
-    <path d="M13 3v11.2a3 3 0 1 1-2.2-2.9M13 3c.4 2.4 2 4 4.6 4.2V10c-1.7 0-3.3-.6-4.6-1.6"
-      stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-  )}
-  {name === 'x' && (
-    <path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-  )}
-  {name === 'kofi' && (
-    <>
-      <path d="M4 6h13v7a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
-      <path d="M17 8h1.5a2.5 2.5 0 0 1 0 5H17" stroke="currentColor" stroke-width="1.6" />
-      <path d="M8 3.5c-.6.6-.6 1.2 0 1.8M11 3.5c-.6.6-.6 1.2 0 1.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
-    </>
-  )}
-</svg>
+{icon && (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="currentColor" 
+    class="social-icon" 
+    aria-hidden="true"
+  >
+    <path d={icon.path} />
+  </svg>
+)}
 
 <style>
   .social-icon {

@@ -36,7 +36,7 @@ export const dict = {
     about_intro_2:
       "I'm into gaming, I make amateur 3D models on the side, and I've got a habit of diving headfirst into whatever new thing I get curious about: modding, servers, whatever it is that week.",
     about_links_title: "Find me elsewhere",
-    featured_label: "Featured post",
+    featured_label: "Pinned post",
     sidebar_about: "About me",
     sidebar_recent: "Recent posts",
     sidebar_categories: "Categories",
@@ -68,7 +68,7 @@ export const dict = {
     about_intro_2:
       "Bavia ma hry, popri tom robím amatérske 3D modely a mám taký zvyk vrhnúť sa naplno do čohokoľvek nového, čo ma zaujme: modding, servery, čokoľvek to práve je.",
     about_links_title: "Nájdeš ma aj tu",
-    featured_label: "Hlavný článok",
+    featured_label: "Pripnutý článok",
     sidebar_about: "O mne",
     sidebar_recent: "Posledné príspevky",
     sidebar_categories: "Kategórie",

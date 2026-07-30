@@ -20,102 +20,154 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
 ---
 
 <BaseLayout lang={lang} title={s.all_tags}>
-  <div class="wrap tags-page">
+  <div class="wrap-wide tags-page">
     <h1>{s.all_tags}</h1>
     <hr class="gold-rule" />
 
-    {tags.length > 0 && (
-      <div class="filter-bar" role="group" aria-label={s.all_tags}>
-        <button class="chip is-active" data-filter-all>{s.all_tags}</button>
-        {tags.map(([tag, count]) => (
-          <button class="chip" data-tag={tag}>
-            {tag} <span class="count">{count}</span>
-          </button>
-        ))}
-      </div>
-    )}
-
-    {articles.length === 0 ? (
-      <p class="empty">{s.home_empty}</p>
-    ) : (
-      <div class="article-list" id="filterable-list">
-        {articles.map((article) => (
-          <div class="filter-item" data-tags={article.data.tags.join(',')}>
-            <ArticleCard
-              lang={lang}
-              slug={article.id}
-              title={article.data.title}
-              description={article.data.description}
-              date={article.data.date}
-              tags={article.data.tags}
-            />
+    <div class="tags-layout">
+      <aside class="filter-panel">
+        {tags.length > 0 && (
+          <div class="filter-bar" role="group" aria-label={s.all_tags}>
+            <button class="chip is-active" data-filter-all>{s.all_tags}</button>
+            {tags.map(([tag, count]) => (
+              <button class="chip" data-tag={tag}>
+                <span class="chip-label">{tag}</span>
+                <span class="count">{count}</span>
+              </button>
+            ))}
           </div>
-        ))}
+        )}
+      </aside>
+
+      <div class="tags-main">
+        {articles.length === 0 ? (
+          <p class="empty">{s.home_empty}</p>
+        ) : (
+          <div class="article-list" id="filterable-list">
+            {articles.map((article) => (
+              <div class="filter-item" data-tags={article.data.tags.join(',')}>
+                <ArticleCard
+                  lang={lang}
+                  slug={article.id}
+                  title={article.data.title}
+                  description={article.data.description}
+                  date={article.data.date}
+                  tags={article.data.tags}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    )}
+    </div>
   </div>
 </BaseLayout>
 
 <script>
-  const chips = document.querySelectorAll<HTMLButtonElement>('.chip');
+  const chips = document.querySelectorAll<HTMLButtonElement>('.chip[data-tag]');
   const items = document.querySelectorAll<HTMLElement>('.filter-item');
   const allChip = document.querySelector<HTMLButtonElement>('[data-filter-all]');
   const active = new Set<string>();
 
-  function render() {
-    if (active.size === 0) {
-      items.forEach((item) => (item.style.display = ''));
-      allChip?.classList.add('is-active');
-      return;
+  function tagsOf(item: HTMLElement): string[] {
+    return (item.dataset.tags ?? '').split(',').filter(Boolean);
+  }
+
+  // An article matches when it carries every currently active tag.
+  function matchesActive(tags: string[]): boolean {
+    for (const tag of active) {
+      if (!tags.includes(tag)) return false;
     }
-    allChip?.classList.remove('is-active');
+    return true;
+  }
+
+  function render() {
+    const visible = [...items].filter((item) => matchesActive(tagsOf(item)));
     items.forEach((item) => {
-      const itemTags = (item.dataset.tags ?? '').split(',');
-      const match = itemTags.some((tag) => active.has(tag));
-      item.style.display = match ? '' : 'none';
+      item.style.display = matchesActive(tagsOf(item)) ? '' : 'none';
+    });
+
+    allChip?.classList.toggle('is-active', active.size === 0);
+
+    chips.forEach((chip) => {
+      const tag = chip.dataset.tag!;
+      const isActive = active.has(tag);
+      // Count of articles you'd end up with if this tag were added to the
+      // current combination (or, if already active, the combination as-is).
+      const count = visible.filter((item) => tagsOf(item).includes(tag)).length;
+      const countEl = chip.querySelector<HTMLElement>('.count');
+      if (countEl) countEl.textContent = String(count);
+
+      chip.classList.toggle('is-active', isActive);
+      const disabled = !isActive && count === 0;
+      chip.classList.toggle('is-disabled', disabled);
+      chip.disabled = disabled;
     });
   }
 
   chips.forEach((chip) => {
     chip.addEventListener('click', () => {
-      if (chip.hasAttribute('data-filter-all')) {
-        active.clear();
-        chips.forEach((c) => c.classList.remove('is-active'));
+      const tag = chip.dataset.tag!;
+      if (active.has(tag)) {
+        active.delete(tag);
       } else {
-        const tag = chip.dataset.tag!;
-        if (active.has(tag)) {
-          active.delete(tag);
-          chip.classList.remove('is-active');
-        } else {
-          active.add(tag);
-          chip.classList.add('is-active');
-        }
+        active.add(tag);
       }
       render();
     });
   });
+
+  allChip?.addEventListener('click', () => {
+    active.clear();
+    render();
+  });
+
+  render();
 </script>
 
 <style>
-  .tags-page { padding: 3rem 1.25rem 4rem; }
+  .tags-page { padding: 2.4rem 1.25rem 4rem; }
+
+  .tags-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2.2rem;
+    align-items: start;
+    margin-top: 1.6rem;
+  }
+
+  .filter-panel {
+    position: sticky;
+    top: 1.5rem;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    border-radius: var(--radius);
+    padding: 0.6rem;
+  }
+
   .filter-bar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 2rem 0 2.2rem;
+    flex-direction: column;
+    gap: 0.15rem;
   }
   .chip {
     font-family: var(--font-mono);
-    font-size: 0.78rem;
-    background: var(--bg-raised);
-    border: 1px solid var(--border);
+    font-size: 0.85rem;
+    background: transparent;
+    border: 1px solid transparent;
     color: var(--text-muted);
-    border-radius: 999px;
-    padding: 0.4rem 0.85rem;
+    border-radius: 6px;
+    padding: 0.55rem 0.7rem;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    justify-content: space-between;
+    gap: 0.6rem;
+    width: 100%;
+    text-align: left;
+  }
+  .chip-label {
+    overflow-wrap: anywhere;
   }
   .chip:hover {
     border-color: var(--accent-2);
@@ -126,13 +178,33 @@ const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1]);
     background: color-mix(in srgb, var(--accent) 16%, transparent);
     color: var(--text);
   }
+  .chip.is-disabled,
+  .chip:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+  .chip.is-disabled:hover,
+  .chip:disabled:hover {
+    border-color: transparent;
+    color: var(--text-muted);
+  }
   .chip .count {
     color: var(--text-faint);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
+    flex-shrink: 0;
   }
   .article-list {
     display: grid;
     gap: 1rem;
   }
   .empty { color: var(--text-muted); margin-top: 2rem; }
+
+  @media (max-width: 800px) {
+    .tags-layout {
+      grid-template-columns: 1fr;
+    }
+    .filter-panel {
+      position: static;
+    }
+  }
 </style>
