@@ -31,8 +31,8 @@ export const dict = {
     not_found_title: 'Page not found',
     not_found_body: "This page wandered off. Let's get you back.",
     about_title: 'About me',
-    about_intro_1: "I'm BOGGELINO — real name Filip Dubovec, an informatics student at Žilina University.",
-    about_intro_2: "I'm into gaming, I make amateur 3D models on the side, and I've got a habit of diving headfirst into whatever new thing I get curious about — modding, servers, whatever it is that week.",
+    about_intro_1: "I'm BOGGELINO, real name Filip Dubovec, an informatics student at Žilina University.",
+    about_intro_2: "I'm into gaming, I make amateur 3D models on the side, and I've got a habit of diving headfirst into whatever new thing I get curious about: modding, servers, whatever it is that week.",
     about_links_title: 'Find me elsewhere',
   },
   sk: {
@@ -56,8 +56,8 @@ export const dict = {
     not_found_title: 'Stránka nenájdená',
     not_found_body: 'Táto stránka sa niekam zatúlala. Poď späť.',
     about_title: 'O mne',
-    about_intro_1: 'Som BOGGELINO — reálnym menom Filip Dubovec, študent informatiky na Žilinskej univerzite.',
-    about_intro_2: 'Bavia ma hry, popri tom robím amatérske 3D modely, a mám taký zvyk vrhnúť sa naplno do čohokoľvek nového, čo ma zaujme — modding, servery, čokoľvek to práve je.',
+    about_intro_1: 'Som BOGGELINO, reálnym menom Filip Dubovec, študent informatiky na Žilinskej univerzite.',
+    about_intro_2: 'Bavia ma hry, popri tom robím amatérske 3D modely a mám taký zvyk vrhnúť sa naplno do čohokoľvek nového, čo ma zaujme: modding, servery, čokoľvek to práve je.',
     about_links_title: 'Nájdeš ma aj tu',
   },
 } as const;

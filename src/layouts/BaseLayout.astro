@@ -10,7 +10,7 @@ interface Props {
   translationHref?: string;
 }
 
-const { lang, title, description = 'BOGGELINO — articles, opinions, and things I like.', translationHref } = Astro.props;
+const { lang, title, description = 'BOGGELINO: articles, opinions, and things I like.', translationHref } = Astro.props;
 const s = t(lang);
 const other = otherLang(lang);
 const flagCode: Record<Lang, 'sk' | 'gb'> = { sk: 'sk', en: 'gb' };
@@ -24,8 +24,8 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/png" href="/images/mascot.png" />
-    <link rel="apple-touch-icon" href="/images/mascot.png" />
+    <link rel="icon" type="image/png" href="/images/boggelino.png" />
+    <link rel="apple-touch-icon" href="/images/boggelino.png" />
     <title>{title} · BOGGELINO</title>
     <meta name="description" content={description} />
     <script is:inline>
@@ -37,7 +37,7 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
     <header class="site-header">
       <div class="wrap header-inner">
         <a class="brand" href={`/${lang}/`}>
-          <img src="/images/mascot.png" alt="" class="brand-mascot" width="34" height="34" />
+          <img src="/images/boggelino.png" alt="" class="brand-boggelino" width="34" height="34" />
           <span class="brand-word">BOGGELINO</span>
         </a>
         <nav class="site-nav">
@@ -141,7 +141,7 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
         color: var(--text);
       }
       .brand:hover { text-decoration: none; }
-      .brand-mascot {
+      .brand-boggelino {
         border-radius: 50%;
         display: block;
       }
