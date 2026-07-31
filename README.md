@@ -24,11 +24,12 @@ file. Move that file into:
 - `src/content/articles/sk/<ID>.md` — Slovak version
 - `src/content/articles/en/<ID>.md` — English version
 
-Use the **same ID** for both language versions of the same article — that's how the
+Use the **same ID** for both language versions of the same article. That's how the
 language switcher on the article page knows they're the same post.
 
 ### Adding images to an article
-In `tools/compose.html`, use the "Pridaj obrázok" file picker — it inserts the right
+
+In `tools/compose.html`, use the "Pridaj obrázok" file picker. It inserts the right
 Markdown into your text automatically. It can't upload the file for you (browsers can't
 write to your disk directly), so you'll need to manually copy the image file into
 `public/images/articles/<ID>/` under the same filename it inserted.
@@ -47,7 +48,7 @@ tags: ["gaming", "music"]
 author: "boggelino"
 ---
 
-Write your article here. Normal Markdown: **bold**, *italic*, [links](https://example.com),
+Write your article here. Normal Markdown: **bold**, _italic_, [links](https://example.com),
 ![image](/images/articles/2/photo.jpg), code blocks, > blockquotes, etc.
 ```
 
@@ -57,14 +58,14 @@ To hide a draft without deleting it, add `draft: true`.
 
 Defined in `src/data/authors.ts`. Right now there's just `boggelino` (avatar =
 `/images/boggelino.png`). If you ever open up article submissions to others, add them here
-and set `author: "their-id"` in their article's frontmatter — their avatar + name will
+and set `author: "their-id"` in their article's frontmatter. Their avatar + name will
 show up automatically next to "Written by".
 
 ## Design
 
 Color/font tokens: `src/styles/global.css` (`:root` = dark theme, `[data-theme='light']`
 = light theme). Layout/nav: `src/layouts/BaseLayout.astro`. Icons: `src/components/SocialIcon.astro`
-and `src/components/FlagIcon.astro` — plain hand-drawn SVGs, not brand assets, easy to
+and `src/components/FlagIcon.astro`, a plain hand-drawn SVGs, not brand assets, easy to
 adjust.
 
 ## Deploying

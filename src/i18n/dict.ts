@@ -36,9 +36,9 @@ export const dict = {
     about_motto:
       "MOMENTUM — because when an idea hits, I drop it here right away and keep the flow going. Keep the momentum.",
     about_purpose_1:
-      "MOMENTUM is where I stash ideas before they slip away. Posts about games, music, 3D printing, modding, and whatever else grabs my attention — no schedule, no promises, just whatever comes to mind.",
+      "MOMENTUM is where I stash ideas before they slip away. Posts about games, music, 3D printing, modding, and whatever else grabs my attention. No schedule, no promises, just whatever comes to mind.",
     about_purpose_2:
-      "The name is on purpose. When something clicks, I want to capture it right away and move on — keeping that sense of momentum going while it lasts.",
+      "The name is on purpose. When something clicks, I want to capture it right away and move on. Keeping that sense of momentum going while it lasts.",
     about_author_title: "Author",
     about_intro_1:
       "MOMENTUM is run by BOGGELINO, an informatics student at Žilina University.",
@@ -51,7 +51,8 @@ export const dict = {
     sidebar_categories: "Categories",
     sidebar_empty: "Nothing here yet.",
     gallery_title: "Gallery",
-    gallery_intro: "Photos I want to keep around somewhere — no big context, just here.",
+    gallery_intro:
+      "Photos I want to keep around somewhere. No big context, just here.",
     gallery_empty: "No photos here yet. Check back soon.",
   },
   sk: {
@@ -80,9 +81,9 @@ export const dict = {
     about_motto:
       "MOMENTUM — preto, lebo keď ma niečo napadne, dám to hneď sem a udržím si tak flow. Svoje momentum.",
     about_purpose_1:
-      "MOMENTUM je miesto, kam si ukladám myšlienky skôr, než mi vyprchajú. Články o hrách, hudbe, 3D tlači, moddingu a čomkoľvek inom, čo ma práve chytí — bez harmonogramu, bez sľubov, jednoducho tak, ako mi to príde.",
+      "MOMENTUM je miesto, kam si ukladám myšlienky skôr, než mi vyprchajú. Články o hrách, hudbe, 3D tlači, moddingu a čomkoľvek inom, čo ma práve chytí. Bez harmonogramu, bez sľubov, jednoducho tak, ako mi to príde.",
     about_purpose_2:
-      "Meno nie je náhodné. Keď ma niečo napadne, chcem si to hneď zachytiť a ísť ďalej — udržať si ten pocit rozbehu, kým ešte trvá.",
+      "Meno nie je náhodné. Keď ma niečo napadne, chcem si to hneď zachytiť a ísť ďalej. Udržať si ten pocit rozbehu, kým ešte trvá.",
     about_author_title: "Autor",
     about_intro_1:
       "Za MOMENTOM stojí BOGGELINO, študent informatiky na Žilinskej univerzite.",
@@ -95,7 +96,8 @@ export const dict = {
     sidebar_categories: "Kategórie",
     sidebar_empty: "Zatiaľ tu nič nie je.",
     gallery_title: "Galéria",
-    gallery_intro: "Fotky, ktoré si chcem nechať niekde poruke — bez veľkého kontextu, jednoducho tu sú.",
+    gallery_intro:
+      "Fotky, ktoré si chcem nechať niekde poruke. Bez veľkého kontextu, jednoducho tu sú.",
     gallery_empty: "Zatiaľ tu nie sú žiadne fotky. Skús to znova neskôr.",
   },
 } as const;

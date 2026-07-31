@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { t } from '../../../i18n/dict';
+import { readGalleryPhotos } from '../../../utils/read-gallery';
+
+const lang = 'en' as const;
+const s = t(lang);
+
+const photos = readGalleryPhotos();
+---
+
+<BaseLayout lang={lang} title={s.gallery_title}>
+  <div class="wrap-wide gallery-page">
+    <span class="eyebrow">{s.nav_gallery}</span>
+    <h1>{s.gallery_title}</h1>
+    <hr class="gold-rule" />
+    <p class="gallery-intro">{s.gallery_intro}</p>
+
+    {photos.length === 0 ? (
+      <p class="empty">{s.gallery_empty}</p>
+    ) : (
+      <div class="gallery-grid">
+        {photos.map((photo) => (
+          <a class="gallery-item" href={photo.src} target="_blank" rel="noopener noreferrer">
+            <img src={photo.src} alt="" loading="lazy" />
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .gallery-page {
+    padding: 2.4rem 1.25rem 4rem;
+  }
+  .gallery-intro {
+    color: var(--text-muted);
+    max-width: 60ch;
+    margin: 1.1rem 0 2.6rem 0;
+  }
+  .empty {
+    color: var(--text-muted);
+  }
+
+  /* Loose masonry via CSS columns — box heights follow each photo's own
+     aspect ratio instead of a rigid uniform grid. */
+  .gallery-grid {
+    columns: 4 240px;
+    column-gap: 1.1rem;
+  }
+  .gallery-item {
+    display: block;
+    break-inside: avoid;
+    margin-bottom: 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-raised);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .gallery-item:hover {
+    border-color: var(--accent-3);
+    transform: translateY(-2px);
+  }
+  .gallery-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 900px) {
+    .gallery-grid { columns: 2 200px; }
+  }
+  @media (max-width: 520px) {
+    .gallery-grid { columns: 1; }
+  }
+</style>

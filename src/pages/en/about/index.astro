@@ -19,71 +19,147 @@ const links: { label: string; url: string; icon: 'twitch' | 'kick' | 'youtube' |
 ---
 
 <BaseLayout lang={lang} title={s.nav_about}>
-  <div class="wrap about-page">
-    <h1>{s.about_title}</h1>
-    <hr class="gold-rule" />
+  <div class="wrap-wide about-page">
+    <section class="about-hero">
+      <span class="eyebrow">{s.about_eyebrow}</span>
+      <h1>{s.about_title}</h1>
+      <hr class="gold-rule" />
+      <p class="about-motto">{s.about_motto}</p>
+    </section>
 
-    <p class="about-text">{s.about_intro_1}</p>
-    <p class="about-text">{s.about_intro_2}</p>
+    <div class="about-layout">
+      <div class="about-main">
+        <p class="about-text">{s.about_purpose_1}</p>
+        <p class="about-text">{s.about_purpose_2}</p>
+      </div>
 
-    <h2 class="links-title">{s.about_links_title}</h2>
-    <ul class="link-list">
-      {links.map((link) => (
-        <li>
-          <a href={link.url} target="_blank" rel="noopener noreferrer">
-            <SocialIcon name={link.icon} />
-            <span>{link.label}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
+      <aside class="about-author">
+        <div class="author-card">
+          <img src="/images/boggelino.png" width="60" height="60" alt="" class="author-avatar" />
+          <p class="author-name">BOGGELINO</p>
+          <span class="author-label">{s.about_author_title}</span>
+          <p class="author-blurb">{s.about_intro_1}</p>
+          <p class="author-blurb">{s.about_intro_2}</p>
+
+          <ul class="link-row">
+            {links.map((link) => (
+              <li>
+                <a href={link.url} target="_blank" rel="noopener noreferrer" title={link.label} aria-label={link.label}>
+                  <SocialIcon name={link.icon} size={15} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+    </div>
   </div>
 </BaseLayout>
 
 <style>
-  .about-page { padding: 3rem 1.25rem 4rem; }
+  .about-page {
+    padding: 2.4rem 1.25rem 4rem;
+  }
+
+  .about-hero {
+    max-width: 62ch;
+    margin-bottom: 2.6rem;
+  }
+  .about-motto {
+    margin: 1.2rem 0 0 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0.005em;
+    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+    line-height: 1.35;
+    color: var(--text);
+  }
+
+  .about-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2.2rem;
+    align-items: start;
+  }
+  .about-main {
+    padding-top: 0.2rem;
+  }
   .about-text {
     color: var(--text-muted);
     font-size: 1.05rem;
     max-width: 58ch;
   }
-  .about-text:first-of-type { margin-top: 1.6rem; }
-  .links-title {
-    margin-top: 2.5rem;
-    font-size: 0.85rem;
-    color: var(--text-faint);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-family: var(--font-mono);
-    font-weight: 500;
-  }
-  .link-list {
-    list-style: none;
-    padding: 0;
-    margin: 1.2rem 0 0 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.6rem;
-    max-width: 560px;
-  }
-  .link-list a {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
+
+  .author-card {
     border: 1px solid var(--border);
     background: var(--bg-raised);
     border-radius: var(--radius);
-    padding: 0.75rem 0.95rem;
+    padding: 1.3rem 1.4rem 1.4rem;
+  }
+  .author-avatar {
+    border-radius: 50%;
+    display: block;
+  }
+  .author-name {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    margin: 0.7rem 0 0 0;
     color: var(--text);
-    text-decoration: none;
-    transition: border-color 0.15s ease, transform 0.15s ease;
   }
-  .link-list a:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
+  .author-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0.15rem 0 0.9rem 0;
+  }
+  .author-blurb {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0 0 0.8rem 0;
+  }
+  .author-blurb:last-of-type {
+    margin-bottom: 0;
+  }
+
+  /* Links are icon-only and deliberately understated — small, muted,
+     tucked below the bio instead of competing for attention. */
+  .link-row {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    padding: 1rem 0 0 0;
+    margin: 1.1rem 0 0 0;
+    border-top: 1px solid var(--border);
+  }
+  .link-row a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    color: var(--text-faint);
+    opacity: 0.75;
+    transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+  }
+  .link-row a:hover {
+    color: var(--accent-3);
+    opacity: 1;
+    background: var(--bg-raised-2);
     text-decoration: none;
   }
-  .link-list a :global(.social-icon) {
-    color: var(--accent-2);
+
+  @media (max-width: 780px) {
+    .about-layout {
+      grid-template-columns: 1fr;
+    }
+    .author-card {
+      max-width: 400px;
+    }
   }
 </style>

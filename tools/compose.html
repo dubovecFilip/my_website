@@ -1,387 +1,835 @@
 <!doctype html>
 <html lang="sk">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>BOGGELINO — Editor článkov (lokálny nástroj)</title>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<style>
-  :root {
-    --bg: #0b0e15; --bg-raised: #12151f; --border: #262b3a;
-    --text: #f4f2ec; --text-muted: #9aa0b4; --red: #ef3c39; --teal: #2ea5ac; --gold: #ffc93b;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: system-ui, sans-serif; padding: 1.5rem;
-  }
-  h1 { font-size: 1.4rem; margin: 0 0 0.3rem; }
-  .sub { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 1.5rem; }
-  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; max-width: 1400px; margin: 0 auto; }
-  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
-  fieldset { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
-  legend { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0 0.4rem; }
-  label { display: block; font-size: 0.82rem; color: var(--text-muted); margin: 0.6rem 0 0.25rem; }
-  input[type=text], input[type=date], input[type=number], textarea, select {
-    width: 100%; background: var(--bg-raised); border: 1px solid var(--border); color: var(--text);
-    padding: 0.5rem 0.6rem; border-radius: 5px; font-family: inherit; font-size: 0.92rem;
-  }
-  textarea.content { min-height: 340px; font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; line-height: 1.5; }
-  .row { display: flex; gap: 0.7rem; }
-  .row > div { flex: 1; }
-  button {
-    background: var(--red); color: white; border: none; border-radius: 5px;
-    padding: 0.55rem 1rem; font-weight: 600; cursor: pointer; font-size: 0.88rem;
-  }
-  button:hover { opacity: 0.9; }
-  button.secondary { background: var(--bg-raised); border: 1px solid var(--border); color: var(--text); }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  .toolbar { display: flex; gap: 0.5rem; margin: 0.6rem 0; flex-wrap: wrap; }
-  .preview {
-    border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem;
-    background: var(--bg-raised); min-height: 340px; overflow-y: auto; max-height: 70vh;
-  }
-  .preview h1, .preview h2, .preview h3 { color: var(--gold); }
-  .preview a { color: var(--gold); }
-  .preview img { max-width: 100%; border-radius: 6px; }
-  .preview code { background: #191d29; padding: 0.15em 0.4em; border-radius: 3px; }
-  .hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.3rem; }
-  #imgList { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .img-chip { display: flex; align-items: center; gap: 0.4rem; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.5rem; }
-  .img-chip img { width: 28px; height: 28px; object-fit: cover; border-radius: 3px; }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BOGGELINO — Editor článkov (lokálny nástroj)</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+      :root {
+        --bg: #0b0e15;
+        --bg-raised: #12151f;
+        --border: #262b3a;
+        --text: #f4f2ec;
+        --text-muted: #9aa0b4;
+        --red: #ef3c39;
+        --teal: #2ea5ac;
+        --gold: #ffc93b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, sans-serif;
+        padding: 1.5rem;
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin: 0 0 0.3rem;
+      }
+      .sub {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin: 0 0 1.5rem;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      fieldset {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      legend {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0 0.4rem;
+      }
+      label {
+        display: block;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin: 0.6rem 0 0.25rem;
+      }
+      input[type="text"],
+      input[type="date"],
+      input[type="number"],
+      textarea,
+      select {
+        width: 100%;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 0.5rem 0.6rem;
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: 0.92rem;
+      }
+      textarea.content {
+        min-height: 340px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+      .row {
+        display: flex;
+        gap: 0.7rem;
+      }
+      .row > div {
+        flex: 1;
+      }
+      button {
+        background: var(--red);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.55rem 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.88rem;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      button.secondary {
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .toolbar {
+        display: flex;
+        gap: 0.5rem;
+        margin: 0.6rem 0;
+        flex-wrap: wrap;
+      }
+      .preview {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.2rem 1.5rem;
+        background: var(--bg-raised);
+        min-height: 340px;
+        overflow-y: auto;
+        max-height: 70vh;
+      }
+      .preview h1,
+      .preview h2,
+      .preview h3 {
+        color: var(--gold);
+      }
+      .preview a {
+        color: var(--gold);
+      }
+      .preview img {
+        max-width: 100%;
+        border-radius: 6px;
+      }
+      .preview code {
+        background: #191d29;
+        padding: 0.15em 0.4em;
+        border-radius: 3px;
+      }
+      .hint {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 0.3rem;
+      }
+      #imgList {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 0.6rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .img-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+      }
+      .img-chip img {
+        width: 28px;
+        height: 28px;
+        object-fit: cover;
+        border-radius: 3px;
+      }
 
-  .lang-tabs { display: flex; gap: 0.4rem; margin: 1.2rem 0 0.8rem; }
-  .lang-tab {
-    flex: 1; background: var(--bg-raised); border: 1px solid var(--border); color: var(--text-muted);
-    padding: 0.6rem; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: 600; font-size: 0.88rem;
-  }
-  .lang-tab.is-active { color: var(--gold); border-bottom: 2px solid var(--gold); background: var(--bg); }
-  .lang-panel { display: none; }
-  .lang-panel.is-active { display: block; }
+      .lang-tabs {
+        display: flex;
+        gap: 0.4rem;
+        margin: 1.2rem 0 0.8rem;
+      }
+      .lang-tab {
+        flex: 1;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 0.6rem;
+        border-radius: 6px 6px 0 0;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.88rem;
+      }
+      .lang-tab.is-active {
+        color: var(--gold);
+        border-bottom: 2px solid var(--gold);
+        background: var(--bg);
+      }
+      .lang-panel {
+        display: none;
+      }
+      .lang-panel.is-active {
+        display: block;
+      }
 
-  .status { font-size: 0.82rem; margin-top: 0.6rem; min-height: 1.2em; }
-  .status.ok { color: #6bcf7a; }
-  .status.err { color: var(--red); }
-  details.help { margin-top: 0.5rem; }
-  details.help summary { cursor: pointer; color: var(--text-muted); font-size: 0.8rem; }
-</style>
-</head>
-<body>
-  <h1>✏️ Editor článkov BOGGELINO</h1>
-  <p class="sub">Lokálny nástroj, nič sa neposiela na internet, beží len v tomto prehliadači.</p>
+      .status {
+        font-size: 0.82rem;
+        margin-top: 0.6rem;
+        min-height: 1.2em;
+      }
+      .status.ok {
+        color: #6bcf7a;
+      }
+      .status.err {
+        color: var(--red);
+      }
+      details.help {
+        margin-top: 0.5rem;
+      }
+      details.help summary {
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>✏️ Editor článkov BOGGELINO</h1>
+    <p class="sub">
+      Lokálny nástroj, nič sa neposiela na internet, beží len v tomto
+      prehliadači.
+    </p>
 
-  <div class="layout">
-    <div>
-      <fieldset>
-        <legend>Spoločné údaje (platia pre obe jazykové verzie)</legend>
-        <div class="row">
-          <div>
-            <label>ID článku</label>
-            <input type="text" id="articleId" placeholder="napr. 2" />
-          </div>
-          <div>
-            <label>Dátum</label>
-            <input type="date" id="date" />
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Autor (id z authors.ts)</label>
-            <input type="text" id="author" value="boggelino" />
+    <div class="layout">
+      <div>
+        <fieldset>
+          <legend>Spoločné údaje (platia pre obe jazykové verzie)</legend>
+          <div class="row">
+            <div>
+              <label>ID článku</label>
+              <input type="text" id="articleId" placeholder="napr. 2" />
+            </div>
+            <div>
+              <label>Dátum</label>
+              <input type="date" id="date" />
+            </div>
           </div>
           <div class="row">
-  <div>
-    <label>Štítky (SK)</label>
-    <input type="text" id="tags-sk" placeholder="napr. hry, 3D tlač" />
-  </div>
-  <div>
-    <label>Tags (EN)</label>
-    <input type="text" id="tags-en" placeholder="e.g. gaming, 3d printing" />
-  </div>
-</div>
-        </div>
-        <label><input type="checkbox" id="draft" style="width:auto; margin-right:0.4rem;" /> Draft (skryté, kým odškrtneš)</label>
-      </fieldset>
+            <div>
+              <label>Autor (id z authors.ts)</label>
+              <input type="text" id="author" value="boggelino" />
+            </div>
+            <div class="row">
+              <div>
+                <label>Štítky (SK)</label>
+                <input
+                  type="text"
+                  id="tags-sk"
+                  placeholder="napr. hry, 3D tlač"
+                />
+              </div>
+              <div>
+                <label>Tags (EN)</label>
+                <input
+                  type="text"
+                  id="tags-en"
+                  placeholder="e.g. gaming, 3d printing"
+                />
+              </div>
+            </div>
+          </div>
+          <label
+            ><input
+              type="checkbox"
+              id="draft"
+              style="width: auto; margin-right: 0.4rem"
+            />
+            Draft (skryté, kým odškrtneš)</label
+          >
+        </fieldset>
 
-      <fieldset>
-        <legend>Obrázky (spoločné pre obe jazykové verzie)</legend>
-        <label>Pridaj obrázok</label>
-        <input type="file" id="imageInput" accept="image/*" multiple />
-        <p class="hint">
-          Vloží sa do textu na mieste kurzora v práve otvorenej jazykovej záložke.
-          Náhľad vidíš rovno v paneli vpravo. Pri automatickom uložení (nižšie) sa
-          obrázok skopíruje sám, netreba nič ručne presúvať.
-        </p>
-        <div id="imgList"></div>
-      </fieldset>
-
-      <div class="lang-tabs">
-        <button type="button" class="lang-tab is-active" data-lang="sk" onclick="switchTab('sk')">🇸🇰 Slovenčina</button>
-        <button type="button" class="lang-tab" data-lang="en" onclick="switchTab('en')">🇬🇧 English</button>
-      </div>
-
-      <div id="panel-sk" class="lang-panel is-active">
-        <label>Titulok (SK)</label>
-        <input type="text" class="title" data-lang="sk" placeholder="Názov článku" />
-        <label>Popis (SK)</label>
-        <input type="text" class="description" data-lang="sk" placeholder="Jedna veta o čom článok je" />
-        <label>Obsah (SK, Markdown)</label>
-        <div class="toolbar">
-          <button type="button" class="secondary" onclick="wrapSelection('sk','**','**')">Tučné</button>
-          <button type="button" class="secondary" onclick="wrapSelection('sk','*','*')">Kurzíva</button>
-          <button type="button" class="secondary" onclick="insertAtCursor('sk','\n## Nadpis\n')">Nadpis</button>
-          <button type="button" class="secondary" onclick="insertAtCursor('sk','\n> citát\n')">Citácia</button>
-        </div>
-        <textarea class="content" data-lang="sk" placeholder="Píš po slovensky..."></textarea>
-      </div>
-
-      <div id="panel-en" class="lang-panel">
-        <label>Title (EN)</label>
-        <input type="text" class="title" data-lang="en" placeholder="Article title" />
-        <label>Description (EN)</label>
-        <input type="text" class="description" data-lang="en" placeholder="One sentence, shown on homepage" />
-        <label>Content (EN, Markdown)</label>
-        <div class="toolbar">
-          <button type="button" class="secondary" onclick="wrapSelection('en','**','**')">Bold</button>
-          <button type="button" class="secondary" onclick="wrapSelection('en','*','*')">Italic</button>
-          <button type="button" class="secondary" onclick="insertAtCursor('en','\n## Heading\n')">Heading</button>
-          <button type="button" class="secondary" onclick="insertAtCursor('en','\n> quote\n')">Quote</button>
-          <button type="button" class="secondary" onclick="copyForTranslation()">📋 Skopírovať SK text pre preklad</button>
-        </div>
-        <textarea class="content" data-lang="en" placeholder="Write in English..."></textarea>
-        <details class="help">
-          <summary>Ako preložiť?</summary>
+        <fieldset>
+          <legend>Obrázky (spoločné pre obe jazykové verzie)</legend>
+          <label>Pridaj obrázok</label>
+          <input type="file" id="imageInput" accept="image/*" multiple />
           <p class="hint">
-            Automatický preklad priamo v tomto nástroji by potreboval API kľúč zapísaný
-            v tomto súbore, čo nie je bezpečné (ktokoľvek s prístupom k repu by ho videl).
-            Namiesto toho: klikni "Skopírovať SK text pre preklad", vlož to do rozhovoru
-            s Claude s prosbou o preklad, a výsledok prilep sem.
+            Vloží sa do textu na mieste kurzora v práve otvorenej jazykovej
+            záložke. Náhľad vidíš rovno v paneli vpravo. Pri automatickom
+            uložení (nižšie) sa obrázok skopíruje sám, netreba nič ručne
+            presúvať.
           </p>
-        </details>
+          <div id="imgList"></div>
+        </fieldset>
+
+        <div class="lang-tabs">
+          <button
+            type="button"
+            class="lang-tab is-active"
+            data-lang="sk"
+            onclick="switchTab('sk')"
+          >
+            🇸🇰 Slovenčina
+          </button>
+          <button
+            type="button"
+            class="lang-tab"
+            data-lang="en"
+            onclick="switchTab('en')"
+          >
+            🇬🇧 English
+          </button>
+        </div>
+
+        <div id="panel-sk" class="lang-panel is-active">
+          <label>Titulok (SK)</label>
+          <input
+            type="text"
+            class="title"
+            data-lang="sk"
+            placeholder="Názov článku"
+          />
+          <label>Popis (SK)</label>
+          <input
+            type="text"
+            class="description"
+            data-lang="sk"
+            placeholder="Jedna veta o čom článok je"
+          />
+          <label>Obsah (SK, Markdown)</label>
+          <div class="toolbar">
+            <button
+              type="button"
+              class="secondary"
+              onclick="wrapSelection('sk', '**', '**')"
+            >
+              Tučné
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              onclick="wrapSelection('sk', '*', '*')"
+            >
+              Kurzíva
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              onclick="insertAtCursor('sk', '\n## Nadpis\n')"
+            >
+              Nadpis
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              onclick="insertAtCursor('sk', '\n> citát\n')"
+            >
+              Citácia
+            </button>
+          </div>
+          <textarea
+            class="content"
+            data-lang="sk"
+            placeholder="Píš po slovensky..."
+          ></textarea>
+        </div>
+
+        <div id="panel-en" class="lang-panel">
+          <label>Title (EN)</label>
+          <input
+            type="text"
+            class="title"
+            data-lang="en"
+            placeholder="Article title"
+          />
+          <label>Description (EN)</label>
+          <input
+            type="text"
+            class="description"
+            data-lang="en"
+            placeholder="One sentence, shown on homepage"
+          />
+          <label>Content (EN, Markdown)</label>
+          <div class="toolbar">
+            <button
+              type="button"
+              class="secondary"
+              onclick="wrapSelection('en', '**', '**')"
+            >
+              Bold
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              onclick="wrapSelection('en', '*', '*')"
+            >
+              Italic
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              onclick="insertAtCursor('en', '\n## Heading\n')"
+            >
+              Heading
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              onclick="insertAtCursor('en', '\n> quote\n')"
+            >
+              Quote
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              onclick="copyForTranslation()"
+            >
+              📋 Skopírovať SK text pre preklad
+            </button>
+          </div>
+          <textarea
+            class="content"
+            data-lang="en"
+            placeholder="Write in English..."
+          ></textarea>
+          <details class="help">
+            <summary>Ako preložiť?</summary>
+            <p class="hint">
+              Automatický preklad priamo v tomto nástroji by potreboval API kľúč
+              zapísaný v tomto súbore, čo nie je bezpečné (ktokoľvek s prístupom
+              k repu by ho videl). Namiesto toho: klikni "Skopírovať SK text pre
+              preklad", vlož to do rozhovoru s Claude s prosbou o preklad, a
+              výsledok prilep sem.
+            </p>
+          </details>
+        </div>
+
+        <div class="toolbar" style="margin-top: 1rem">
+          <button type="button" onclick="downloadAll()">
+            ⬇️ Stiahnuť .md súbory (SK + EN)
+          </button>
+          <button
+            type="button"
+            class="secondary"
+            id="saveToProjectBtn"
+            onclick="saveToProject()"
+          >
+            💾 Uložiť priamo do projektu
+          </button>
+          <button type="button" class="secondary" onclick="clearAll()">
+            Vyčistiť
+          </button>
+        </div>
+        <p class="status" id="status"></p>
       </div>
 
-      <div class="toolbar" style="margin-top:1rem;">
-        <button type="button" onclick="downloadAll()">⬇️ Stiahnuť .md súbory (SK + EN)</button>
-        <button type="button" class="secondary" id="saveToProjectBtn" onclick="saveToProject()">💾 Uložiť priamo do projektu</button>
-        <button type="button" class="secondary" onclick="clearAll()">Vyčistiť</button>
+      <div>
+        <label>Náhľad (aktívna záložka)</label>
+        <div class="preview" id="preview"></div>
       </div>
-      <p class="status" id="status"></p>
     </div>
 
-    <div>
-      <label>Náhľad (aktívna záložka)</label>
-      <div class="preview" id="preview"></div>
-    </div>
-  </div>
+    <script>
+      const $ = (sel) => document.querySelector(sel);
+      const $$ = (sel) => document.querySelectorAll(sel);
+      let activeLang = "sk";
+      let projectDirHandle = null;
 
-<script>
-  const $ = (sel) => document.querySelector(sel);
-  const $$ = (sel) => document.querySelectorAll(sel);
-  let activeLang = 'sk';
-  let projectDirHandle = null;
+      const images = [];
 
-  const images = [];
-
-  function todayISO() {
-    return new Date().toISOString().slice(0, 10);
-  }
-  $('#date').value = todayISO();
-
-  function switchTab(lang) {
-    activeLang = lang;
-    $$('.lang-tab').forEach((b) => b.classList.toggle('is-active', b.dataset.lang === lang));
-    $$('.lang-panel').forEach((p) => p.classList.toggle('is-active', p.id === 'panel-' + lang));
-    updatePreview();
-  }
-
-  function activeContentEl() {
-    return document.querySelector('.content[data-lang="' + activeLang + '"]');
-  }
-
-  function updatePreview() {
-    const ta = activeContentEl();
-    let md = ta.value;
-    let html = window.marked ? marked.parse(md) : md;
-    images.forEach((img) => {
-      const escaped = img.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp('(["\'(])(/images/articles/[^"\')]*' + escaped + ')(["\')])', 'g');
-      html = html.replace(re, '$1' + img.url + '$3');
-    });
-    $('#preview').innerHTML = html;
-  }
-
-  $$('input, textarea, select').forEach((el) => el.addEventListener('input', updatePreview));
-  updatePreview();
-
-  function insertAtCursor(lang, text) {
-    const ta = document.querySelector('.content[data-lang="' + lang + '"]');
-    const start = ta.selectionStart, end = ta.selectionEnd;
-    ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
-    ta.focus();
-    ta.selectionStart = ta.selectionEnd = start + text.length;
-    updatePreview();
-  }
-
-  function wrapSelection(lang, before, after) {
-    const ta = document.querySelector('.content[data-lang="' + lang + '"]');
-    const start = ta.selectionStart, end = ta.selectionEnd;
-    const selected = ta.value.slice(start, end) || 'text';
-    ta.value = ta.value.slice(0, start) + before + selected + after + ta.value.slice(end);
-    ta.focus();
-    updatePreview();
-  }
-
-  function copyForTranslation() {
-    const skTitle = document.querySelector('.title[data-lang="sk"]').value;
-    const skDesc = document.querySelector('.description[data-lang="sk"]').value;
-    const skContent = document.querySelector('.content[data-lang="sk"]').value;
-    const prompt = 'Preloz tento clanok zo slovenciny do anglictiny. Zachovaj markdown formatovanie a neformalny ton.\n\nTitulok: ' + skTitle + '\nPopis: ' + skDesc + '\n\n' + skContent;
-    navigator.clipboard.writeText(prompt).then(() => {
-      setStatus('Skopírované do schránky, vlož to do rozhovoru s Claude.', 'ok');
-    });
-  }
-
-  $('#imageInput').addEventListener('change', (e) => {
-    const files = Array.from(e.target.files);
-    const id = $('#articleId').value.trim() || 'ID';
-    files.forEach((file) => {
-      const url = URL.createObjectURL(file);
-      images.push({ name: file.name, file, url });
-      insertAtCursor(activeLang, '\n![popis obrázka](/images/articles/' + id + '/' + file.name + ')\n');
-    });
-    renderImgList();
-    e.target.value = '';
-  });
-
-  function renderImgList() {
-    const id = $('#articleId').value.trim() || 'ID';
-    $('#imgList').innerHTML = images.map((img) =>
-      '<span class="img-chip"><img src="' + img.url + '" alt="" /> ' + img.name + '</span>'
-    ).join('') + (images.length ? '<div class="hint" style="width:100%">Cieľ: public/images/articles/' + id + '/</div>' : '');
-  }
-
-  function buildFrontmatter(lang) {
-    const title = document.querySelector('.title[data-lang="' + lang + '"]').value || 'Bez nazvu';
-    const description = document.querySelector('.description[data-lang="' + lang + '"]').value || '';
-    const date = $('#date').value || todayISO();
-    const author = $('#author').value.trim() || 'boggelino';
-    const tags = $(`#tags-${lang}`).value
-  .split(',')
-  .map((t) => t.trim())
-  .filter(Boolean);
-    const draft = $('#draft').checked;
-
-    let fm = '---\n';
-    fm += 'title: "' + title.replace(/"/g, '\\"') + '"\n';
-    fm += 'description: "' + description.replace(/"/g, '\\"') + '"\n';
-    fm += 'date: ' + date + '\n';
-    fm += 'tags: [' + tags.map((t) => '"' + t + '"').join(', ') + ']\n';
-    fm += 'author: "' + author + '"\n';
-    if (draft) fm += 'draft: true\n';
-    fm += '---\n\n';
-    return fm;
-  }
-
-  function fullFileFor(lang) {
-    const content = document.querySelector('.content[data-lang="' + lang + '"]').value.trim();
-    return buildFrontmatter(lang) + content + '\n';
-  }
-
-  function hasContent(lang) {
-    return document.querySelector('.content[data-lang="' + lang + '"]').value.trim().length > 0
-      || document.querySelector('.title[data-lang="' + lang + '"]').value.trim().length > 0;
-  }
-
-  function downloadAll() {
-    const id = $('#articleId').value.trim();
-    if (!id) { setStatus('Vyplň ID článku hore, použije sa ako názov súboru.', 'err'); return; }
-    let count = 0;
-    ['sk', 'en'].forEach((lang) => {
-      if (!hasContent(lang)) return;
-      const blob = new Blob([fullFileFor(lang)], { type: 'text/markdown' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = id + '.md';
-      a.click();
-      count++;
-    });
-    if (count === 0) { setStatus('Nič na stiahnutie, obe jazykové verzie sú prázdne.', 'err'); return; }
-    setStatus('Stiahnuté ' + count + ' súbor(y). Presuň ich do src/content/articles/<jazyk>/' + id + '.md a obrázky do public/images/articles/' + id + '/', 'ok');
-  }
-
-  const supportsFS = 'showDirectoryPicker' in window;
-  if (!supportsFS) {
-    $('#saveToProjectBtn').disabled = true;
-    $('#saveToProjectBtn').title = 'Táto funkcia funguje len v Chrome / Edge. Použi sťahovanie súborov vyššie.';
-  }
-
-  async function ensureDir(parent, parts) {
-    let dir = parent;
-    for (const part of parts) {
-      dir = await dir.getDirectoryHandle(part, { create: true });
-    }
-    return dir;
-  }
-
-  async function writeFile(dirHandle, name, contents) {
-    const fileHandle = await dirHandle.getFileHandle(name, { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(contents);
-    await writable.close();
-  }
-
-  async function saveToProject() {
-    const id = $('#articleId').value.trim();
-    if (!id) { setStatus('Vyplň ID článku hore.', 'err'); return; }
-    try {
-      if (!projectDirHandle) {
-        setStatus('Vyber koreňový priečinok projektu (ten, kde je package.json)...', '');
-        projectDirHandle = await window.showDirectoryPicker();
+      function todayISO() {
+        return new Date().toISOString().slice(0, 10);
       }
-      let wrote = [];
-      for (const lang of ['sk', 'en']) {
-        if (!hasContent(lang)) continue;
-        const articlesDir = await ensureDir(projectDirHandle, ['src', 'content', 'articles', lang]);
-        await writeFile(articlesDir, id + '.md', fullFileFor(lang));
-        wrote.push('src/content/articles/' + lang + '/' + id + '.md');
-      }
-      if (images.length > 0) {
-        const imgDir = await ensureDir(projectDirHandle, ['public', 'images', 'articles', id]);
-        for (const img of images) {
-          await writeFile(imgDir, img.name, img.file);
+      $("#date").value = todayISO();
+	  
+	  async function generateUniqueId() {
+        // Generuje 6-miestne ID s nulami zľava
+        const randId = () => String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+
+        // Ak ešte nie je vybraný priečinok projektu, vráti len náhodné ID
+        if (!projectDirHandle) {
+          return randId();
         }
-        wrote.push('public/images/articles/' + id + '/ (' + images.length + ' obrázok/ky)');
-      }
-      if (wrote.length === 0) {
-        setStatus('Nič na uloženie, vyplň aspoň jednu jazykovú verziu.', 'err');
-        return;
-      }
-      setStatus('Uložené: ' + wrote.join(', ') + '. Teraz stačí git add, commit, push.', 'ok');
-    } catch (err) {
-      if (err.name === 'AbortError') { setStatus('Zrušené.', ''); return; }
-      setStatus('Chyba pri ukladaní: ' + err.message, 'err');
-    }
-  }
 
-  function setStatus(msg, kind) {
-    const el = $('#status');
-    el.textContent = msg;
-    el.className = 'status' + (kind ? ' ' + kind : '');
-  }
+        try {
+          // Otvorí priečinok src/content/articles/sk (ak existuje)
+          const articlesDir = await ensureDir(projectDirHandle, ['src', 'content', 'articles', 'sk']);
+          
+          let newId;
+          let exists = true;
+          let attempts = 0;
 
-  function clearAll() {
-    if (!confirm('Vyčistiť všetky polia?')) return;
-    $$('.title, .description, .content').forEach((el) => (el.value = ''));
-    $('#articleId').value = '';
-    $('#tags-sk').value = '';
-$('#tags-en').value = '';
-    $('#draft').checked = false;
-    $('#date').value = todayISO();
-    images.length = 0;
-    renderImgList();
-    updatePreview();
-    setStatus('', '');
-  }
-</script>
-</body>
+          // Bude skúšať generovať kým nenájde voľné (max 100 pokusov, aby nezacyklilo)
+          while (exists && attempts < 100) {
+            newId = randId();
+            try {
+              // Skúsi zistiť, či súbor s týmto názvom už existuje
+              await articlesDir.getFileHandle(newId + '.md');
+              attempts++;
+            } catch (err) {
+              // Ak súbor neexistuje, getFileHandle vyhodi chybu -> ID je voľné!
+              exists = false;
+            }
+          }
+          return newId;
+        } catch (e) {
+          // V prípade akejkoľvek chyby vráti aspoň náhodne vygenerované ID
+          return randId();
+        }
+      }
+	  
+	  (async () => {
+        if (!$("#articleId").value) {
+          $("#articleId").value = await generateUniqueId();
+        }
+      })();
+
+      function switchTab(lang) {
+        activeLang = lang;
+        $$(".lang-tab").forEach((b) =>
+          b.classList.toggle("is-active", b.dataset.lang === lang),
+        );
+        $$(".lang-panel").forEach((p) =>
+          p.classList.toggle("is-active", p.id === "panel-" + lang),
+        );
+        updatePreview();
+      }
+
+      function activeContentEl() {
+        return document.querySelector(
+          '.content[data-lang="' + activeLang + '"]',
+        );
+      }
+
+      function updatePreview() {
+        const ta = activeContentEl();
+        let md = ta.value;
+        let html = window.marked ? marked.parse(md) : md;
+        images.forEach((img) => {
+          const escaped = img.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const re = new RegExp(
+            "([\"'(])(/images/articles/[^\"')]*" + escaped + ")([\"')])",
+            "g",
+          );
+          html = html.replace(re, "$1" + img.url + "$3");
+        });
+        $("#preview").innerHTML = html;
+      }
+
+      $$("input, textarea, select").forEach((el) =>
+        el.addEventListener("input", updatePreview),
+      );
+      updatePreview();
+
+      function insertAtCursor(lang, text) {
+        const ta = document.querySelector('.content[data-lang="' + lang + '"]');
+        const start = ta.selectionStart,
+          end = ta.selectionEnd;
+        ta.value = ta.value.slice(0, start) + text + ta.value.slice(end);
+        ta.focus();
+        ta.selectionStart = ta.selectionEnd = start + text.length;
+        updatePreview();
+      }
+
+      function wrapSelection(lang, before, after) {
+        const ta = document.querySelector('.content[data-lang="' + lang + '"]');
+        const start = ta.selectionStart,
+          end = ta.selectionEnd;
+        const selected = ta.value.slice(start, end) || "text";
+        ta.value =
+          ta.value.slice(0, start) +
+          before +
+          selected +
+          after +
+          ta.value.slice(end);
+        ta.focus();
+        updatePreview();
+      }
+
+      function copyForTranslation() {
+        const skTitle = document.querySelector('.title[data-lang="sk"]').value;
+        const skDesc = document.querySelector(
+          '.description[data-lang="sk"]',
+        ).value;
+        const skContent = document.querySelector(
+          '.content[data-lang="sk"]',
+        ).value;
+        const prompt =
+          "Preloz tento clanok zo slovenciny do anglictiny. Zachovaj markdown formatovanie a neformalny ton.\n\nTitulok: " +
+          skTitle +
+          "\nPopis: " +
+          skDesc +
+          "\n\n" +
+          skContent;
+        navigator.clipboard.writeText(prompt).then(() => {
+          setStatus(
+            "Skopírované do schránky, vlož to do rozhovoru s Claude.",
+            "ok",
+          );
+        });
+      }
+
+      $("#imageInput").addEventListener("change", (e) => {
+        const files = Array.from(e.target.files);
+        const id = $("#articleId").value.trim() || "ID";
+        files.forEach((file) => {
+          const url = URL.createObjectURL(file);
+          images.push({ name: file.name, file, url });
+          insertAtCursor(
+            activeLang,
+            "\n![popis obrázka](/images/articles/" +
+              id +
+              "/" +
+              file.name +
+              ")\n",
+          );
+        });
+        renderImgList();
+        e.target.value = "";
+      });
+
+      function renderImgList() {
+        const id = $("#articleId").value.trim() || "ID";
+        $("#imgList").innerHTML =
+          images
+            .map(
+              (img) =>
+                '<span class="img-chip"><img src="' +
+                img.url +
+                '" alt="" /> ' +
+                img.name +
+                "</span>",
+            )
+            .join("") +
+          (images.length
+            ? '<div class="hint" style="width:100%">Cieľ: public/images/articles/' +
+              id +
+              "/</div>"
+            : "");
+      }
+
+      function buildFrontmatter(lang) {
+        const title =
+          document.querySelector('.title[data-lang="' + lang + '"]').value ||
+          "Bez nazvu";
+        const description =
+          document.querySelector('.description[data-lang="' + lang + '"]')
+            .value || "";
+        const date = $("#date").value || todayISO();
+        const author = $("#author").value.trim() || "boggelino";
+        const tags = $(`#tags-${lang}`)
+          .value.split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+        const draft = $("#draft").checked;
+
+        let fm = "---\n";
+        fm += 'title: "' + title.replace(/"/g, '\\"') + '"\n';
+        fm += 'description: "' + description.replace(/"/g, '\\"') + '"\n';
+        fm += "date: " + date + "\n";
+        fm += "tags: [" + tags.map((t) => '"' + t + '"').join(", ") + "]\n";
+        fm += 'author: "' + author + '"\n';
+        if (draft) fm += "draft: true\n";
+        fm += "---\n\n";
+        return fm;
+      }
+
+      function fullFileFor(lang) {
+        const content = document
+          .querySelector('.content[data-lang="' + lang + '"]')
+          .value.trim();
+        return buildFrontmatter(lang) + content + "\n";
+      }
+
+      function hasContent(lang) {
+        return (
+          document
+            .querySelector('.content[data-lang="' + lang + '"]')
+            .value.trim().length > 0 ||
+          document
+            .querySelector('.title[data-lang="' + lang + '"]')
+            .value.trim().length > 0
+        );
+      }
+
+      function downloadAll() {
+        const id = $("#articleId").value.trim();
+        if (!id) {
+          setStatus(
+            "Vyplň ID článku hore, použije sa ako názov súboru.",
+            "err",
+          );
+          return;
+        }
+        let count = 0;
+        ["sk", "en"].forEach((lang) => {
+          if (!hasContent(lang)) return;
+          const blob = new Blob([fullFileFor(lang)], { type: "text/markdown" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = id + ".md";
+          a.click();
+          count++;
+        });
+        if (count === 0) {
+          setStatus(
+            "Nič na stiahnutie, obe jazykové verzie sú prázdne.",
+            "err",
+          );
+          return;
+        }
+        setStatus(
+          "Stiahnuté " +
+            count +
+            " súbor(y). Presuň ich do src/content/articles/<jazyk>/" +
+            id +
+            ".md a obrázky do public/images/articles/" +
+            id +
+            "/",
+          "ok",
+        );
+      }
+
+      const supportsFS = "showDirectoryPicker" in window;
+      if (!supportsFS) {
+        $("#saveToProjectBtn").disabled = true;
+        $("#saveToProjectBtn").title =
+          "Táto funkcia funguje len v Chrome / Edge. Použi sťahovanie súborov vyššie.";
+      }
+
+      async function ensureDir(parent, parts) {
+        let dir = parent;
+        for (const part of parts) {
+          dir = await dir.getDirectoryHandle(part, { create: true });
+        }
+        return dir;
+      }
+
+      async function writeFile(dirHandle, name, contents) {
+        const fileHandle = await dirHandle.getFileHandle(name, {
+          create: true,
+        });
+        const writable = await fileHandle.createWritable();
+        await writable.write(contents);
+        await writable.close();
+      }
+
+      async function saveToProject() {
+        const id = $("#articleId").value.trim();
+        if (!id) {
+          setStatus("Vyplň ID článku hore.", "err");
+          return;
+        }
+        try {
+          if (!projectDirHandle) {
+            setStatus(
+              "Vyber koreňový priečinok projektu (ten, kde je package.json)...",
+              "",
+            );
+            projectDirHandle = await window.showDirectoryPicker();
+          }
+          let wrote = [];
+          for (const lang of ["sk", "en"]) {
+            if (!hasContent(lang)) continue;
+            const articlesDir = await ensureDir(projectDirHandle, [
+              "src",
+              "content",
+              "articles",
+              lang,
+            ]);
+            await writeFile(articlesDir, id + ".md", fullFileFor(lang));
+            wrote.push("src/content/articles/" + lang + "/" + id + ".md");
+          }
+          if (images.length > 0) {
+            const imgDir = await ensureDir(projectDirHandle, [
+              "public",
+              "images",
+              "articles",
+              id,
+            ]);
+            for (const img of images) {
+              await writeFile(imgDir, img.name, img.file);
+            }
+            wrote.push(
+              "public/images/articles/" +
+                id +
+                "/ (" +
+                images.length +
+                " obrázok/ky)",
+            );
+          }
+          if (wrote.length === 0) {
+            setStatus(
+              "Nič na uloženie, vyplň aspoň jednu jazykovú verziu.",
+              "err",
+            );
+            return;
+          }
+          setStatus(
+            "Uložené: " +
+              wrote.join(", ") +
+              ". Teraz stačí git add, commit, push.",
+            "ok",
+          );
+        } catch (err) {
+          if (err.name === "AbortError") {
+            setStatus("Zrušené.", "");
+            return;
+          }
+          setStatus("Chyba pri ukladaní: " + err.message, "err");
+        }
+      }
+
+      function setStatus(msg, kind) {
+        const el = $("#status");
+        el.textContent = msg;
+        el.className = "status" + (kind ? " " + kind : "");
+      }
+
+      function clearAll() {
+        if (!confirm("Vyčistiť všetky polia?")) return;
+        $$(".title, .description, .content").forEach((el) => (el.value = ""));
+        $("#articleId").value = generateUniqueId();
+        $("#tags-sk").value = "";
+        $("#tags-en").value = "";
+        $("#draft").checked = false;
+        $("#date").value = todayISO();
+        images.length = 0;
+        renderImgList();
+        updatePreview();
+        setStatus("", "");
+      }
+    </script>
+  </body>
 </html>
