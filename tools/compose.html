@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>BOGGELINO — Editor článkov</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
     <style>
       :root {
         --bg: #0b0e15;
@@ -325,6 +329,376 @@
         letter-spacing: 0.05em;
         padding: 0.2rem 0;
       }
+
+      /* ============================================================
+         ŠTÝLY SKOPÍROVANÉ ZO ŽIVEJ STRÁNKY (boggelino.netlify.app)
+         Naschválne obalené v .site-scope, aby sa nebili s editorom.
+         Zdroj: src/styles/global.css, ArticleCard.astro,
+                pages/sk/index.astro, pages/sk/articles/[slug]/index.astro
+         ============================================================ */
+      .site-scope {
+        --site-red: #ef3c39;
+        --site-teal: #2ea5ac;
+        --site-gold: #ffc93b;
+        --site-bg: #0b0e15;
+        --site-bg-raised: #12151f;
+        --site-border: #262b3a;
+        --site-text: #f4f2ec;
+        --site-text-muted: #9aa0b4;
+        --site-text-faint: #676d82;
+        --site-accent: var(--site-red);
+        --site-accent-2: var(--site-teal);
+        --site-accent-3: var(--site-gold);
+        --site-font-display: "Anton", "Arial Narrow", sans-serif;
+        --site-font-body: "Inter", system-ui, sans-serif;
+        --site-font-mono: "JetBrains Mono", "Courier New", monospace;
+        --site-radius: 5px;
+
+        background: var(--site-bg);
+        color: var(--site-text);
+        font-family: var(--site-font-body);
+        font-size: 17px;
+        line-height: 1.6;
+        border-radius: 8px;
+        padding: 0;
+      }
+      .site-scope * {
+        box-sizing: border-box;
+      }
+      .site-scope h1,
+      .site-scope h2,
+      .site-scope h3 {
+        font-family: var(--site-font-display);
+        font-weight: 400;
+        letter-spacing: 0.01em;
+        line-height: 1.05;
+        text-transform: uppercase;
+        margin: 0 0 0.5em 0;
+        color: var(--site-text);
+      }
+      .site-scope h1 {
+        font-size: clamp(1.9rem, 6vw, 3rem);
+      }
+      .site-scope h2 {
+        font-size: clamp(1.4rem, 4vw, 1.9rem);
+      }
+      .site-scope p {
+        margin: 0 0 1.1em 0;
+      }
+      .site-scope a {
+        color: var(--site-accent-3);
+        text-decoration: none;
+      }
+      .site-scope a:hover {
+        text-decoration: underline;
+      }
+      .site-scope .mono {
+        font-family: var(--site-font-mono);
+      }
+      .site-scope .eyebrow {
+        font-family: var(--site-font-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--site-accent-3);
+      }
+      .site-scope .gold-rule {
+        height: 4px;
+        width: 64px;
+        background: linear-gradient(90deg, var(--site-gold), var(--site-red));
+        border-radius: 2px;
+        border: none;
+        margin: 0.9rem 0 0 0;
+      }
+      .site-scope .tag {
+        display: inline-block;
+        font-family: var(--site-font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        text-transform: lowercase;
+        color: var(--site-accent-2);
+        background: color-mix(in srgb, var(--site-accent-2) 14%, transparent);
+        border: 1px solid
+          color-mix(in srgb, var(--site-accent-2) 35%, transparent);
+        border-radius: 999px;
+        padding: 0.2em 0.7em;
+        text-decoration: none;
+      }
+      .site-scope .tag:hover {
+        text-decoration: none;
+        border-color: var(--site-accent-2);
+      }
+      .site-scope hr.divider {
+        border: none;
+        border-top: 1px solid var(--site-border);
+        margin: 2.5rem 0;
+      }
+
+      /* --- náhľad: rámik "okna" simulujúci celú stránku --- */
+      .site-window {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--site-bg);
+      }
+      .site-window-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 0.7rem;
+        background: var(--site-bg-raised);
+        border-bottom: 1px solid var(--site-border);
+      }
+      .site-window-bar span {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--border);
+        display: inline-block;
+      }
+      .site-window-inner {
+        padding: 1.6rem 1.4rem;
+      }
+      .site-window-inner.narrow-card {
+        max-width: 340px;
+        margin: 0 auto;
+      }
+
+      /* --- ArticleCard.astro (malé okienko) --- */
+      .site-scope .card {
+        display: block;
+        border: 1px solid var(--site-border);
+        border-radius: var(--site-radius);
+        background: var(--site-bg-raised);
+        color: var(--site-text);
+        text-decoration: none;
+        overflow: hidden;
+      }
+      .site-scope .card-body {
+        padding: 1.1rem 1.2rem 1.3rem;
+      }
+      .site-scope .card-thumb {
+        position: relative;
+        height: 130px;
+        display: flex;
+        align-items: flex-end;
+        padding: 0.6rem 0.8rem;
+      }
+      .site-scope .card-thumb-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        z-index: 0;
+      }
+      .site-scope .card-thumb-photo .card-thumb-tag {
+        position: relative;
+        z-index: 1;
+      }
+      .site-scope .card-thumb-tag {
+        font-size: 0.7rem;
+        letter-spacing: 0.05em;
+        text-transform: lowercase;
+        color: rgba(11, 14, 21, 0.75);
+        background: rgba(255, 255, 255, 0.55);
+        border-radius: 999px;
+        padding: 0.15em 0.6em;
+      }
+      .site-scope .card-meta {
+        font-size: 0.75rem;
+        color: var(--site-text-faint);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+      }
+      .site-scope .card-title {
+        font-size: 1.08rem;
+        margin: 0 0 0.4em 0;
+        color: var(--site-text);
+      }
+      .site-scope .card-desc {
+        color: var(--site-text-muted);
+        margin: 0 0 0.8em 0;
+        font-size: 0.88rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .site-scope .card-tags {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+      }
+
+      /* --- pripnutý post (featured, z pages/sk/index.astro) --- */
+      .site-scope .featured {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: center;
+        gap: 1.4rem;
+        border: 1px solid var(--site-border);
+        background: var(--site-bg-raised);
+        border-radius: 10px;
+        padding: 1.7rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .site-scope .featured-text {
+        position: relative;
+        z-index: 2;
+      }
+      .site-scope .featured h1 {
+        margin: 0.5rem 0 0 0;
+      }
+      .site-scope .featured-desc {
+        color: var(--site-text-muted);
+        font-size: 1.02rem;
+        max-width: 48ch;
+        margin: 1.1rem 0 1.4rem 0;
+      }
+      .site-scope .btn-read {
+        display: inline-block;
+        background: var(--site-accent-3);
+        color: var(--site-bg);
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 0.6rem 1.3rem;
+        border-radius: 6px;
+      }
+      .site-scope .btn-read:hover {
+        text-decoration: none;
+        filter: brightness(1.08);
+      }
+      .site-scope .featured-art {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 55%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .site-scope .featured-image-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        -webkit-mask-image: linear-gradient(to right, transparent, black 40%);
+        mask-image: linear-gradient(to right, transparent, black 40%);
+      }
+      @media (max-width: 640px) {
+        .site-scope .featured {
+          grid-template-columns: 1fr;
+        }
+        .site-scope .featured-art {
+          display: none;
+        }
+      }
+
+      /* --- samotný článok ([slug]/index.astro) --- */
+      .site-scope .article {
+        padding: 0.2rem 0 0.5rem;
+      }
+      .site-scope .back-link {
+        color: var(--site-text-faint);
+        font-size: 0.85rem;
+        text-decoration: none;
+      }
+      .site-scope .back-link:hover {
+        color: var(--site-accent-3);
+      }
+      .site-scope .article-header {
+        margin: 1.5rem 0 2.2rem;
+      }
+      .site-scope .article-meta {
+        color: var(--site-text-faint);
+        font-size: 0.82rem;
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .site-scope .author {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .site-scope .author-avatar {
+        border-radius: 50%;
+        display: block;
+        width: 20px;
+        height: 20px;
+        object-fit: cover;
+      }
+      .site-scope .dot {
+        color: var(--site-border);
+      }
+      .site-scope .article-tags {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+      .site-scope .article-body {
+        font-size: 1.05rem;
+      }
+      .site-scope .article-body :is(h2, h3) {
+        margin-top: 1.6em;
+      }
+      .site-scope .article-body img {
+        max-width: 100%;
+        border-radius: var(--site-radius);
+        display: block;
+        margin: 1.4em 0;
+      }
+      .site-scope .article-body pre {
+        background: var(--site-bg-raised);
+        border: 1px solid var(--site-border);
+        border-radius: var(--site-radius);
+        padding: 1em;
+        overflow-x: auto;
+      }
+      .site-scope .article-body code {
+        font-family: var(--site-font-mono);
+        font-size: 0.9em;
+      }
+      .site-scope .article-body blockquote {
+        border-left: 3px solid var(--site-accent);
+        margin: 1.2em 0;
+        padding: 0.2em 1em;
+        color: var(--site-text-muted);
+      }
+
+      .preview-modes {
+        display: flex;
+        gap: 0.4rem;
+        margin: 0 0 0.6rem;
+        flex-shrink: 0;
+      }
+      .preview-mode-btn {
+        flex: 1;
+        background: var(--bg-raised);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 0.5rem 0.4rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .preview-mode-btn.is-active {
+        color: var(--gold);
+        border-color: var(--gold);
+        background: var(--bg);
+      }
     </style>
   </head>
   <body>
@@ -543,7 +917,33 @@
       </div>
 
       <div class="col preview-col">
-        <label>Náhľad (aktívna záložka)</label>
+        <label>Náhľad (aktívna záložka) — presne ako na boggelino.netlify.app</label>
+        <div class="preview-modes">
+          <button
+            type="button"
+            class="preview-mode-btn is-active"
+            data-mode="card"
+            onclick="setPreviewMode('card')"
+          >
+            🔲 Malé okienko
+          </button>
+          <button
+            type="button"
+            class="preview-mode-btn"
+            data-mode="featured"
+            onclick="setPreviewMode('featured')"
+          >
+            📌 Pripnutý článok
+          </button>
+          <button
+            type="button"
+            class="preview-mode-btn"
+            data-mode="article"
+            onclick="setPreviewMode('article')"
+          >
+            📄 Celý článok
+          </button>
+        </div>
         <div class="preview" id="preview"></div>
       </div>
     </div>
@@ -554,6 +954,7 @@
       let activeLang = "sk";
       let projectDirHandle = null;
       let articlesIndex = {};
+	  let isEditingExisting = false;
 
       const images = [];
 
@@ -627,10 +1028,133 @@
         );
       }
 
-      function updatePreview() {
-        const ta = activeContentEl();
-        let md = ta.value;
-        let html = window.marked ? marked.parse(md) : md;
+      let previewMode = "card";
+
+      function setPreviewMode(mode) {
+        previewMode = mode;
+        $$(".preview-mode-btn").forEach((b) =>
+          b.classList.toggle("is-active", b.dataset.mode === mode),
+        );
+        updatePreview();
+      }
+
+      // Nahradí odkazy na uploadnuté obrázky (public/images/articles/...) za
+      // dočasné blob URL, aby sa dali zobraziť aj pred uložením do projektu.
+      function resolveImageUrl(src) {
+        if (!src) return src;
+        let resolved = src;
+        images.forEach((img) => {
+          const escaped = img.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          const re = new RegExp(
+            "/images/articles/[^\"')\\s]*" + escaped + "$",
+          );
+          if (re.test(resolved)) resolved = img.url;
+        });
+        return resolved;
+      }
+
+      // Rovnaká logika ako src/utils/extract-image.ts na živej stránke:
+      // nájde prvý obrázok v markdown obsahu (na homepage karty ho použijú
+      // ako cover foto namiesto gradientu).
+      function extractFirstImage(md) {
+        const match = md.match(/!\[[^\]]*\]\(([^)\s]+)/);
+        return match ? resolveImageUrl(match[1]) : undefined;
+      }
+
+      // Rovnaký deterministický výber gradientu podľa titulku ako v
+      // ArticleCard.astro, keď článok nemá žiadny obrázok.
+      function gradientForTitle(title) {
+        const gradients = [
+          ["var(--site-accent)", "var(--site-accent-3)"],
+          ["var(--site-accent-2)", "var(--site-accent-3)"],
+          ["var(--site-accent)", "var(--site-accent-2)"],
+        ];
+        let hash = 0;
+        for (const ch of title || "")
+          hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+        const [g1, g2] = gradients[hash % gradients.length];
+        return `linear-gradient(135deg, ${g1}, ${g2})`;
+      }
+
+      const AUTHOR_AVATARS = {
+        boggelino: "https://boggelino.netlify.app/images/boggelino.png",
+      };
+
+      function formatDate(dateStr, lang, style) {
+        const d = dateStr ? new Date(dateStr + "T00:00:00") : new Date();
+        if (isNaN(d.getTime())) return dateStr || "";
+        const locale = lang === "sk" ? "sk-SK" : "en-GB";
+        const opts =
+          style === "long"
+            ? { year: "numeric", month: "long", day: "numeric" }
+            : { year: "numeric", month: "short", day: "numeric" };
+        return d.toLocaleDateString(locale, opts);
+      }
+
+      function currentFormData() {
+        const lang = activeLang;
+        const title =
+          document.querySelector('.title[data-lang="' + lang + '"]').value ||
+          (lang === "sk" ? "Bez názvu" : "Untitled");
+        const description = document.querySelector(
+          '.description[data-lang="' + lang + '"]',
+        ).value;
+        const md = activeContentEl().value;
+        const date = $("#date").value;
+        const author = ($("#author").value.trim() || "boggelino").toLowerCase();
+        const tags = $("#tags-" + lang)
+          .value.split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+        return { lang, title, description, md, date, author, tags };
+      }
+
+      function renderCardPreview(d) {
+        const image = extractFirstImage(d.md);
+        const thumbHtml = image
+          ? `<div class="card-thumb card-thumb-photo"><img src="${escapeHtml(image)}" alt="" class="card-thumb-img" />${d.tags[0] ? `<span class="card-thumb-tag mono">${escapeHtml(d.tags[0])}</span>` : ""}</div>`
+          : `<div class="card-thumb" style="background:${gradientForTitle(d.title)};">${d.tags[0] ? `<span class="card-thumb-tag mono">${escapeHtml(d.tags[0])}</span>` : ""}</div>`;
+        return `
+          <div class="site-scope">
+            <div class="site-window-inner narrow-card">
+              <a class="card card-grid" href="#" onclick="return false;">
+                ${thumbHtml}
+                <div class="card-body">
+                  <div class="card-meta mono"><time>${escapeHtml(formatDate(d.date, d.lang, "short"))}</time></div>
+                  <h3 class="card-title">${escapeHtml(d.title)}</h3>
+                  <p class="card-desc">${escapeHtml(d.description || "")}</p>
+                  ${d.tags.length ? `<div class="card-tags">${d.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
+                </div>
+              </a>
+            </div>
+          </div>`;
+      }
+
+      function renderFeaturedPreview(d) {
+        const image = extractFirstImage(d.md);
+        const eyebrow = d.lang === "sk" ? "PRIPNUTÝ ČLÁNOK" : "PINNED POST";
+        const readMore = d.lang === "sk" ? "Čítať článok" : "Read article";
+        return `
+          <div class="site-scope">
+            <div class="site-window-inner">
+              <section class="featured">
+                <div class="featured-text">
+                  <span class="eyebrow">${eyebrow}</span>
+                  <h1>${escapeHtml(d.title)}</h1>
+                  <hr class="gold-rule" />
+                  <p class="featured-desc">${escapeHtml(d.description || "")}</p>
+                  <a class="btn-read" href="#" onclick="return false;">${readMore}</a>
+                </div>
+                <div class="featured-art" aria-hidden="true">
+                  <div class="featured-image-bg" style="background-image:url('${image ? escapeHtml(image) : ""}');"></div>
+                </div>
+              </section>
+            </div>
+          </div>`;
+      }
+
+      function renderArticlePreview(d) {
+        let html = window.marked ? marked.parse(d.md) : d.md;
         images.forEach((img) => {
           const escaped = img.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           const re = new RegExp(
@@ -639,7 +1163,43 @@
           );
           html = html.replace(re, "$1" + img.url + "$3");
         });
-        $("#preview").innerHTML = html;
+        const backLabel =
+          d.lang === "sk" ? "Späť na všetky články" : "Back to all articles";
+        const writtenBy = d.lang === "sk" ? "Napísal" : "Written by";
+        const publishedOn = d.lang === "sk" ? "Publikované" : "Published";
+        const avatar =
+          AUTHOR_AVATARS[d.author] ||
+          "https://boggelino.netlify.app/images/boggelino.png";
+        return `
+          <div class="site-scope">
+            <div class="site-window-inner">
+              <article class="wrap article">
+                <a class="back-link mono" href="#" onclick="return false;">&larr; ${backLabel}</a>
+                <header class="article-header">
+                  <h1>${escapeHtml(d.title)}</h1>
+                  <hr class="gold-rule" />
+                  <div class="article-meta mono">
+                    <span class="author"><img src="${avatar}" alt="" class="author-avatar" /> ${writtenBy} ${escapeHtml(d.author.toUpperCase())}</span>
+                    <span class="dot">&middot;</span>
+                    <time>${publishedOn} ${escapeHtml(formatDate(d.date, d.lang, "long"))}</time>
+                  </div>
+                  ${d.tags.length ? `<div class="article-tags">${d.tags.map((t) => `<a class="tag" href="#" onclick="return false;">${escapeHtml(t)}</a>`).join("")}</div>` : ""}
+                </header>
+                <div class="article-body">${html}</div>
+                <hr class="divider" />
+                <a class="back-link mono" href="#" onclick="return false;">&larr; ${backLabel}</a>
+              </article>
+            </div>
+          </div>`;
+      }
+
+      function updatePreview() {
+        const d = currentFormData();
+        let out;
+        if (previewMode === "card") out = renderCardPreview(d);
+        else if (previewMode === "featured") out = renderFeaturedPreview(d);
+        else out = renderArticlePreview(d);
+        $("#preview").innerHTML = out;
       }
 
       $$("input, textarea, select").forEach((el) =>
@@ -673,23 +1233,32 @@
       }
 
       $("#imageInput").addEventListener("change", (e) => {
-        const files = Array.from(e.target.files);
-        const id = $("#articleId").value.trim() || "ID";
-        files.forEach((file) => {
-          const url = URL.createObjectURL(file);
-          images.push({ name: file.name, file, url });
-          insertAtCursor(
-            activeLang,
-            "\n![popis obrázka](/images/articles/" +
-              id +
-              "/" +
-              file.name +
-              ")\n",
-          );
-        });
-        renderImgList();
-        e.target.value = "";
-      });
+  const files = Array.from(e.target.files);
+  const id = $("#articleId").value.trim() || "ID";
+  files.forEach((file) => {
+    const originalExt = file.name.includes(".")
+      ? file.name.slice(file.name.lastIndexOf("."))
+      : "";
+    let newName = prompt("Názov obrázka:", file.name);
+    if (newName === null) return; // Zrušené, tento obrázok sa preskočí
+    newName = newName.trim();
+    if (!newName) newName = file.name;
+    if (!newName.includes(".") && originalExt) newName += originalExt;
+
+    const url = URL.createObjectURL(file);
+    images.push({ name: newName, file, url });
+    insertAtCursor(
+      activeLang,
+      "\n![popis obrázka](/images/articles/" +
+        id +
+        "/" +
+        newName +
+        ")\n",
+    );
+  });
+  renderImgList();
+  e.target.value = "";
+});
 
       function renderImgList() {
         const id = $("#articleId").value.trim() || "ID";
@@ -834,6 +1403,7 @@
               "",
             );
             projectDirHandle = await window.showDirectoryPicker();
+			markProjectSelected();
           }
           let wrote = [];
           for (const lang of ["sk", "en"]) {
@@ -873,10 +1443,15 @@
             return;
           }
           if (projectDirHandle) await scanArticles();
+          const commitMsg = buildCommitMessage();
+          try {
+            await navigator.clipboard.writeText(commitMsg);
+          } catch (e) {}
           setStatus(
             "Uložené: " +
               wrote.join(", ") +
-              ". Teraz stačí git add, commit, push.",
+              ". Commit message skopírovaná do schránky: " +
+              commitMsg,
             "ok",
           );
         } catch (err) {
@@ -887,6 +1462,16 @@
           setStatus("Chyba pri ukladaní: " + err.message, "err");
         }
       }
+
+	  function buildCommitMessage() {
+      const skTitle = document.querySelector('.title[data-lang="sk"]').value;
+      const enTitle = document.querySelector('.title[data-lang="en"]').value;
+      const title = skTitle || enTitle || $("#articleId").value.trim();
+      const langs = ["sk", "en"].filter((l) => hasContent(l));
+      const langSuffix = langs.length === 2 ? " (SK + EN)" : "";
+      const prefix = isEditingExisting ? "Úprava článku" : "Nový článok";
+      return prefix + ": " + title + langSuffix;
+    }
 
       function escapeHtml(s) {
         return String(s).replace(
@@ -951,9 +1536,16 @@
         return fm + d.body + "\n";
       }
 
+		function markProjectSelected() {
+		  const btn = $("#openProjectBtn");
+		  btn.disabled = true;
+		  btn.textContent = "📂 Projekt vybraný";
+		}
+
       async function openProjectAndScan() {
         try {
           projectDirHandle = await window.showDirectoryPicker();
+		  markProjectSelected();
           setStatus("Priečinok projektu vybraný, načítavam články...", "");
           await scanArticles();
         } catch (err) {
@@ -1052,6 +1644,9 @@
               '\')">' +
               (d.draft ? "Zverejniť" : "Skryť") +
               "</button>" +
+              '<button type="button" onclick="deleteArticle(\'' +
+              id +
+              '\')" style="background:rgba(239,60,57,0.15);border-color:var(--red);color:var(--red)">Zmazať</button>' +
               "</div>" +
               "</div>"
             );
@@ -1062,6 +1657,7 @@
       function loadArticleIntoEditor(id) {
         const entry = articlesIndex[id];
         if (!entry) return;
+		isEditingExisting = true;
         $("#articleId").value = id;
         for (const lang of ["sk", "en"]) {
           const d = entry[lang];
@@ -1123,6 +1719,57 @@
           setStatus("Chyba pri zmene viditeľnosti: " + err.message, "err");
         }
       }
+	  
+	  async function deleteArticle(id) {
+  if (!projectDirHandle) {
+    setStatus("Najprv vyber priečinok projektu.", "err");
+    return;
+  }
+  const entry = articlesIndex[id];
+  if (!entry) return;
+  const d = entry.sk || entry.en;
+  const confirmed = confirm(
+    'Naozaj natrvalo zmazať článok "' +
+      (d.title || id) +
+      '" (ID: ' +
+      id +
+      ')? Zmažú sa SK aj EN súbor a celý priečinok s obrázkami. Toto sa nedá vrátiť späť.',
+  );
+  if (!confirmed) return;
+
+  try {
+    for (const lang of ["sk", "en"]) {
+      if (!entry[lang]) continue;
+      try {
+        const dir = await ensureDir(projectDirHandle, [
+          "src",
+          "content",
+          "articles",
+          lang,
+        ]);
+        await dir.removeEntry(id + ".md");
+      } catch (e) {
+        // súbor pre daný jazyk už neexistuje, preskočiť
+      }
+    }
+    try {
+      const imagesRootDir = await ensureDir(projectDirHandle, [
+        "public",
+        "images",
+        "articles",
+      ]);
+      await imagesRootDir.removeEntry(id, { recursive: true });
+    } catch (e) {
+      // priečinok s obrázkami neexistoval, nič sa nedeje
+    }
+
+    delete articlesIndex[id];
+    renderArticleList();
+    setStatus('Článok "' + id + '" bol natrvalo zmazaný.', "ok");
+  } catch (err) {
+    setStatus("Chyba pri mazaní: " + err.message, "err");
+  }
+}
 
       async function startNewArticle() {
         await clearAll();
@@ -1142,6 +1789,7 @@
         $("#tags-en").value = "";
         $("#draft").checked = false;
         $("#date").value = todayISO();
+		isEditingExisting = false;
         images.length = 0;
         renderImgList();
         updatePreview();
