@@ -38,12 +38,9 @@ const [g1, g2] = gradients[hash % gradients.length];
     image ? (
       <div class="card-thumb card-thumb-photo">
         <img src={image} alt="" loading="lazy" class="card-thumb-img" />
-        {tags[0] && <span class="card-thumb-tag mono">{tags[0]}</span>}
       </div>
     ) : (
-      <div class="card-thumb" style={`background: linear-gradient(135deg, ${g1}, ${g2});`}>
-        {tags[0] && <span class="card-thumb-tag mono">{tags[0]}</span>}
-      </div>
+      <div class="card-thumb" style={`background: linear-gradient(135deg, ${g1}, ${g2});`}></div>
     )
   )}
   <div class="card-body">
@@ -87,9 +84,6 @@ const [g1, g2] = gradients[hash % gradients.length];
   .card-thumb {
     position: relative;
     height: 130px;
-    display: flex;
-    align-items: flex-end;
-    padding: 0.6rem 0.8rem;
   }
   .card-thumb-img {
     position: absolute;
@@ -99,19 +93,6 @@ const [g1, g2] = gradients[hash % gradients.length];
     object-fit: cover;
     object-position: center;
     z-index: 0;
-  }
-  .card-thumb-photo .card-thumb-tag {
-    position: relative;
-    z-index: 1;
-  }
-  .card-thumb-tag {
-    font-size: 0.7rem;
-    letter-spacing: 0.05em;
-    text-transform: lowercase;
-    color: rgba(11, 14, 21, 0.75);
-    background: rgba(255, 255, 255, 0.55);
-    border-radius: 999px;
-    padding: 0.15em 0.6em;
   }
   .card-meta {
     font-size: 0.75rem;

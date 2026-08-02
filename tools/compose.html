@@ -484,9 +484,6 @@
       .site-scope .card-thumb {
         position: relative;
         height: 130px;
-        display: flex;
-        align-items: flex-end;
-        padding: 0.6rem 0.8rem;
       }
       .site-scope .card-thumb-img {
         position: absolute;
@@ -496,19 +493,6 @@
         object-fit: cover;
         object-position: center;
         z-index: 0;
-      }
-      .site-scope .card-thumb-photo .card-thumb-tag {
-        position: relative;
-        z-index: 1;
-      }
-      .site-scope .card-thumb-tag {
-        font-size: 0.7rem;
-        letter-spacing: 0.05em;
-        text-transform: lowercase;
-        color: rgba(11, 14, 21, 0.75);
-        background: rgba(255, 255, 255, 0.55);
-        border-radius: 999px;
-        padding: 0.15em 0.6em;
       }
       .site-scope .card-meta {
         font-size: 0.75rem;
@@ -855,16 +839,8 @@
               />
               📌 Pripnúť tento článok (zobrazí sa navrchu ako hlavný)</label
             >
-            <p class="hint">
-              Pri uložení priamo do projektu sa automaticky odpipne každý iný
-              článok, ktorý bol predtým pripnutý.
-            </p>
             <label style="margin-top: 0.8rem">Obrázky</label>
             <input type="file" id="imageInput" accept="image/*" multiple />
-            <p class="hint">
-              Vloží sa na miesto kurzora v aktívnej jazykovej záložke. Pri
-              uložení priamo do projektu sa skopírujú samé.
-            </p>
             <div id="imgList"></div>
           </fieldset>
 
@@ -1270,8 +1246,8 @@
       function renderCardPreview(d) {
         const image = extractFirstImage(d.md);
         const thumbHtml = image
-          ? `<div class="card-thumb card-thumb-photo"><img src="${escapeHtml(image)}" alt="" class="card-thumb-img" />${d.tags[0] ? `<span class="card-thumb-tag mono">${escapeHtml(d.tags[0])}</span>` : ""}</div>`
-          : `<div class="card-thumb" style="background:${gradientForTitle(d.title)};">${d.tags[0] ? `<span class="card-thumb-tag mono">${escapeHtml(d.tags[0])}</span>` : ""}</div>`;
+          ? `<div class="card-thumb card-thumb-photo"><img src="${escapeHtml(image)}" alt="" class="card-thumb-img" /></div>`
+          : `<div class="card-thumb" style="background:${gradientForTitle(d.title)};"></div>`;
         return `
           <div class="site-scope">
             <div class="site-window-inner narrow-card">
