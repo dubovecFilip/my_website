@@ -13,7 +13,9 @@ const s = t(lang);
 const allArticles = await getCollection('articles-sk', ({ data }) => !data.draft);
 const articles = allArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
-const featured = articles.find((a) => a.data.pinned) ?? articles[0];
+const pinnedArticle = articles.find((a) => a.data.pinned);
+const featured = pinnedArticle ?? articles[0];
+const isPinned = Boolean(pinnedArticle);
 const gridArticles = featured ? articles.filter((a) => a !== featured) : articles;
 ---
 
@@ -22,7 +24,7 @@ const gridArticles = featured ? articles.filter((a) => a !== featured) : article
     {featured && (
       <section class="featured">
         <div class="featured-text">
-          <span class="eyebrow">{s.featured_label}</span>
+          <span class="eyebrow">{isPinned ? s.featured_label : s.featured_latest_label}</span>
           <h1>{featured.data.title}</h1>
           <hr class="gold-rule" />
           <p class="featured-desc">{featured.data.description}</p>

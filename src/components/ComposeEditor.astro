@@ -882,6 +882,42 @@
         padding: 0.2em 1em;
         color: var(--text-muted);
       }
+      .site-scope .author-note {
+        margin: 2.4rem 0;
+        padding: 1.2rem 1.4rem 1.3rem;
+        border: 1px solid color-mix(in srgb, var(--accent-3) 40%, var(--border));
+        border-left: 4px solid var(--accent-3);
+        background: color-mix(in srgb, var(--accent-3) 8%, var(--bg-raised));
+        border-radius: 0 var(--radius) var(--radius) 0;
+      }
+      .site-scope .author-note-head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.6rem;
+      }
+      .site-scope .author-note-avatar {
+        border-radius: 50% !important;
+        display: block;
+        width: 26px !important;
+        height: 26px !important;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .site-scope .author-note-title {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-3);
+      }
+      .site-scope .author-note-text {
+        margin: 0;
+        color: var(--text);
+        font-size: 1rem;
+        font-style: italic;
+        line-height: 1.55;
+      }
 
       .preview-modes {
         display: flex;
@@ -1291,7 +1327,7 @@
                 <div class="article-body">${html}</div>
                 ${
                   d.authorNote
-                    ? `<aside class="author-note"><span class="author-note-title">${d.lang === "sk" ? "Poznámka autora" : "Author's Note"}</span><p class="author-note-text">${escapeHtml(d.authorNote)}</p></aside>`
+                    ? `<aside class="author-note"><header class="author-note-head"><img src="${avatar}" alt="" class="author-note-avatar" /><span class="author-note-title">${d.lang === "sk" ? "Poznámka autora" : "Author's Note"}</span></header><p class="author-note-text">${escapeHtml(d.authorNote)}</p></aside>`
                     : ""
                 }
                 <hr class="divider" />
