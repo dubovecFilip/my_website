@@ -1,0 +1,43 @@
+---
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+  note?: string;
+}
+
+const { lang, note } = Astro.props;
+const s = t(lang);
+---
+
+{note && (
+  <aside class="author-note">
+    <span class="author-note-title">{s.author_note_title}</span>
+    <p class="author-note-text">{note}</p>
+  </aside>
+)}
+
+<style>
+  .author-note {
+    margin: 2rem 0;
+    padding: 1rem 1.2rem;
+    border-left: 3px solid var(--accent-3);
+    background: var(--bg-raised);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .author-note-title {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-3);
+    margin-bottom: 0.5rem;
+  }
+  .author-note-text {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-style: italic;
+  }
+</style>

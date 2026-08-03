@@ -5,6 +5,7 @@ import ArticleCard from '../../components/ArticleCard.astro';
 import Sidebar from '../../components/Sidebar.astro';
 import { t } from '../../i18n/dict';
 import { extractFirstImage } from '../../utils/extract-image';
+import { countWords, readingTimeMinutes } from '../../utils/article-stats';
 
 const lang = 'en' as const;
 const s = t(lang);
@@ -53,6 +54,7 @@ const gridArticles = featured ? articles.filter((a) => a !== featured) : article
                 date={article.data.date}
                 tags={article.data.tags}
                 image={extractFirstImage(article.body)}
+                readingTime={readingTimeMinutes(countWords(article.body))}
               />
             ))}
           </div>
@@ -115,7 +117,7 @@ const gridArticles = featured ? articles.filter((a) => a !== featured) : article
     filter: brightness(1.08);
   }
   
-  /* Nové štýly pre faded obrázok vpravo */
+  /* Faded image background on the right side of the featured card */
   .featured-art {
     position: absolute;
     top: 0;
@@ -136,7 +138,7 @@ const gridArticles = featured ? articles.filter((a) => a !== featured) : article
     background-repeat: no-repeat;
     -webkit-mask-image: linear-gradient(to right, transparent, black 40%);
     mask-image: linear-gradient(to right, transparent, black 40%);
-    opacity: 0.85;
+    opacity: 1;
   }
 
   .home-layout {

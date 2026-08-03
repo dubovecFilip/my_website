@@ -3,7 +3,7 @@ export type Lang = (typeof languages)[number];
 export const defaultLang: Lang = "sk";
 
 // Metadata for the language dropdown. Add more entries here later if the site
-// ever grows past SK/EN — the dropdown UI already supports any number of languages.
+// ever grows past SK/EN; the dropdown UI already supports any number of languages.
 export const langMeta: Record<Lang, { label: string; flag: string }> = {
   sk: { label: "Slovenčina", flag: "🇸🇰" },
   en: { label: "English", flag: "🇬🇧" },
@@ -54,6 +54,44 @@ export const dict = {
     gallery_intro:
       "Photos I want to keep around somewhere. No big context, just here.",
     gallery_empty: "No photos here yet. Check back soon.",
+
+    // Search / archive page
+    search_placeholder: "Search articles...",
+    search_random: "Random",
+    search_random_title: "Open a random article",
+    search_sort_label: "Sort",
+    sort_newest: "Newest first",
+    sort_oldest: "Oldest first",
+    sort_reading_time: "Reading time",
+    sort_alphabetical: "Alphabetical",
+    search_no_results: "No articles match your search.",
+    search_tags_heading: "Tags",
+
+    // Table of contents
+    toc_title: "Contents",
+
+    // Related articles
+    related_articles: "Related Articles",
+
+    // Article statistics
+    stats_title: "Article Statistics",
+    stats_words: "Words",
+    stats_reading_time: "Reading Time",
+    stats_images: "Images",
+    stats_headings: "Headings",
+    stats_minutes: "min",
+
+    // Author's note
+    author_note_title: "Author's Note",
+
+    // Footer
+    footer_latest_articles: "Latest Articles",
+    footer_latest_article: "Latest article",
+    footer_random_article: "Random article",
+    footer_navigation: "Navigation",
+    footer_social: "Social",
+    footer_meta: "Meta",
+    footer_built_with: "Built with Astro",
   },
   sk: {
     tagline: "Nadávanie, blúznenie a veci, čo mám rád",
@@ -99,6 +137,44 @@ export const dict = {
     gallery_intro:
       "Fotky, ktoré si chcem nechať niekde poruke. Bez veľkého kontextu, jednoducho tu sú.",
     gallery_empty: "Zatiaľ tu nie sú žiadne fotky. Skús to znova neskôr.",
+
+    // Search / archive page
+    search_placeholder: "Hľadať v článkoch...",
+    search_random: "Náhodný",
+    search_random_title: "Otvoriť náhodný článok",
+    search_sort_label: "Zoradiť",
+    sort_newest: "Najnovšie",
+    sort_oldest: "Najstaršie",
+    sort_reading_time: "Čas čítania",
+    sort_alphabetical: "Abecedne",
+    search_no_results: "Hľadaniu nezodpovedajú žiadne články.",
+    search_tags_heading: "Štítky",
+
+    // Table of contents
+    toc_title: "Obsah",
+
+    // Related articles
+    related_articles: "Súvisiace články",
+
+    // Article statistics
+    stats_title: "Štatistiky článku",
+    stats_words: "Slová",
+    stats_reading_time: "Čas čítania",
+    stats_images: "Obrázky",
+    stats_headings: "Nadpisy",
+    stats_minutes: "min",
+
+    // Author's note
+    author_note_title: "Poznámka autora",
+
+    // Footer
+    footer_latest_articles: "Najnovšie články",
+    footer_latest_article: "Najnovší článok",
+    footer_random_article: "Náhodný článok",
+    footer_navigation: "Navigácia",
+    footer_social: "Sociálne siete",
+    footer_meta: "Meta",
+    footer_built_with: "Postavené na Astro",
   },
 } as const;
 

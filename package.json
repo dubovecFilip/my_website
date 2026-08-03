@@ -12,9 +12,11 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.2.2",
     "@astrojs/rss": "^4.0.19",
     "astro": "^7.1.6",
     "marked": "^18.0.7",
-    "simple-icons": "^16.27.1"
+    "simple-icons": "^16.27.1",
+    "unist-util-visit": "^5.1.0"
   }
 }

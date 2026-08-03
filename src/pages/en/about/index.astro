@@ -1,21 +1,13 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import SocialIcon from '../../../components/SocialIcon.astro';
+import { socialLinks } from '../../../data/social';
 import { t } from '../../../i18n/dict';
 
 const lang = 'en' as const;
 const s = t(lang);
 
-const links: { label: string; url: string; icon: 'twitch' | 'kick' | 'youtube' | 'tiktok' | 'x' | 'kofi' | 'steam' }[] = [
-  { label: 'Kick', url: 'https://kick.com/boggelino', icon: 'kick' },
-  { label: 'YouTube', url: 'https://youtube.com/@boggelino', icon: 'youtube' },
-  { label: 'YouTube Extra', url: 'https://www.youtube.com/@BOGGELINO_Extra', icon: 'youtube' },
-  { label: 'Steam', url: 'https://steamcommunity.com/id/boggelino', icon: 'steam' },
-  { label: 'TikTok', url: 'https://tiktok.com/@boggelino', icon: 'tiktok' },
-  { label: 'X', url: 'https://x.com/boggelino', icon: 'x' },
-  { label: 'Ko-fi', url: 'https://ko-fi.com/boggelino/', icon: 'kofi' },
-  { label: 'Twitch', url: 'https://twitch.tv/boggelino', icon: 'twitch' },
-];
+const links = socialLinks;
 ---
 
 <BaseLayout lang={lang} title={s.nav_about}>
@@ -125,7 +117,7 @@ const links: { label: string; url: string; icon: 'twitch' | 'kick' | 'youtube' |
     margin-bottom: 0;
   }
 
-  /* Links are icon-only and deliberately understated — small, muted,
+  /* Links are icon-only and deliberately understated: small, muted,
      tucked below the bio instead of competing for attention. */
   .link-row {
     list-style: none;

@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import ArticleCard from '../../../../components/ArticleCard.astro';
 import { t } from '../../../../i18n/dict';
+import { countWords, readingTimeMinutes } from '../../../../utils/article-stats';
 
 export async function getStaticPaths() {
   const articles = await getCollection('articles-sk', ({ data }) => !data.draft);
@@ -39,6 +40,7 @@ const articles = allArticles
           description={article.data.description}
           date={article.data.date}
           tags={article.data.tags}
+          readingTime={readingTimeMinutes(countWords(article.body))}
         />
       ))}
     </div>

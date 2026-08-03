@@ -11,10 +11,12 @@ interface Props {
   tags: string[];
   variant?: 'list' | 'grid';
   image?: string;
+  readingTime?: number;
 }
 
-const { lang, slug, title, description, date, tags, variant = 'list', image } = Astro.props;
+const { lang, slug, title, description, date, tags, variant = 'list', image, readingTime } = Astro.props;
 const s = t(lang);
+const readingTimeLabel = lang === 'sk' ? `${readingTime} min čítania` : `${readingTime} min read`;
 const dateStr = date.toLocaleDateString(lang === 'sk' ? 'sk-SK' : 'en-GB', {
   year: 'numeric',
   month: 'short',
@@ -46,6 +48,12 @@ const [g1, g2] = gradients[hash % gradients.length];
   <div class="card-body">
     <div class="card-meta mono">
       <time datetime={date.toISOString()}>{dateStr}</time>
+      {typeof readingTime === 'number' && (
+        <>
+          <span class="meta-dot">&middot;</span>
+          <span class="card-reading-time">{readingTimeLabel}</span>
+        </>
+      )}
     </div>
     <h3 class="card-title">{title}</h3>
     <p class="card-desc">{description}</p>
@@ -79,7 +87,7 @@ const [g1, g2] = gradients[hash % gradients.length];
     padding: 1.4rem 1.5rem;
   }
   .card-grid .card-body {
-    padding: 1.1rem 1.2rem 1.3rem;
+    padding: 0.7rem 1.2rem 1.3rem;
   }
   .card-thumb {
     position: relative;
@@ -94,12 +102,35 @@ const [g1, g2] = gradients[hash % gradients.length];
     object-position: center;
     z-index: 0;
   }
+  /* Both photo thumbs and the gradient placeholder can end in a color
+     close to the card background, which reads as the meta line sitting
+     "inside" the thumb. A soft fade into the card color gives every
+     variant a clean handoff regardless of what's underneath. */
+  .card-thumb::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 46%;
+    background: linear-gradient(to bottom, transparent, var(--bg-raised));
+    pointer-events: none;
+  }
   .card-meta {
     font-size: 0.75rem;
-    color: var(--text-faint);
+    color: var(--text-muted);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .meta-dot {
+    color: var(--border);
+  }
+  .card-reading-time {
+    white-space: nowrap;
   }
   .card-title {
     font-size: 1.3rem;

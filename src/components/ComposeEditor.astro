@@ -143,6 +143,13 @@
               data-lang="sk"
               placeholder="Píš po slovensky..."
             ></textarea>
+            <label>Poznámka autora (SK, voliteľné)</label>
+            <textarea
+              class="authorNote"
+              data-lang="sk"
+              placeholder="Napr. Táto recenzia vychádza z Build 42.20."
+              rows="2"
+            ></textarea>
           </div>
 
           <div id="panel-en" class="lang-panel">
@@ -191,6 +198,13 @@
               class="content"
               data-lang="en"
               placeholder="Write in English..."
+            ></textarea>
+            <label>Author's Note (EN, optional)</label>
+            <textarea
+              class="authorNote"
+              data-lang="en"
+              placeholder="E.g. This review is based on Build 42.20."
+              rows="2"
             ></textarea>
           </div>
         </div>
@@ -543,10 +557,11 @@
 <style is:global>
 
       /* ============================================================
-         ŠTÝLY SKOPÍROVANÉ ZO ŽIVEJ STRÁNKY (boggelino.netlify.app)
-         Naschválne obalené v .site-scope, aby sa nebili s editorom.
-         Zdroj: src/styles/global.css, ArticleCard.astro,
-                pages/sk/index.astro, pages/sk/articles/[slug]/index.astro
+         STYLES COPIED FROM THE LIVE SITE (boggelino.netlify.app)
+         Deliberately wrapped in .site-scope so they don't clash with
+         the editor's own styles.
+         Source: src/styles/global.css, ArticleCard.astro,
+                 pages/sk/index.astro, pages/sk/articles/[slug]/index.astro
          ============================================================ */
       .site-scope {
         background: var(--bg);
@@ -632,7 +647,7 @@
         margin: 2.5rem 0;
       }
 
-      /* --- náhľad: rámik "okna" simulujúci celú stránku --- */
+      /* --- preview: a "window" frame simulating the full page --- */
       .site-window {
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -662,7 +677,7 @@
         margin: 0 auto;
       }
 
-      /* --- ArticleCard.astro (malé okienko) --- */
+      /* --- ArticleCard.astro (small card preview) --- */
       .site-scope .card {
         display: block;
         border: 1px solid var(--border);
@@ -721,7 +736,7 @@
         flex-wrap: wrap;
       }
 
-      /* --- pripnutý post (featured, z pages/sk/index.astro) --- */
+      /* --- pinned post (featured, from pages/sk/index.astro) --- */
       .site-scope .featured {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -792,7 +807,7 @@
         }
       }
 
-      /* --- samotný článok ([slug]/index.astro) --- */
+      /* --- the article itself ([slug]/index.astro) --- */
       .site-scope .article {
         padding: 0.2rem 0 0.5rem;
       }
@@ -906,9 +921,9 @@
         border-color: var(--gold);
       }
 
-      /* Náhľad zväčšený cez celú obrazovku, v reálnych rozmeroch webu
-         (rovnaké max-width a paddingy ako na boggelino.netlify.app),
-         namiesto zmenšeného do polovice editora. */
+      /* Preview expanded to fill the screen, at the site's real
+         dimensions (same max-width and paddings as on boggelino.netlify.app),
+         instead of scaled down to half the editor's width. */
       .preview.is-fullscreen {
         position: fixed;
         inset: 0;
@@ -948,7 +963,7 @@
         color: var(--gold);
       }
 
-      /* --- reálne rozmery zo živej stránky, namiesto umelo zmenšených --- */
+      /* --- real dimensions from the live site, not artificially shrunk --- */
       .site-window-inner {
         padding: 2.4rem 1.25rem 4rem;
       }
@@ -985,17 +1000,17 @@
       $("#date").value = todayISO();
 
       async function generateUniqueId() {
-        // Generuje 6-miestne ID s nulami zľava
+        // Generates a 6-digit ID, zero-padded on the left
         const randId = () =>
           String(Math.floor(Math.random() * 1000000)).padStart(6, "0");
 
-        // Ak ešte nie je vybraný priečinok projektu, vráti len náhodné ID
+        // If no project folder is selected yet, just return a random ID
         if (!projectDirHandle) {
           return randId();
         }
 
         try {
-          // Otvorí priečinok src/content/articles/sk (ak existuje)
+          // Opens the src/content/articles/sk folder (if it exists)
           const articlesDir = await ensureDir(projectDirHandle, [
             "src",
             "content",
@@ -1007,21 +1022,21 @@
           let exists = true;
           let attempts = 0;
 
-          // Bude skúšať generovať kým nenájde voľné (max 100 pokusov, aby nezacyklilo)
+          // Keeps generating until it finds a free one (capped at 100 tries to avoid looping forever)
           while (exists && attempts < 100) {
             newId = randId();
             try {
-              // Skúsi zistiť, či súbor s týmto názvom už existuje
+              // Tries to check whether a file with this name already exists
               await articlesDir.getFileHandle(newId + ".md");
               attempts++;
             } catch (err) {
-              // Ak súbor neexistuje, getFileHandle vyhodi chybu -> ID je voľné!
+              // If the file doesn't exist, getFileHandle throws, meaning the ID is free!
               exists = false;
             }
           }
           return newId;
         } catch (e) {
-          // V prípade akejkoľvek chyby vráti aspoň náhodne vygenerované ID
+          // On any error, fall back to a randomly generated ID
           return randId();
         }
       }
@@ -1059,8 +1074,8 @@
         updatePreview();
       }
 
-      // Nahradí odkazy na uploadnuté obrázky (public/images/articles/...) za
-      // dočasné blob URL, aby sa dali zobraziť aj pred uložením do projektu.
+      // Swaps references to uploaded images (public/images/articles/...) for
+      // temporary blob URLs, so they can be previewed before being saved to the project.
       function resolveImageUrl(src) {
         if (!src) return src;
         let resolved = src;
@@ -1074,16 +1089,16 @@
         return resolved;
       }
 
-      // Rovnaká logika ako src/utils/extract-image.ts na živej stránke:
-      // nájde prvý obrázok v markdown obsahu (na homepage karty ho použijú
-      // ako cover foto namiesto gradientu).
+      // Same logic as src/utils/extract-image.ts on the live site:
+      // finds the first image in the markdown body (homepage cards use it
+      // as the cover photo instead of the gradient placeholder).
       function extractFirstImage(md) {
         const match = md.match(/!\[[^\]]*\]\(([^)\s]+)/);
         return match ? resolveImageUrl(match[1]) : undefined;
       }
 
-      // Rovnaký deterministický výber gradientu podľa titulku ako v
-      // ArticleCard.astro, keď článok nemá žiadny obrázok.
+      // Same deterministic gradient pick based on the title as in
+      // ArticleCard.astro, for when an article has no image.
       function gradientForTitle(title) {
         const gradients = [
           ["var(--accent)", "var(--accent-3)"],
@@ -1097,9 +1112,9 @@
         return `linear-gradient(135deg, ${g1}, ${g2})`;
       }
 
-      // Cache: meno autora -> URL avatara. Kým sa neprečíta reálny súbor
-      // z projektu, použije sa dočasne obrázok zo živej stránky, aby náhľad
-      // nezostal prázdny.
+      // Cache: author name -> avatar URL. Until the real file is read
+      // from the project, the live site's image is used temporarily so the
+      // preview isn't left blank.
       const authorAvatarCache = {};
 
       function getAuthorAvatarUrl(author) {
@@ -1112,9 +1127,9 @@
         return authorAvatarCache[key];
       }
 
-      // Skúsi nájsť public/images/<autor>.(png|jpg|jpeg|webp|gif) v
-      // aktuálne vybranom priečinku projektu. Ak sa nájde, prepíše cache
-      // reálnym súborom a prekreslí náhľad. Nič nezakladá, len číta.
+      // Tries to find public/images/<author>.(png|jpg|jpeg|webp|gif) in
+      // the currently selected project folder. If found, overwrites the cache
+      // with the real file and re-renders the preview. Read-only, creates nothing.
       async function loadAuthorAvatarFromProject(key) {
         if (!projectDirHandle) return;
         try {
@@ -1129,7 +1144,7 @@
               fileHandle = await imagesDir.getFileHandle(key + "." + ext);
               break;
             } catch (e) {
-              /* táto prípona neexistuje, skús ďalšiu */
+              /* this extension doesn't exist, try the next one */
             }
           }
           if (!fileHandle) {
@@ -1147,7 +1162,7 @@
           authorAvatarCache[key] = URL.createObjectURL(file);
           updatePreview();
         } catch (e) {
-          // public/images neexistuje alebo k nemu nie je prístup, necháme fallback
+          // public/images doesn't exist or isn't accessible, keep the fallback
         }
       }
 
@@ -1173,11 +1188,15 @@
         const md = activeContentEl().value;
         const date = $("#date").value;
         const author = ($("#author").value.trim() || "boggelino").toLowerCase();
+        const authorNote = (
+          document.querySelector('.authorNote[data-lang="' + lang + '"]')
+            ?.value || ""
+        ).trim();
         const tags = $("#tags-" + lang)
           .value.split(",")
           .map((t) => t.trim())
           .filter(Boolean);
-        return { lang, title, description, md, date, author, tags };
+        return { lang, title, description, md, date, author, tags, authorNote };
       }
 
       function renderCardPreview(d) {
@@ -1201,8 +1220,8 @@
           </div>`;
       }
 
-      // Otvorí/zatvorí náhľad na celú obrazovku, v reálnej veľkosti webu
-      // (namiesto zmenšeného do polovice šírky editora).
+      // Opens/closes the fullscreen preview at the site's real size
+      // (instead of scaled down to half the editor's width).
       function toggleFullscreenPreview() {
         const preview = $("#preview");
         const isFullscreen = preview.classList.toggle("is-fullscreen");
@@ -1270,6 +1289,11 @@
                   ${d.tags.length ? `<div class="article-tags">${d.tags.map((t) => `<a class="tag" href="#" onclick="return false;">${escapeHtml(t)}</a>`).join("")}</div>` : ""}
                 </header>
                 <div class="article-body">${html}</div>
+                ${
+                  d.authorNote
+                    ? `<aside class="author-note"><span class="author-note-title">${d.lang === "sk" ? "Poznámka autora" : "Author's Note"}</span><p class="author-note-text">${escapeHtml(d.authorNote)}</p></aside>`
+                    : ""
+                }
                 <hr class="divider" />
                 <a class="back-link mono" href="#" onclick="return false;">&larr; ${backLabel}</a>
               </article>
@@ -1364,6 +1388,20 @@
             : "");
       }
 
+      function escapeYamlString(value) {
+        return String(value)
+          .replace(/\\/g, "\\\\")
+          .replace(/"/g, '\\"')
+          .replace(/\n/g, "\\n");
+      }
+
+      function unescapeYamlString(value) {
+        return String(value)
+          .replace(/\\n/g, "\n")
+          .replace(/\\"/g, '"')
+          .replace(/\\\\/g, "\\");
+      }
+
       function buildFrontmatter(lang) {
         const title =
           document.querySelector('.title[data-lang="' + lang + '"]').value ||
@@ -1371,6 +1409,10 @@
         const description =
           document.querySelector('.description[data-lang="' + lang + '"]')
             .value || "";
+        const authorNote = (
+          document.querySelector('.authorNote[data-lang="' + lang + '"]')
+            ?.value || ""
+        ).trim();
         const date = $("#date").value || todayISO();
         const author = $("#author").value.trim() || "boggelino";
         const tags = $(`#tags-${lang}`)
@@ -1388,6 +1430,8 @@
         fm += 'author: "' + author + '"\n';
         if (draft) fm += "draft: true\n";
         if (pinned) fm += "pinned: true\n";
+        if (authorNote)
+          fm += 'authorNote: "' + escapeYamlString(authorNote) + '"\n';
         fm += "---\n\n";
         return fm;
       }
@@ -1479,10 +1523,10 @@
         await writable.close();
       }
 
-      // Prejde všetky ostatné naskenované články (SK aj EN verzie) a každému,
-      // kto mal doteraz "pinned: true", ten riadok z frontmatteru odstráni
-      // (rebuildFileFromData ho zapíše len ak d.pinned je pravdivé).
-      // Vracia zoznam ID článkov, ktoré boli odopnuté.
+      // Goes through every other scanned article (both SK and EN versions) and,
+      // for any that currently have "pinned: true", strips that line from the
+      // frontmatter (rebuildFileFromData only writes it back if d.pinned is true).
+      // Returns the list of article IDs that got unpinned.
       async function unpinOtherArticles(currentId) {
         const unpinnedIds = [];
         for (const otherId of Object.keys(articlesIndex)) {
@@ -1637,6 +1681,10 @@
           : [];
         const draft = /^draft:\s*true\s*$/m.test(fm);
         const pinned = /^pinned:\s*true\s*$/m.test(fm);
+        const authorNoteMatch = fm.match(/^authorNote:\s*"(.*)"\s*$/m);
+        const authorNote = authorNoteMatch
+          ? unescapeYamlString(authorNoteMatch[1])
+          : "";
         return {
           title: getField("title"),
           description: getField("description"),
@@ -1645,6 +1693,7 @@
           tags,
           draft,
           pinned,
+          authorNote,
           body,
         };
       }
@@ -1664,6 +1713,8 @@
         fm += 'author: "' + (d.author || "boggelino") + '"\n';
         if (d.draft) fm += "draft: true\n";
         if (d.pinned) fm += "pinned: true\n";
+        if (d.authorNote && d.authorNote.trim())
+          fm += 'authorNote: "' + escapeYamlString(d.authorNote.trim()) + '"\n';
         fm += "---\n\n";
         return fm + d.body + "\n";
       }
@@ -1674,11 +1725,11 @@
 		  btn.textContent = "📂 Projekt vybraný";
 		}
 
-      // Perzistencia vybraného priečinka projektu cez IndexedDB, aby
-      // "prežila" plný reload stránky, ktorý Astro/Vite dev server
-      // spúšťa pri zápise do src/content/articles/... (bežné pri
-      // pripnutí, keď sa prepisuje viac súborov naraz). Bez tohto by
-      // sa po každom takom reloade musel priečinok vyberať znova.
+      // Persists the selected project folder via IndexedDB so it survives
+      // the full page reload that the Astro/Vite dev server triggers on
+      // writes to src/content/articles/... (common when pinning, since that
+      // rewrites multiple files at once). Without this, the folder would
+      // have to be re-selected after every such reload.
       const DB_NAME = "boggelino-compose";
       const STORE_NAME = "handles";
       const HANDLE_KEY = "projectDirHandle";
@@ -1702,7 +1753,7 @@
             tx.onerror = () => reject(tx.error);
           });
         } catch (e) {
-          // IndexedDB nedostupné, len sa nebude dať auto-obnoviť po reloade
+          // IndexedDB unavailable, auto-restore after reload just won't work
         }
       }
 
@@ -1720,10 +1771,10 @@
         }
       }
 
-      // Skúsi na pozadí obnoviť predtým vybraný priečinok bez toho, aby
-      // vyskočil natívny dialóg (requestPermission na už-udelenom handle
-      // v Chrome/Edge zvyčajne prejde ticho, keď je stránka na rovnakom
-      // origin ako pri prvom udelení).
+      // Tries to silently restore the previously selected folder in the
+      // background without popping a native dialog (requestPermission on an
+      // already-granted handle usually passes quietly in Chrome/Edge when the
+      // page is on the same origin as when permission was first granted).
       (async function restoreProjectHandle() {
         const handle = await idbGetHandle();
         if (!handle) return;
@@ -1737,7 +1788,7 @@
           await scanArticles();
           updatePreview();
         } catch (e) {
-          // handle už nie je platný (napr. iný priečinok/permission zrušené), ignoruj
+          // handle is no longer valid (e.g. folder moved/permission revoked), ignore it
         }
       })();
 
@@ -1785,7 +1836,7 @@
               if (!index[id]) index[id] = {};
               index[id][lang] = parsed;
             } catch (e) {
-              // preskočiť súbor, ktorý sa nedá prečítať/parsovať
+              // skip a file that can't be read/parsed
             }
           }
         }
@@ -1874,6 +1925,9 @@
           ).value = d ? d.description : "";
           document.querySelector('.content[data-lang="' + lang + '"]').value =
             d ? d.body : "";
+          document.querySelector(
+            '.authorNote[data-lang="' + lang + '"]',
+          ).value = d ? d.authorNote || "" : "";
           $("#tags-" + lang).value = d ? d.tags.join(", ") : "";
         }
         const primary = entry.sk || entry.en;
@@ -1956,7 +2010,7 @@
         ]);
         await dir.removeEntry(id + ".md");
       } catch (e) {
-        // súbor pre daný jazyk už neexistuje, preskočiť
+        // file for this language doesn't exist, skip it
       }
     }
     try {
@@ -1967,7 +2021,7 @@
       ]);
       await imagesRootDir.removeEntry(id, { recursive: true });
     } catch (e) {
-      // priečinok s obrázkami neexistoval, nič sa nedeje
+      // images folder didn't exist, nothing to do
     }
 
     delete articlesIndex[id];
@@ -1990,7 +2044,9 @@
 
       async function clearAll() {
         if (!confirm("Vyčistiť všetky polia a začať nový článok?")) return;
-        $$(".title, .description, .content").forEach((el) => (el.value = ""));
+        $$(".title, .description, .content, .authorNote").forEach(
+          (el) => (el.value = ""),
+        );
         $("#articleId").value = await generateUniqueId();
         $("#tags-sk").value = "";
         $("#tags-en").value = "";

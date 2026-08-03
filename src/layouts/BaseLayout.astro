@@ -1,4 +1,5 @@
 ---
+import { getCollection } from 'astro:content';
 import '../styles/global.css';
 import FlagIcon from '../components/FlagIcon.astro';
 import { t, otherLang, langMeta, type Lang } from '../i18n/dict';
@@ -17,6 +18,17 @@ const flagCode: Record<Lang, 'sk' | 'gb'> = { sk: 'sk', en: 'gb' };
 
 const currentPath = Astro.url.pathname;
 const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}/`).replace(new RegExp(`/${lang}$`), `/${other}`);
+
+// Footer data: latest article link + the full slug list so the "random
+// article" button can pick one client-side without a server round trip.
+const collectionName = lang === 'sk' ? 'articles-sk' : 'articles-en';
+const footerArticles = await getCollection(
+  collectionName as 'articles-sk' | 'articles-en',
+  ({ data }) => !data.draft,
+);
+const footerSorted = footerArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const latestArticle = footerSorted[0];
+const footerSlugs = footerSorted.map((a) => a.id);
 ---
 
 <!doctype html>
@@ -80,12 +92,58 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
     </main>
 
     <footer class="site-footer">
-      <div class="wrap-wide footer-inner">
-        <span>&copy; {new Date().getFullYear()} MOMENTUM</span>
-        <span class="footer-sep">·</span>
-        <a href={`/${lang}/rss.xml`} class="footer-rss">{s.footer_rss}</a>
+      <div class="wrap-wide footer-grid">
+        <div class="footer-col">
+          <h3 class="footer-heading">{s.footer_latest_articles}</h3>
+          <ul class="footer-list">
+            {latestArticle && (
+              <li>
+                <a href={`/${lang}/articles/${latestArticle.id}/`}>{s.footer_latest_article}</a>
+              </li>
+            )}
+            {footerSlugs.length > 0 && (
+              <li>
+                <button type="button" id="footer-random-btn" class="footer-link-btn" data-slugs={JSON.stringify(footerSlugs)} data-lang={lang}>
+                  {s.footer_random_article}
+                </button>
+              </li>
+            )}
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h3 class="footer-heading">{s.footer_navigation}</h3>
+          <ul class="footer-list">
+            <li><a href={`/${lang}/tags/`}>{s.nav_tags}</a></li>
+            <li><a href={`/${lang}/about/`}>{s.nav_about}</a></li>
+            <li><a href={`/${lang}/rss.xml`}>{s.footer_rss}</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h3 class="footer-heading">{s.footer_meta}</h3>
+          <ul class="footer-list">
+            <li><span>&copy; {new Date().getFullYear()} MOMENTUM</span></li>
+            <li><span>{s.footer_built_with}</span></li>
+          </ul>
+        </div>
       </div>
     </footer>
+
+    <script>
+      const randomBtn = document.getElementById('footer-random-btn');
+      randomBtn?.addEventListener('click', () => {
+        try {
+          const slugs = JSON.parse(randomBtn.dataset.slugs || '[]');
+          const lang = randomBtn.dataset.lang || 'en';
+          if (slugs.length === 0) return;
+          const pick = slugs[Math.floor(Math.random() * slugs.length)];
+          window.location.href = `/${lang}/articles/${pick}/`;
+        } catch {
+          // no-op: malformed data attribute, nothing to navigate to
+        }
+      });
+    </script>
 
     <script is:inline>
       const darkIcon = document.getElementById('theme-icon-dark');
@@ -238,23 +296,54 @@ const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}
       .site-footer {
         border-top: 1px solid var(--border);
         margin-top: 4rem;
-        padding: 2rem 0;
+        padding: 2.4rem 0 2rem;
         color: var(--text-faint);
         font-size: 0.85rem;
       }
-      .footer-inner {
+      .footer-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.8rem;
+      }
+      .footer-heading {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin: 0 0 0.8rem 0;
+        font-weight: 600;
+      }
+      .footer-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
         display: flex;
+        flex-direction: column;
         gap: 0.5rem;
-        flex-wrap: wrap;
-        align-items: center;
       }
-      .footer-sep { color: var(--border); }
-      .footer-rss {
+      .footer-list a,
+      .footer-link-btn {
         color: var(--text-faint);
-        font-size: 0.78rem;
+        font-size: 0.83rem;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-family: inherit;
+        text-align: left;
       }
-      .footer-rss:hover {
+      .footer-list a:hover,
+      .footer-link-btn:hover {
         color: var(--accent-3);
+        text-decoration: none;
+      }
+
+      @media (max-width: 780px) {
+        .footer-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.6rem 1.2rem;
+        }
       }
     </style>
   </body>

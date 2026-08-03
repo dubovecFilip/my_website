@@ -154,18 +154,35 @@ input:focus-visible {
   border-color: var(--accent-2);
 }
 
-article :is(h2, h3) {
+.article-body :is(h2, h3) {
   margin-top: 1.6em;
+  scroll-margin-top: 84px;
 }
 
-article img {
+.article-body img {
   max-width: 100%;
   border-radius: var(--radius);
   display: block;
   margin: 1.4em 0;
+  cursor: zoom-in;
 }
 
-article pre {
+.article-body figure.article-figure {
+  margin: 1.4em 0;
+}
+.article-body figure.article-figure img {
+  margin: 0;
+}
+.article-body figure.article-figure figcaption {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+  text-align: center;
+  margin-top: 0.5em;
+}
+
+.article-body pre {
   background: var(--bg-raised);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -173,12 +190,12 @@ article pre {
   overflow-x: auto;
 }
 
-article code {
+.article-body code {
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
 
-article blockquote {
+.article-body blockquote {
   border-left: 3px solid var(--accent);
   margin: 1.2em 0;
   padding: 0.2em 1em;

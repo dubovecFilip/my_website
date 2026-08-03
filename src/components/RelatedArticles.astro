@@ -1,0 +1,85 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import ArticleCard from './ArticleCard.astro';
+import { t, type Lang } from '../i18n/dict';
+import { extractFirstImage } from '../utils/extract-image';
+import { countWords, readingTimeMinutes } from '../utils/article-stats';
+
+interface Props {
+  lang: Lang;
+  currentId: string;
+  currentTags: string[];
+}
+
+const { lang, currentId, currentTags } = Astro.props;
+const s = t(lang);
+
+const collectionName = lang === 'sk' ? 'articles-sk' : 'articles-en';
+const all = await getCollection(
+  collectionName as 'articles-sk' | 'articles-en',
+  ({ data }) => !data.draft,
+);
+
+type Entry = CollectionEntry<'articles-sk'> | CollectionEntry<'articles-en'>;
+
+function sharedTagCount(tags: string[]): number {
+  const currentSet = new Set(currentTags);
+  return tags.filter((tag) => currentSet.has(tag)).length;
+}
+
+const related = (all as Entry[])
+  .filter((a) => a.id !== currentId)
+  .map((a) => ({ article: a, shared: sharedTagCount(a.data.tags) }))
+  .filter(({ shared }) => shared > 0)
+  .sort((a, b) => {
+    if (b.shared !== a.shared) return b.shared - a.shared;
+    return b.article.data.date.valueOf() - a.article.data.date.valueOf();
+  })
+  .slice(0, 3)
+  .map(({ article }) => article);
+---
+
+{related.length > 0 && (
+  <section class="related-articles">
+    <h2 class="related-title">{s.related_articles}</h2>
+    <hr class="gold-rule" />
+    <div class="related-grid">
+      {related.map((article) => {
+        const words = countWords(article.body);
+        return (
+          <ArticleCard
+            lang={lang}
+            variant="grid"
+            slug={article.id}
+            title={article.data.title}
+            description={article.data.description}
+            date={article.data.date}
+            tags={article.data.tags}
+            image={extractFirstImage(article.body)}
+            readingTime={readingTimeMinutes(words)}
+          />
+        );
+      })}
+    </div>
+  </section>
+)}
+
+<style>
+  .related-articles {
+    margin: 3rem 0 2rem;
+  }
+  .related-title {
+    font-size: 1.4rem;
+  }
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1.6rem;
+  }
+  @media (max-width: 780px) {
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

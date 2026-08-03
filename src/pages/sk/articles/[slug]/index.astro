@@ -1,8 +1,14 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import TableOfContents from '../../../../components/TableOfContents.astro';
+import ArticleLightbox from '../../../../components/ArticleLightbox.astro';
+import RelatedArticles from '../../../../components/RelatedArticles.astro';
+import AuthorNote from '../../../../components/AuthorNote.astro';
+import ArticleStats from '../../../../components/ArticleStats.astro';
 import { t } from '../../../../i18n/dict';
 import { authors, defaultAuthor, type AuthorId } from '../../../../data/authors';
+import { countWords, readingTimeMinutes } from '../../../../utils/article-stats';
 
 export async function getStaticPaths() {
   const articles = await getCollection('articles-sk', ({ data }) => !data.draft);
@@ -13,11 +19,13 @@ export async function getStaticPaths() {
 }
 
 const { article } = Astro.props;
-const { Content } = await render(article);
+const { Content, headings } = await render(article);
+const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const hasToc = tocHeadings.length > 0;
 const lang = 'sk' as const;
 const s = t(lang);
 
-// The language switcher needs a translation with the same ID to exist — otherwise
+// The language switcher needs a translation with the same ID to exist; otherwise
 // send the reader to the EN homepage instead of a broken /en/articles/<slug>/ link.
 const enArticles = await getCollection('articles-en');
 const hasTranslation = enArticles.some((a) => a.id === article.id);
@@ -29,10 +37,13 @@ const dateStr = article.data.date.toLocaleDateString('sk-SK', {
   month: 'long',
   day: 'numeric',
 });
+
+const readingTime = readingTimeMinutes(countWords(article.body));
+const readingTimeLabel = `${readingTime} min čítania`;
 ---
 
 <BaseLayout lang={lang} title={article.data.title} description={article.data.description} translationHref={translationHref}>
-  <article class="wrap article">
+  <article class="wrap-wide article">
     <a class="back-link mono" href={`/${lang}/`}>&larr; {s.back_home}</a>
 
     <header class="article-header">
@@ -45,6 +56,8 @@ const dateStr = article.data.date.toLocaleDateString('sk-SK', {
         </span>
         <span class="dot">&middot;</span>
         <time datetime={article.data.date.toISOString()}>{s.published_on} {dateStr}</time>
+        <span class="dot">&middot;</span>
+        <span>{readingTimeLabel}</span>
       </div>
       {article.data.tags.length > 0 && (
         <div class="article-tags">
@@ -55,13 +68,26 @@ const dateStr = article.data.date.toLocaleDateString('sk-SK', {
       )}
     </header>
 
-    <div class="article-body">
-      <Content />
+    <div class:list={['article-layout', hasToc && 'has-toc']}>
+      <TableOfContents lang={lang} headings={headings} />
+
+      <div class="article-main">
+        <div class="article-body">
+          <Content />
+        </div>
+
+        <AuthorNote lang={lang} note={article.data.authorNote} />
+        <ArticleStats lang={lang} body={article.body} />
+      </div>
     </div>
 
     <hr class="divider" />
     <a class="back-link mono" href={`/${lang}/`}>&larr; {s.back_home}</a>
+
+    <RelatedArticles lang={lang} currentId={article.id} currentTags={article.data.tags} />
   </article>
+
+  <ArticleLightbox />
 </BaseLayout>
 
 <style>
@@ -73,7 +99,8 @@ const dateStr = article.data.date.toLocaleDateString('sk-SK', {
   }
   .back-link:hover { color: var(--accent-3); }
   .article-header {
-    margin: 1.5rem 0 2.5rem;
+    max-width: var(--max-width);
+    margin: 1.5rem auto 2.5rem;
   }
   .article-meta {
     color: var(--text-faint);
@@ -100,7 +127,31 @@ const dateStr = article.data.date.toLocaleDateString('sk-SK', {
     flex-wrap: wrap;
     margin-top: 1rem;
   }
+
+  .article-layout {
+    display: block;
+  }
+  .article-layout.has-toc {
+    display: grid;
+    grid-template-columns: 220px minmax(0, var(--max-width));
+    gap: 2.4rem;
+    justify-content: center;
+    align-items: start;
+  }
+  .article-main {
+    min-width: 0;
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
   .article-body {
     font-size: 1.05rem;
+  }
+
+  @media (max-width: 900px) {
+    .article-layout.has-toc {
+      grid-template-columns: 1fr;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
   }
 </style>

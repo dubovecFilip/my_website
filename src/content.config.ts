@@ -8,6 +8,7 @@ const articleSchema = z.object({
   tags: z.array(z.string()).default([]),
   draft: z.boolean().default(false),
   pinned: z.boolean().default(false),
+  authorNote: z.string().optional(),
 });
 
 export const collections = {

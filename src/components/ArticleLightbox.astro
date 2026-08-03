@@ -1,0 +1,199 @@
+---
+// Attaches a lightbox to every <img> inside .article-body. No props needed;
+// it scans the rendered article DOM once mounted, so it automatically covers
+// plain images and the figure/figcaption images from the caption plugin.
+---
+
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <button class="lightbox-close" id="lightbox-close" aria-label="Close" type="button">&times;</button>
+  <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous image" type="button">&larr;</button>
+  <div class="lightbox-stage" id="lightbox-stage">
+    <img id="lightbox-img" src="" alt="" />
+    <p class="lightbox-caption" id="lightbox-caption"></p>
+  </div>
+  <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next image" type="button">&rarr;</button>
+</div>
+
+<script>
+  const overlay = document.getElementById('lightbox') as HTMLDivElement;
+  const stage = document.getElementById('lightbox-stage') as HTMLDivElement;
+  const imgEl = document.getElementById('lightbox-img') as HTMLImageElement;
+  const captionEl = document.getElementById('lightbox-caption') as HTMLParagraphElement;
+  const closeBtn = document.getElementById('lightbox-close') as HTMLButtonElement;
+  const prevBtn = document.getElementById('lightbox-prev') as HTMLButtonElement;
+  const nextBtn = document.getElementById('lightbox-next') as HTMLButtonElement;
+
+  const images = Array.from(document.querySelectorAll<HTMLImageElement>('.article-body img'));
+  let currentIndex = 0;
+  let zoomed = false;
+
+  if (images.length <= 1) {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+  }
+
+  function openAt(index: number) {
+    if (images.length === 0) return;
+    currentIndex = (index + images.length) % images.length;
+    const img = images[currentIndex];
+    imgEl.src = img.src;
+    imgEl.alt = img.alt || '';
+    captionEl.textContent = img.alt || '';
+    captionEl.style.display = img.alt ? 'block' : 'none';
+    zoomed = false;
+    imgEl.classList.remove('is-zoomed');
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    overlay.classList.remove('is-open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function next() {
+    openAt(currentIndex + 1);
+  }
+  function prev() {
+    openAt(currentIndex - 1);
+  }
+
+  images.forEach((img, index) => {
+    img.addEventListener('click', () => openAt(index));
+  });
+
+  closeBtn.addEventListener('click', close);
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
+
+  // Click outside the image (on the dark stage) closes; click on the image
+  // itself toggles a simple zoom instead.
+  stage.addEventListener('click', (e) => {
+    if (e.target === imgEl) return;
+    close();
+  });
+  imgEl.addEventListener('click', () => {
+    zoomed = !zoomed;
+    imgEl.classList.toggle('is-zoomed', zoomed);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('is-open')) return;
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowRight') next();
+    else if (e.key === 'ArrowLeft') prev();
+  });
+
+  // Basic swipe support for mobile.
+  let touchStartX = 0;
+  stage.addEventListener(
+    'touchstart',
+    (e) => {
+      touchStartX = e.touches[0].clientX;
+    },
+    { passive: true },
+  );
+  stage.addEventListener(
+    'touchend',
+    (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) < 40) return;
+      if (dx < 0) next();
+      else prev();
+    },
+    { passive: true },
+  );
+</script>
+
+<style>
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(6, 7, 11, 0.92);
+    z-index: 100;
+  }
+  .lightbox.is-open {
+    display: flex;
+  }
+  .lightbox-stage {
+    max-width: 90vw;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .lightbox-stage img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: var(--radius);
+    cursor: zoom-in;
+    transition: transform 0.2s ease;
+  }
+  .lightbox-stage img.is-zoomed {
+    cursor: zoom-out;
+    transform: scale(1.5);
+  }
+  .lightbox-caption {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    text-align: center;
+    max-width: 60ch;
+    margin: 0;
+  }
+  .lightbox-close,
+  .lightbox-nav {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f4f2ec;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .lightbox-close {
+    top: 1.2rem;
+    right: 1.2rem;
+    width: 42px;
+    height: 42px;
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  .lightbox-nav {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    font-size: 1.3rem;
+  }
+  .lightbox-prev {
+    left: 1.2rem;
+  }
+  .lightbox-next {
+    right: 1.2rem;
+  }
+  .lightbox-close:hover,
+  .lightbox-nav:hover {
+    border-color: var(--accent-3);
+    color: var(--accent-3);
+  }
+
+  @media (max-width: 640px) {
+    .lightbox-nav {
+      width: 38px;
+      height: 38px;
+    }
+    .lightbox-close {
+      width: 36px;
+      height: 36px;
+    }
+  }
+</style>

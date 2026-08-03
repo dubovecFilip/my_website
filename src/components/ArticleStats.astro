@@ -1,0 +1,75 @@
+---
+import { t, type Lang } from '../i18n/dict';
+import { computeArticleStats } from '../utils/article-stats';
+
+interface Props {
+  lang: Lang;
+  body: string | undefined;
+}
+
+const { lang, body } = Astro.props;
+const s = t(lang);
+const stats = computeArticleStats(body);
+---
+
+<div class="article-stats">
+  <span class="stats-title">{s.stats_title}</span>
+  <dl class="stats-grid">
+    <div class="stat">
+      <dt>{s.stats_words}</dt>
+      <dd>{stats.words.toLocaleString(lang === 'sk' ? 'sk-SK' : 'en-GB')}</dd>
+    </div>
+    <div class="stat">
+      <dt>{s.stats_reading_time}</dt>
+      <dd>{stats.readingTime} {s.stats_minutes}</dd>
+    </div>
+    <div class="stat">
+      <dt>{s.stats_images}</dt>
+      <dd>{stats.images}</dd>
+    </div>
+    <div class="stat">
+      <dt>{s.stats_headings}</dt>
+      <dd>{stats.headings}</dd>
+    </div>
+  </dl>
+</div>
+
+<style>
+  .article-stats {
+    margin: 2rem 0;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-raised);
+  }
+  .stats-title {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 0.7rem;
+  }
+  .stats-grid {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.6rem;
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .stat dt {
+    font-size: 0.75rem;
+    color: var(--text-faint);
+  }
+  .stat dd {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--text-muted);
+  }
+</style>

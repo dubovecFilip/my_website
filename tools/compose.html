@@ -335,10 +335,11 @@
       }
 
       /* ============================================================
-         ŠTÝLY SKOPÍROVANÉ ZO ŽIVEJ STRÁNKY (boggelino.netlify.app)
-         Naschválne obalené v .site-scope, aby sa nebili s editorom.
-         Zdroj: src/styles/global.css, ArticleCard.astro,
-                pages/sk/index.astro, pages/sk/articles/[slug]/index.astro
+         STYLES COPIED FROM THE LIVE SITE (boggelino.netlify.app)
+         Deliberately wrapped in .site-scope so they don't clash with
+         the editor's own styles.
+         Source: src/styles/global.css, ArticleCard.astro,
+                 pages/sk/index.astro, pages/sk/articles/[slug]/index.astro
          ============================================================ */
       .site-scope {
         --site-red: #ef3c39;
@@ -438,7 +439,7 @@
         margin: 2.5rem 0;
       }
 
-      /* --- náhľad: rámik "okna" simulujúci celú stránku --- */
+      /* --- preview: a "window" frame simulating the full page --- */
       .site-window {
         border: 1px solid var(--border);
         border-radius: 8px;
@@ -468,7 +469,7 @@
         margin: 0 auto;
       }
 
-      /* --- ArticleCard.astro (malé okienko) --- */
+      /* --- ArticleCard.astro (small card preview) --- */
       .site-scope .card {
         display: block;
         border: 1px solid var(--site-border);
@@ -521,7 +522,7 @@
         flex-wrap: wrap;
       }
 
-      /* --- pripnutý post (featured, z pages/sk/index.astro) --- */
+      /* --- pinned post (featured, from pages/sk/index.astro) --- */
       .site-scope .featured {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -590,7 +591,7 @@
         }
       }
 
-      /* --- samotný článok ([slug]/index.astro) --- */
+      /* --- the article itself ([slug]/index.astro) --- */
       .site-scope .article {
         padding: 0.2rem 0 0.5rem;
       }
@@ -703,9 +704,9 @@
         border-color: var(--gold);
       }
 
-      /* Náhľad zväčšený cez celú obrazovku, v reálnych rozmeroch webu
-         (rovnaké max-width a paddingy ako na boggelino.netlify.app),
-         namiesto zmenšeného do polovice editora. */
+      /* Preview expanded to fill the screen, at the site's real
+         dimensions (same max-width and paddings as on boggelino.netlify.app),
+         instead of scaled down to half the editor's width. */
       .preview.is-fullscreen {
         position: fixed;
         inset: 0;
@@ -745,7 +746,7 @@
         color: var(--gold);
       }
 
-      /* --- reálne rozmery zo živej stránky, namiesto umelo zmenšených --- */
+      /* --- real dimensions from the live site, not artificially shrunk --- */
       .site-window-inner {
         padding: 2.4rem 1.25rem 4rem;
       }
@@ -1048,17 +1049,17 @@
       $("#date").value = todayISO();
 
       async function generateUniqueId() {
-        // Generuje 6-miestne ID s nulami zľava
+        // Generates a 6-digit ID, zero-padded on the left
         const randId = () =>
           String(Math.floor(Math.random() * 1000000)).padStart(6, "0");
 
-        // Ak ešte nie je vybraný priečinok projektu, vráti len náhodné ID
+        // If no project folder is selected yet, just return a random ID
         if (!projectDirHandle) {
           return randId();
         }
 
         try {
-          // Otvorí priečinok src/content/articles/sk (ak existuje)
+          // Opens the src/content/articles/sk folder (if it exists)
           const articlesDir = await ensureDir(projectDirHandle, [
             "src",
             "content",
@@ -1070,21 +1071,21 @@
           let exists = true;
           let attempts = 0;
 
-          // Bude skúšať generovať kým nenájde voľné (max 100 pokusov, aby nezacyklilo)
+          // Keeps generating until it finds a free one (capped at 100 tries to avoid looping forever)
           while (exists && attempts < 100) {
             newId = randId();
             try {
-              // Skúsi zistiť, či súbor s týmto názvom už existuje
+              // Tries to check whether a file with this name already exists
               await articlesDir.getFileHandle(newId + ".md");
               attempts++;
             } catch (err) {
-              // Ak súbor neexistuje, getFileHandle vyhodi chybu -> ID je voľné!
+              // If the file doesn't exist, getFileHandle throws, meaning the ID is free!
               exists = false;
             }
           }
           return newId;
         } catch (e) {
-          // V prípade akejkoľvek chyby vráti aspoň náhodne vygenerované ID
+          // On any error, fall back to a randomly generated ID
           return randId();
         }
       }
@@ -1122,8 +1123,8 @@
         updatePreview();
       }
 
-      // Nahradí odkazy na uploadnuté obrázky (public/images/articles/...) za
-      // dočasné blob URL, aby sa dali zobraziť aj pred uložením do projektu.
+      // Swaps references to uploaded images (public/images/articles/...) for
+      // temporary blob URLs, so they can be previewed before being saved to the project.
       function resolveImageUrl(src) {
         if (!src) return src;
         let resolved = src;
@@ -1137,16 +1138,16 @@
         return resolved;
       }
 
-      // Rovnaká logika ako src/utils/extract-image.ts na živej stránke:
-      // nájde prvý obrázok v markdown obsahu (na homepage karty ho použijú
-      // ako cover foto namiesto gradientu).
+      // Same logic as src/utils/extract-image.ts on the live site:
+      // finds the first image in the markdown body (homepage cards use it
+      // as the cover photo instead of the gradient placeholder).
       function extractFirstImage(md) {
         const match = md.match(/!\[[^\]]*\]\(([^)\s]+)/);
         return match ? resolveImageUrl(match[1]) : undefined;
       }
 
-      // Rovnaký deterministický výber gradientu podľa titulku ako v
-      // ArticleCard.astro, keď článok nemá žiadny obrázok.
+      // Same deterministic gradient pick based on the title as in
+      // ArticleCard.astro, for when an article has no image.
       function gradientForTitle(title) {
         const gradients = [
           ["var(--site-accent)", "var(--site-accent-3)"],
@@ -1160,9 +1161,9 @@
         return `linear-gradient(135deg, ${g1}, ${g2})`;
       }
 
-      // Cache: meno autora -> URL avatara. Kým sa neprečíta reálny súbor
-      // z projektu, použije sa dočasne obrázok zo živej stránky, aby náhľad
-      // nezostal prázdny.
+      // Cache: author name -> avatar URL. Until the real file is read
+      // from the project, the live site's image is used temporarily so the
+      // preview isn't left blank.
       const authorAvatarCache = {};
 
       function getAuthorAvatarUrl(author) {
@@ -1175,9 +1176,9 @@
         return authorAvatarCache[key];
       }
 
-      // Skúsi nájsť public/images/<autor>.(png|jpg|jpeg|webp|gif) v
-      // aktuálne vybranom priečinku projektu. Ak sa nájde, prepíše cache
-      // reálnym súborom a prekreslí náhľad. Nič nezakladá, len číta.
+      // Tries to find public/images/<author>.(png|jpg|jpeg|webp|gif) in
+      // the currently selected project folder. If found, overwrites the cache
+      // with the real file and re-renders the preview. Read-only, creates nothing.
       async function loadAuthorAvatarFromProject(key) {
         if (!projectDirHandle) return;
         try {
@@ -1192,7 +1193,7 @@
               fileHandle = await imagesDir.getFileHandle(key + "." + ext);
               break;
             } catch (e) {
-              /* táto prípona neexistuje, skús ďalšiu */
+              /* this extension doesn't exist, try the next one */
             }
           }
           if (!fileHandle) {
@@ -1210,7 +1211,7 @@
           authorAvatarCache[key] = URL.createObjectURL(file);
           updatePreview();
         } catch (e) {
-          // public/images neexistuje alebo k nemu nie je prístup, necháme fallback
+          // public/images doesn't exist or isn't accessible, keep the fallback
         }
       }
 
@@ -1264,8 +1265,8 @@
           </div>`;
       }
 
-      // Otvorí/zatvorí náhľad na celú obrazovku, v reálnej veľkosti webu
-      // (namiesto zmenšeného do polovice šírky editora).
+      // Opens/closes the fullscreen preview at the site's real size
+      // (instead of scaled down to half the editor's width).
       function toggleFullscreenPreview() {
         const preview = $("#preview");
         const isFullscreen = preview.classList.toggle("is-fullscreen");
@@ -1542,10 +1543,10 @@
         await writable.close();
       }
 
-      // Prejde všetky ostatné naskenované články (SK aj EN verzie) a každému,
-      // kto mal doteraz "pinned: true", ten riadok z frontmatteru odstráni
-      // (rebuildFileFromData ho zapíše len ak d.pinned je pravdivé).
-      // Vracia zoznam ID článkov, ktoré boli odopnuté.
+      // Goes through every other scanned article (both SK and EN versions) and,
+      // for any that currently have "pinned: true", strips that line from the
+      // frontmatter (rebuildFileFromData only writes it back if d.pinned is true).
+      // Returns the list of article IDs that got unpinned.
       async function unpinOtherArticles(currentId) {
         const unpinnedIds = [];
         for (const otherId of Object.keys(articlesIndex)) {
@@ -1779,7 +1780,7 @@
               if (!index[id]) index[id] = {};
               index[id][lang] = parsed;
             } catch (e) {
-              // preskočiť súbor, ktorý sa nedá prečítať/parsovať
+              // skip a file that can't be read/parsed
             }
           }
         }
@@ -1950,7 +1951,7 @@
         ]);
         await dir.removeEntry(id + ".md");
       } catch (e) {
-        // súbor pre daný jazyk už neexistuje, preskočiť
+        // file for this language doesn't exist, skip it
       }
     }
     try {
@@ -1961,7 +1962,7 @@
       ]);
       await imagesRootDir.removeEntry(id, { recursive: true });
     } catch (e) {
-      // priečinok s obrázkami neexistoval, nič sa nedeje
+      // images folder didn't exist, nothing to do
     }
 
     delete articlesIndex[id];

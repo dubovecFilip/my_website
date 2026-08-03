@@ -3,7 +3,7 @@ import path from "node:path";
 
 /**
  * Reads photos straight out of `public/images/gallery/` at build time.
- * There's no content-collection entry per photo — just drop a file in that
+ * There's no content-collection entry per photo; just drop a file in that
  * folder and it shows up. Newest file (by name, then mtime as a tiebreaker)
  * first.
  */
