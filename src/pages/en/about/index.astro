@@ -8,150 +8,197 @@ const lang = 'en' as const;
 const s = t(lang);
 
 const links = socialLinks;
+const stack = ['astro', 'netlify', 'markdown', 'sk / en'];
+
+// The closing clause of the motto is set in rust, so the statement lands on
+// the sentence's own emphasis rather than an arbitrary word count.
+const mottoParts = s.about_motto.split(/(?<=[.!?])\s+/);
+const mottoLead = mottoParts.slice(0, -1).join(' ');
+const mottoTail = mottoParts[mottoParts.length - 1];
 ---
 
-<BaseLayout lang={lang} title={s.nav_about}>
-  <div class="wrap-wide about-page">
-    <section class="about-hero">
-      <span class="eyebrow">{s.about_eyebrow}</span>
-      <h1>{s.about_title}</h1>
-      <hr class="gold-rule" />
-      <p class="about-motto">{s.about_motto}</p>
-    </section>
+<BaseLayout lang={lang} title={s.nav_about} breadcrumb={s.nav_about}>
+  <section class="statement">
+    <p class="statement-text">
+      {mottoLead && <>{mottoLead} </>}<span class="statement-accent">{mottoTail}</span>
+    </p>
+  </section>
 
-    <div class="about-layout">
-      <div class="about-main">
-        <p class="about-text">{s.about_purpose_1}</p>
-        <p class="about-text">{s.about_purpose_2}</p>
+  <div class="about-grid">
+    <div class="about-main">
+      <span class="eyebrow">{s.about_eyebrow}</span>
+      <p class="about-lead">{s.about_intro_1}</p>
+      <p class="about-text">{s.about_purpose_1}</p>
+      <p class="about-text">{s.about_purpose_2}</p>
+      <p class="about-text">{s.about_intro_2}</p>
+    </div>
+
+    <aside class="about-side">
+      <div class="side-cell author-cell">
+        <img src="/images/boggelino.png" width="84" height="84" alt="" class="author-avatar" />
+        <div>
+          <h2 class="side-title">BOGGELINO</h2>
+          <p class="author-role">{s.about_author_title}</p>
+        </div>
       </div>
 
-      <aside class="about-author">
-        <div class="author-card">
-          <img src="/images/boggelino.png" width="60" height="60" alt="" class="author-avatar" />
-          <p class="author-name">BOGGELINO</p>
-          <span class="author-label">{s.about_author_title}</span>
-          <p class="author-blurb">{s.about_intro_1}</p>
-          <p class="author-blurb">{s.about_intro_2}</p>
-
-          <ul class="link-row">
-            {links.map((link) => (
-              <li>
-                <a href={link.url} target="_blank" rel="noopener noreferrer" title={link.label} aria-label={link.label}>
-                  <SocialIcon name={link.icon} size={15} />
-                </a>
-              </li>
-            ))}
-          </ul>
+      <div class="side-cell">
+        <span class="eyebrow">{s.about_stack}</span>
+        <div class="stack-row">
+          {stack.map((item) => (
+            <span class="tag">{item}</span>
+          ))}
         </div>
-      </aside>
-    </div>
+      </div>
+
+      <div class="side-cell">
+        <span class="eyebrow">{s.about_links_title}</span>
+        <ul class="link-row">
+          {links.map((link) => (
+            <li>
+              <a href={link.url} target="_blank" rel="noopener noreferrer" title={link.label} aria-label={link.label}>
+                <SocialIcon name={link.icon} size={16} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="side-cell side-actions">
+        <a class="btn-ghost" href={`/${lang}/tags/`}>&#8594; {s.all_tags}</a>
+        <a class="btn-ghost" href={`/${lang}/rss.xml`}>&#8594; {s.footer_rss}</a>
+      </div>
+    </aside>
   </div>
 </BaseLayout>
 
 <style>
-  .about-page {
-    padding: 2.4rem 1.25rem 4rem;
+  .statement {
+    background: var(--inv-bg);
+    color: var(--inv-text);
+    padding: 3.2rem var(--pad);
+    border-bottom: var(--rule-w) solid var(--rule);
   }
-
-  .about-hero {
-    max-width: 62ch;
-    margin-bottom: 2.6rem;
-  }
-  .about-motto {
-    margin: 1.2rem 0 0 0;
+  .statement-text {
+    margin: 0;
     font-family: var(--font-display);
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: 0.005em;
-    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
-    line-height: 1.35;
-    color: var(--text);
+    font-weight: 900;
+    font-size: clamp(1.9rem, 5vw, 3.8rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+    max-width: 24ch;
+  }
+  .statement-accent {
+    color: var(--accent);
   }
 
-  .about-layout {
+  .about-grid {
     display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 2.2rem;
-    align-items: start;
+    grid-template-columns: 1.4fr 1fr;
+    border-bottom: var(--rule-w) solid var(--rule);
   }
   .about-main {
-    padding-top: 0.2rem;
+    padding: 2.2rem var(--pad) 2.6rem;
+    border-right: var(--rule-w) solid var(--rule);
+  }
+  .about-lead {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    line-height: 1.6;
+    color: var(--text);
+    margin: 1.1rem 0 1.4rem 0;
+    max-width: 46ch;
   }
   .about-text {
-    color: var(--text-muted);
-    font-size: 1.05rem;
-    max-width: 58ch;
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    line-height: 1.75;
+    color: var(--text-body);
+    max-width: 62ch;
   }
 
-  .author-card {
-    border: 1px solid var(--border);
-    background: var(--bg-raised);
-    border-radius: var(--radius);
-    padding: 1.3rem 1.4rem 1.4rem;
+  .about-side {
+    display: flex;
+    flex-direction: column;
+  }
+  .side-cell {
+    padding: 1.5rem var(--pad);
+  }
+  .side-cell + .side-cell {
+    border-top: var(--rule-w) solid var(--rule);
+  }
+  .side-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.15rem;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+  .author-cell {
+    display: flex;
+    gap: 1.1rem;
+    align-items: center;
   }
   .author-avatar {
-    border-radius: 50%;
+    flex: none;
+    border: var(--rule-w) solid var(--rule);
+    border-radius: 0;
     display: block;
   }
-  .author-name {
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-    margin: 0.7rem 0 0 0;
-    color: var(--text);
-  }
-  .author-label {
-    display: block;
+  .author-role {
+    margin: 0.3rem 0 0 0;
     font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--text-faint);
-    margin: 0.15rem 0 0.9rem 0;
-  }
-  .author-blurb {
     color: var(--text-muted);
-    font-size: 0.9rem;
-    margin: 0 0 0.8rem 0;
-  }
-  .author-blurb:last-of-type {
-    margin-bottom: 0;
   }
 
-  /* Links are icon-only and deliberately understated: small, muted,
-     tucked below the bio instead of competing for attention. */
+  .stack-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+
   .link-row {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.55rem;
-    padding: 1rem 0 0 0;
-    margin: 1.1rem 0 0 0;
-    border-top: 1px solid var(--border);
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0.8rem 0 0 0;
   }
   .link-row a {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    color: var(--text-faint);
-    opacity: 0.75;
-    transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+    width: 38px;
+    height: 38px;
+    border: 2px solid var(--rule);
+    color: inherit;
   }
   .link-row a:hover {
-    color: var(--accent-3);
-    opacity: 1;
-    background: var(--bg-raised-2);
-    text-decoration: none;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
   }
 
-  @media (max-width: 780px) {
-    .about-layout {
+  .side-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: auto;
+  }
+
+  @media (max-width: 860px) {
+    .about-grid {
       grid-template-columns: 1fr;
     }
-    .author-card {
-      max-width: 400px;
+    .about-main {
+      border-right: none;
+      border-bottom: var(--rule-w) solid var(--rule);
     }
   }
 </style>

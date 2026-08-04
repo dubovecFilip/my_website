@@ -16,7 +16,14 @@ const { lang, headings } = Astro.props;
 const s = t(lang);
 
 // Ignore H1 (the article title already exists), only H2/H3.
-const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
+// H2 entries carry the same running number the article body prints.
+let section = 0;
+const items = headings
+  .filter((h) => h.depth === 2 || h.depth === 3)
+  .map((h) => {
+    if (h.depth === 2) section += 1;
+    return { ...h, marker: h.depth === 2 ? String(section).padStart(2, '0') : '\u2014' };
+  });
 ---
 
 {items.length > 0 && (
@@ -26,18 +33,24 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
       <ul class="toc-list">
         {items.map((h) => (
           <li class:list={[`toc-depth-${h.depth}`]}>
-            <a href={`#${h.slug}`} data-toc-link data-toc-slug={h.slug}>{h.text}</a>
+            <a href={`#${h.slug}`} data-toc-link data-toc-slug={h.slug}>
+              <span class="toc-marker">{h.marker}</span>
+              <span class="toc-text">{h.text}</span>
+            </a>
           </li>
         ))}
       </ul>
     </nav>
 
     <details class="toc toc-mobile">
-      <summary>{s.toc_title}</summary>
+      <summary>{s.toc_title} ({items.length})</summary>
       <ul class="toc-list">
         {items.map((h) => (
           <li class:list={[`toc-depth-${h.depth}`]}>
-            <a href={`#${h.slug}`} data-toc-link data-toc-slug={h.slug}>{h.text}</a>
+            <a href={`#${h.slug}`} data-toc-link data-toc-slug={h.slug}>
+              <span class="toc-marker">{h.marker}</span>
+              <span class="toc-text">{h.text}</span>
+            </a>
           </li>
         ))}
       </ul>
@@ -101,53 +114,58 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
 <style>
   .toc-title {
     display: block;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--text-faint);
-    margin-bottom: 0.7rem;
+    color: var(--text);
+    margin-bottom: 0.9rem;
   }
   .toc-list {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.05rem;
   }
   .toc-list a {
-    display: block;
-    color: var(--text-muted);
-    font-size: 0.86rem;
-    padding: 0.32rem 0.6rem;
-    border-left: 2px solid transparent;
-    text-decoration: none;
-    line-height: 1.3;
+    display: flex;
+    gap: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+    padding: 0.55rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc-marker {
+    flex: none;
+    color: var(--text-faint);
   }
   .toc-list a:hover {
-    color: var(--text);
+    background: var(--bg-raised);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 4px;
   }
   .toc-list a.is-active {
-    color: var(--accent-3);
-    border-left-color: var(--accent-3);
-    font-weight: 600;
+    background: var(--rule);
+    color: var(--bg);
+    border-bottom-color: var(--rule);
+  }
+  .toc-list a.is-active .toc-marker {
+    color: var(--accent);
+    font-weight: 700;
   }
   .toc-depth-3 a {
-    padding-left: 1.3rem;
-    font-size: 0.82rem;
+    padding-left: 1.5rem;
+    color: var(--text-muted);
   }
 
+  /* Stickiness lives on the rail in the article page, so the contents,
+     the author and the actions travel down the page together. */
   .toc-desktop {
-    position: sticky;
-    top: 5.5rem;
-    align-self: start;
-    border: 1px solid var(--border);
-    background: var(--bg-raised);
-    border-radius: var(--radius);
-    padding: 1rem 0.7rem;
-    max-height: calc(100vh - 7rem);
-    overflow-y: auto;
+    padding: 1.6rem 1.1rem;
   }
 
   .toc-mobile {
@@ -156,38 +174,35 @@ const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
   .toc-mobile summary {
     cursor: pointer;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
-    letter-spacing: 0.06em;
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--text);
-    border: 1px solid var(--border);
     background: var(--bg-raised);
-    border-radius: var(--radius);
-    padding: 0.7rem 0.9rem;
+    padding: 0.9rem var(--pad);
+    border-bottom: var(--rule-w) solid var(--rule);
     list-style: none;
   }
   .toc-mobile summary::-webkit-details-marker {
     display: none;
   }
-  .toc-mobile[open] summary {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+  .toc-mobile summary::after {
+    content: ' \25BE';
+    color: var(--accent);
+    float: right;
   }
   .toc-mobile .toc-list {
-    border: 1px solid var(--border);
-    border-top: none;
-    border-bottom-left-radius: var(--radius);
-    border-bottom-right-radius: var(--radius);
-    padding: 0.5rem 0.7rem;
+    padding: 0.4rem var(--pad) 0.8rem;
+    border-bottom: var(--rule-w) solid var(--rule);
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1200px) {
     .toc-desktop {
       display: none;
     }
     .toc-mobile {
       display: block;
-      margin-bottom: 1.8rem;
     }
   }
 </style>

@@ -4,6 +4,7 @@ import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import ArticleCard from '../../../../components/ArticleCard.astro';
 import { t } from '../../../../i18n/dict';
 import { countWords, readingTimeMinutes } from '../../../../utils/article-stats';
+import { extractFirstImage } from '../../../../utils/extract-image';
 
 export async function getStaticPaths() {
   const articles = await getCollection('articles-en', ({ data }) => !data.draft);
@@ -24,48 +25,70 @@ const articles = allArticles
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout lang={lang} title={`${s.tagged_with}: ${tag}`}>
-  <div class="wrap tag-page">
-    <a class="back-link mono" href={`/${lang}/tags/`}>&larr; {s.all_tags}</a>
-    <p class="eyebrow">{s.tagged_with}</p>
-    <h1>{tag}</h1>
-    <p class="count-line mono">{articles.length} {s.articles_in_tag}</p>
-    <hr class="gold-rule" />
-    <div class="article-grid">
-      {articles.map((article) => (
-        <ArticleCard
-          lang={lang}
-          slug={article.id}
-          title={article.data.title}
-          description={article.data.description}
-          date={article.data.date}
-          tags={article.data.tags}
-          readingTime={readingTimeMinutes(countWords(article.body))}
-        />
-      ))}
+<BaseLayout lang={lang} title={`${s.tagged_with}: ${tag}`} breadcrumb={`${s.nav_tags} / ${tag}`}>
+  <section class="page-head">
+    <div class="head-text">
+      <span class="eyebrow">{s.tagged_with}</span>
+      <h1 class="display-xl">{tag}</h1>
+      <p class="head-count eyebrow">{articles.length} {s.articles_in_tag}</p>
     </div>
+    <a class="head-back" href={`/${lang}/tags/`}>&#8592; {s.all_tags}</a>
+  </section>
+
+  <div class="feed">
+    {articles.map((article, i) => (
+      <ArticleCard
+        lang={lang}
+        index={articles.length - i}
+        slug={article.id}
+        title={article.data.title}
+        description={article.data.description}
+        date={article.data.date}
+        tags={article.data.tags}
+        image={extractFirstImage(article.body)}
+        readingTime={readingTimeMinutes(countWords(article.body))}
+      />
+    ))}
   </div>
 </BaseLayout>
 
 <style>
-  .tag-page { padding: 3rem 1.25rem 4rem; }
-  .back-link {
-    color: var(--text-faint);
-    font-size: 0.85rem;
-    text-decoration: none;
-  }
-  .back-link:hover { color: var(--accent-3); }
-  h1 {
-    color: var(--accent-2);
-    margin-top: 0.2em;
-  }
-  .count-line {
-    color: var(--text-faint);
-    font-size: 0.8rem;
-  }
-  .article-grid {
+  .page-head {
     display: grid;
-    gap: 1rem;
-    margin-top: 2rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .head-text {
+    padding: 2rem var(--pad) 1.4rem;
+  }
+  .head-count {
+    margin: 0.7rem 0 0 0;
+  }
+  .head-back {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.4rem;
+    border-left: var(--rule-w) solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .head-back:hover {
+    background: var(--rule);
+    color: var(--bg);
+  }
+
+  @media (max-width: 700px) {
+    .page-head {
+      grid-template-columns: 1fr;
+    }
+    .head-back {
+      border-left: none;
+      border-top: var(--rule-w) solid var(--rule);
+    }
   }
 </style>

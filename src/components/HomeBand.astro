@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const s = t(lang);
+
+const collectionName = lang === 'sk' ? 'articles-sk' : 'articles-en';
+const all = await getCollection(collectionName as 'articles-sk' | 'articles-en', ({ data }) => !data.draft);
+
+const tagCounts = new Map<string, number>();
+for (const article of all) {
+  for (const tag of article.data.tags) tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+}
+const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+---
+
+<section class="home-band">
+  <div class="band-cell">
+    <h2 class="cell-title">{s.search_tags_heading}</h2>
+    {tags.length === 0 ? (
+      <p class="cell-empty">{s.sidebar_empty}</p>
+    ) : (
+      <div class="tag-cloud">
+        {tags.map(([tag, count]) => (
+          <a class="tag" href={`/${lang}/tags/${tag}/`}>{tag} &middot; {count}</a>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div class="band-cell author-cell">
+    <img src="/images/boggelino.png" width="76" height="76" alt="" class="author-avatar" />
+    <div class="author-text">
+      <h2 class="cell-title">BOGGELINO</h2>
+      <p class="author-blurb">{s.about_intro_1}</p>
+      <a class="author-link" href={`/${lang}/about/`}>{s.nav_about} &#9656;</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .home-band {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .band-cell {
+    padding: 1.5rem var(--pad);
+  }
+  .band-cell + .band-cell {
+    border-left: var(--rule-w) solid var(--rule);
+  }
+  .cell-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0 0 0.9rem 0;
+  }
+  .cell-empty {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .author-cell {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+  }
+  .author-avatar {
+    flex: none;
+    border: var(--rule-w) solid var(--rule);
+    border-radius: 0;
+    display: block;
+  }
+  .author-blurb {
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    margin: 0 0 0.8rem 0;
+    max-width: 46ch;
+  }
+  .author-link {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 2px;
+  }
+  .author-link:hover {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  @media (max-width: 860px) {
+    .home-band {
+      grid-template-columns: 1fr;
+    }
+    .band-cell + .band-cell {
+      border-left: none;
+      border-top: var(--rule-w) solid var(--rule);
+    }
+  }
+</style>

@@ -1,0 +1,18 @@
+---
+// One editor for both languages, so it lives outside the /sk/ and /en/ trees.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ComposeEditor from '../components/ComposeEditor.astro';
+import { defaultLang } from '../i18n/dict';
+---
+
+<BaseLayout
+  lang={defaultLang}
+  title="Editor"
+  description="Internal tool for writing and managing MOMENTUM articles."
+  breadcrumb="Editor"
+  showLangSwitch={false}
+  fullBleed
+  showFooter={false}
+>
+  <ComposeEditor />
+</BaseLayout>

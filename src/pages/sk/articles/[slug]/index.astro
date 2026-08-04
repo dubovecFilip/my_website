@@ -6,9 +6,12 @@ import ArticleLightbox from '../../../../components/ArticleLightbox.astro';
 import RelatedArticles from '../../../../components/RelatedArticles.astro';
 import AuthorNote from '../../../../components/AuthorNote.astro';
 import ArticleStats from '../../../../components/ArticleStats.astro';
+import PlaceholderArt from '../../../../components/PlaceholderArt.astro';
+import ShareOverlay from '../../../../components/ShareOverlay.astro';
 import { t } from '../../../../i18n/dict';
 import { authors, defaultAuthor, type AuthorId } from '../../../../data/authors';
 import { countWords, readingTimeMinutes } from '../../../../utils/article-stats';
+import { extractFirstImage } from '../../../../utils/extract-image';
 
 export async function getStaticPaths() {
   const articles = await getCollection('articles-sk', ({ data }) => !data.draft);
@@ -33,125 +36,392 @@ const translationHref = hasTranslation ? `/en/articles/${article.id}/` : '/en/';
 const author = authors[(article.data.author as AuthorId) ?? defaultAuthor] ?? authors[defaultAuthor];
 
 const dateStr = article.data.date.toLocaleDateString('sk-SK', {
+  day: '2-digit',
+  month: '2-digit',
   year: 'numeric',
-  month: 'long',
-  day: 'numeric',
 });
 
 const readingTime = readingTimeMinutes(countWords(article.body));
 const readingTimeLabel = `${readingTime} min čítania`;
+const coverImage = extractFirstImage(article.body);
+
 ---
 
-<BaseLayout lang={lang} title={article.data.title} description={article.data.description} translationHref={translationHref}>
-  <article class="wrap-wide article">
-    <a class="back-link mono" href={`/${lang}/`}>&larr; {s.back_home}</a>
-
+<BaseLayout
+  lang={lang}
+  title={article.data.title}
+  description={article.data.description}
+  translationHref={translationHref}
+  breadcrumb={article.data.title}
+  readingProgress
+  scrollTitle
+>
+  <article class="article">
     <header class="article-header">
-      <h1>{article.data.title}</h1>
-      <hr class="gold-rule" />
-      <div class="article-meta mono">
-        <span class="author">
-          <img src={author.avatar} alt="" class="author-avatar" width="20" height="20" />
-          {s.written_by} {author.name}
-        </span>
-        <span class="dot">&middot;</span>
-        <time datetime={article.data.date.toISOString()}>{s.published_on} {dateStr}</time>
-        <span class="dot">&middot;</span>
-        <span>{readingTimeLabel}</span>
-      </div>
-      {article.data.tags.length > 0 && (
-        <div class="article-tags">
-          {article.data.tags.map((tag: string) => (
-            <a class="tag" href={`/${lang}/tags/${tag}/`}>{tag}</a>
-          ))}
+      <div class="header-text">
+        <div class="header-kicker">
+          <span class="header-meta">{s.published_on} {dateStr} &middot; {readingTimeLabel}</span>
         </div>
-      )}
+        <h1 class="header-title">{article.data.title}</h1>
+        <p class="header-desc">{article.data.description}</p>
+        {article.data.tags.length > 0 && (
+          <div class="header-tags">
+            {article.data.tags.map((tag: string) => (
+              <a class="tag header-tag" href={`/${lang}/tags/${tag}/`}>{tag}</a>
+            ))}
+          </div>
+        )}
+      </div>
+      <div class="header-stats">
+        <ArticleStats lang={lang} body={article.body} variant="hero" />
+      </div>
     </header>
 
+    <div class:list={['article-cover', !coverImage && 'is-placeholder']}>
+      {coverImage ? <img src={coverImage} alt="" /> : <PlaceholderArt seed={article.data.title} variant="band" />}
+    </div>
+
     <div class:list={['article-layout', hasToc && 'has-toc']}>
-      <TableOfContents lang={lang} headings={headings} />
+      <aside class="article-rail">
+        {hasToc && <TableOfContents lang={lang} headings={headings} />}
+
+        <div class="rail-block">
+          <h2 class="rail-title">{s.about_author_title}</h2>
+          <div class="rail-author">
+            <img src={author.avatar} alt="" class="rail-avatar" width="48" height="48" />
+            <p class="rail-name">{author.name}</p>
+          </div>
+          {article.data.authorNote && (
+            <div class="rail-note">
+              <span class="rail-note-title">{s.author_note_title}</span>
+              <p class="rail-note-text">{article.data.authorNote}</p>
+            </div>
+          )}
+        </div>
+
+        <div class="rail-block rail-actions">
+          <a class="btn-ghost" href="#main">&#8593; {s.article_top}</a>
+          <a class="btn-ghost" href={`/${lang}/tags/`}>&#8594; {s.all_tags}</a>
+          <button type="button" class="btn-ghost share-btn" data-share-open>
+            &#9741; {s.article_share}
+          </button>
+        </div>
+      </aside>
 
       <div class="article-main">
-        <div class="article-body">
+        <div class:list={['article-body', coverImage && 'has-cover']}>
           <Content />
         </div>
 
-        <AuthorNote lang={lang} note={article.data.authorNote} avatar={author.avatar} />
-        <ArticleStats lang={lang} body={article.body} />
+        <AuthorNote lang={lang} note={article.data.authorNote} avatar={author.avatar} authorName={author.name} />
       </div>
     </div>
 
-    <hr class="divider" />
-    <a class="back-link mono" href={`/${lang}/`}>&larr; {s.back_home}</a>
+    <div class="mobile-actions">
+      <a class="mobile-action" href="#main">&#8593; {s.article_top}</a>
+      <a class="mobile-action" href={`/${lang}/tags/`}>&#8594; {s.all_tags}</a>
+      <button type="button" class="mobile-action is-primary share-btn" data-share-open>
+        &#9741; {s.article_share}
+      </button>
+    </div>
 
     <RelatedArticles lang={lang} currentId={article.id} currentTags={article.data.tags} />
   </article>
 
   <ArticleLightbox />
+  <ShareOverlay lang={lang} title={article.data.title} />
 </BaseLayout>
 
+<script>
+  // Reading progress: how far the article body has scrolled past the fold.
+  const fill = document.getElementById('reading-progress');
+  const body = document.querySelector('.article-body');
+
+  function update() {
+    if (!fill || !body) return;
+    const rect = body.getBoundingClientRect();
+    const total = rect.height - window.innerHeight;
+    const done = total > 0 ? Math.min(1, Math.max(0, -rect.top / total)) : 0;
+    fill.style.width = `${done * 100}%`;
+  }
+
+  update();
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+
+  // Hand the headline to the top bar once the real one leaves the screen.
+  const barTitle = document.querySelector('[data-scroll-title]');
+  const headline = document.querySelector('.header-title');
+
+  if (barTitle && headline && 'IntersectionObserver' in window) {
+    const titleObserver = new IntersectionObserver(
+      ([entry]) => {
+        barTitle.classList.toggle('is-visible', !entry.isIntersecting);
+      },
+      { rootMargin: '-60px 0px 0px 0px', threshold: 0 },
+    );
+    titleObserver.observe(headline);
+  }
+</script>
+
 <style>
-  .article { padding: 2.5rem 1.25rem 4rem; }
-  .back-link {
-    color: var(--text-faint);
-    font-size: 0.85rem;
-    text-decoration: none;
-  }
-  .back-link:hover { color: var(--accent-3); }
   .article-header {
-    max-width: var(--max-width);
-    margin: 1.5rem auto 2.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 3rem;
+    align-items: end;
+    background: var(--inv-bg);
+    color: var(--inv-text);
+    padding: 2.8rem var(--pad) 2.4rem;
+    border-bottom: var(--rule-w) solid var(--rule);
   }
-  .article-meta {
-    color: var(--text-faint);
-    font-size: 0.82rem;
-    margin-top: 1rem;
+  .header-text {
     display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .header-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+  .header-badge {
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.7rem;
+  }
+  .header-meta {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--inv-text-muted);
+  }
+  .header-title {
+    margin: 0;
+    font-size: clamp(2.3rem, 6vw, 5rem);
+    line-height: 0.88;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+  .header-desc {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #c9c4b8;
+  }
+  .header-tags {
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    align-items: center;
-    flex-wrap: wrap;
   }
-  .author {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+  .header-tag:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
   }
-  .author-avatar {
-    border-radius: 50%;
+
+  .article-cover {
+    border-bottom: var(--rule-w) solid var(--rule);
+    max-height: 460px;
+    overflow: hidden;
+  }
+  .article-cover.is-placeholder {
+    max-height: 260px;
+  }
+  .article-cover img {
     display: block;
-  }
-  .dot { color: var(--border); }
-  .article-tags {
-    display: flex;
-    gap: 0.45rem;
-    flex-wrap: wrap;
-    margin-top: 1rem;
+    width: 100%;
+    height: 100%;
+    max-height: 460px;
+    object-fit: cover;
+    cursor: zoom-in;
   }
 
   .article-layout {
-    display: block;
-  }
-  .article-layout.has-toc {
     display: grid;
-    grid-template-columns: 220px minmax(0, var(--max-width));
-    gap: 2.4rem;
-    justify-content: center;
+    grid-template-columns: 300px minmax(0, 1fr);
     align-items: start;
   }
+  /* The measure stays a measure, so on a wide screen the column centres
+     inside the space the old right rail used to take. */
   .article-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.4rem var(--pad) 3rem;
     min-width: 0;
-    max-width: var(--max-width);
-    margin: 0 auto;
   }
-  .article-body {
-    font-size: 1.05rem;
+  .article-main > * {
+    width: 100%;
+    max-width: var(--measure);
+  }
+  /* The rail carries the note on wide screens; below the rail breakpoint the
+     body copy takes over. */
+  .article-main :global(.author-note) {
+    display: none;
+    width: 100%;
+    max-width: var(--measure);
   }
 
-  @media (max-width: 900px) {
-    .article-layout.has-toc {
+  /* Contents, author and actions ride down the page as one sticky column. */
+  .article-rail {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 4.4rem;
+    max-height: calc(100vh - 5.4rem);
+    overflow: hidden;
+    border-right: var(--rule-w) solid var(--rule);
+  }
+  /* Long contents scroll inside the rail so the author and the actions
+     never get pushed out of sight. */
+  .article-rail :global(.toc-desktop) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .rail-block {
+    padding: 1.6rem 1.1rem;
+  }
+  .rail-block + .rail-block {
+    border-top: var(--rule-w) solid var(--rule);
+  }
+  .rail-title {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin: 0 0 0.9rem 0;
+  }
+  .rail-author {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .rail-avatar {
+    display: block;
+    border: var(--rule-w) solid var(--rule);
+    border-radius: 0;
+    flex: none;
+  }
+  .rail-name {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .rail-note {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 2px solid var(--border);
+  }
+  .rail-note-title {
+    display: block;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.58rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  .rail-note-text {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-body);
+  }
+  .rail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .share-btn {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .share-btn:hover {
+    background: var(--rule);
+    border-color: var(--rule);
+    color: var(--bg);
+  }
+
+  /* Below the rail breakpoint only the collapsible contents strip stays,
+     and the actions move to a bar under the article. */
+  .mobile-actions {
+    display: none;
+    border-bottom: var(--rule-w) solid var(--rule);
+    background: var(--bg-raised);
+  }
+  .mobile-action {
+    flex: 1;
+    text-align: center;
+    padding: 0.95rem 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: inherit;
+    background: none;
+    border: none;
+    border-right: var(--rule-w) solid var(--rule);
+    cursor: pointer;
+  }
+  .mobile-action:last-child {
+    border-right: none;
+  }
+  .mobile-action.is-primary {
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+  }
+
+  @media (max-width: 1200px) {
+    .article-layout {
       grid-template-columns: 1fr;
-      max-width: var(--max-width);
-      margin: 0 auto;
+    }
+    .article-rail {
+      position: static;
+      max-height: none;
+      overflow: visible;
+      border-right: none;
+    }
+    .article-rail :global(.toc-desktop) {
+      overflow: visible;
+    }
+    .rail-block {
+      display: none;
+    }
+    .article-main :global(.author-note) {
+      display: flex;
+    }
+    .article-main {
+      padding: 1.6rem var(--pad) 2.4rem;
+    }
+    .mobile-actions {
+      display: flex;
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .article-header {
+      grid-template-columns: 1fr;
+      gap: 1.6rem;
+      padding: 1.8rem var(--pad);
     }
   }
 </style>

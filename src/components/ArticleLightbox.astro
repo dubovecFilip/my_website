@@ -1,10 +1,15 @@
 ---
-// Attaches a lightbox to every <img> inside .article-body. No props needed;
-// it scans the rendered article DOM once mounted, so it automatically covers
-// plain images and the figure/figcaption images from the caption plugin.
+// Attaches a lightbox to every image matched by `selector`. It scans the
+// rendered DOM once mounted, so it covers plain images, the figure/figcaption
+// images from the caption plugin, the article cover and the gallery sheet.
+interface Props {
+  selector?: string;
+}
+
+const { selector = '.article-cover img, .article-body img' } = Astro.props;
 ---
 
-<div class="lightbox" id="lightbox" aria-hidden="true">
+<div class="lightbox" id="lightbox" aria-hidden="true" data-selector={selector}>
   <button class="lightbox-close" id="lightbox-close" aria-label="Close" type="button">&times;</button>
   <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous image" type="button">&larr;</button>
   <div class="lightbox-stage" id="lightbox-stage">
@@ -23,7 +28,23 @@
   const prevBtn = document.getElementById('lightbox-prev') as HTMLButtonElement;
   const nextBtn = document.getElementById('lightbox-next') as HTMLButtonElement;
 
-  const images = Array.from(document.querySelectorAll<HTMLImageElement>('.article-body img'));
+  // Hidden images (the body copy of the cover) stay out of the sequence.
+  const selector = overlay.dataset.selector || '.article-body img';
+  const images = Array.from(document.querySelectorAll<HTMLImageElement>(selector)).filter(
+    (img) => img.offsetParent !== null,
+  );
+
+  /**
+   * The cover carries no alt of its own, so it borrows the caption from the
+   * hidden body copy of the same file.
+   */
+  function captionFor(img: HTMLImageElement): string {
+    if (img.alt) return img.alt;
+    const twin = Array.from(document.querySelectorAll<HTMLImageElement>('.article-body img')).find(
+      (candidate) => candidate.src === img.src && candidate.alt,
+    );
+    return twin?.alt ?? '';
+  }
   let currentIndex = 0;
   let zoomed = false;
 
@@ -36,10 +57,11 @@
     if (images.length === 0) return;
     currentIndex = (index + images.length) % images.length;
     const img = images[currentIndex];
+    const caption = captionFor(img);
     imgEl.src = img.src;
-    imgEl.alt = img.alt || '';
-    captionEl.textContent = img.alt || '';
-    captionEl.style.display = img.alt ? 'block' : 'none';
+    imgEl.alt = caption;
+    captionEl.textContent = caption;
+    captionEl.style.display = caption ? 'block' : 'none';
     zoomed = false;
     imgEl.classList.remove('is-zoomed');
     overlay.classList.add('is-open');
@@ -61,7 +83,14 @@
   }
 
   images.forEach((img, index) => {
-    img.addEventListener('click', () => openAt(index));
+    // Gallery thumbs sit inside a link to the raw file, which stays as the
+    // no-script fallback. Links that point somewhere else are left alone.
+    const wrapper = img.closest('a');
+    const target = wrapper && wrapper.href === img.src ? wrapper : img;
+    target.addEventListener('click', (e) => {
+      e.preventDefault();
+      openAt(index);
+    });
   });
 
   closeBtn.addEventListener('click', close);
@@ -114,7 +143,7 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(6, 7, 11, 0.92);
+    background: rgba(17, 17, 17, 0.97);
     z-index: 100;
   }
   .lightbox.is-open {
@@ -126,13 +155,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.9rem;
   }
   .lightbox-stage img {
     max-width: 90vw;
-    max-height: 80vh;
+    max-height: 78vh;
     object-fit: contain;
-    border-radius: var(--radius);
+    border: var(--rule-w) solid #f4f2ec;
+    border-radius: 0;
     cursor: zoom-in;
     transition: transform 0.2s ease;
   }
@@ -141,59 +171,77 @@
     transform: scale(1.5);
   }
   .lightbox-caption {
-    color: var(--text-muted);
-    font-size: 0.88rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f4f2ec;
+    border: 2px solid #f4f2ec;
+    padding: 0.4rem 0.7rem;
     text-align: center;
     max-width: 60ch;
     margin: 0;
   }
+
+  /* Controls are hard squares, not floating circles: same vocabulary as
+     the rest of the site. */
   .lightbox-close,
   .lightbox-nav {
     position: absolute;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: none;
+    border: var(--rule-w) solid #f4f2ec;
     color: #f4f2ec;
     cursor: pointer;
-    border-radius: 50%;
+    border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: var(--font-mono);
   }
   .lightbox-close {
     top: 1.2rem;
     right: 1.2rem;
-    width: 42px;
-    height: 42px;
-    font-size: 1.6rem;
+    width: 46px;
+    height: 46px;
+    font-size: 1.5rem;
     line-height: 1;
+    background: var(--rust);
+    border-color: var(--rust);
+    color: #ffffff;
   }
   .lightbox-nav {
     top: 50%;
     transform: translateY(-50%);
-    width: 46px;
-    height: 46px;
-    font-size: 1.3rem;
+    width: 56px;
+    height: 56px;
+    font-size: 1.4rem;
   }
   .lightbox-prev {
-    left: 1.2rem;
+    left: 1.4rem;
   }
   .lightbox-next {
-    right: 1.2rem;
+    right: 1.4rem;
   }
-  .lightbox-close:hover,
   .lightbox-nav:hover {
-    border-color: var(--accent-3);
-    color: var(--accent-3);
+    background: var(--rust);
+    border-color: var(--rust);
+    color: #ffffff;
+  }
+  .lightbox-close:hover {
+    background: #f4f2ec;
+    border-color: #f4f2ec;
+    color: #111111;
   }
 
   @media (max-width: 640px) {
     .lightbox-nav {
-      width: 38px;
-      height: 38px;
+      width: 42px;
+      height: 42px;
     }
     .lightbox-close {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
     }
   }
 </style>

@@ -5,54 +5,66 @@ interface Props {
   lang: Lang;
   note?: string;
   avatar: string;
+  authorName?: string;
 }
 
-const { lang, note, avatar } = Astro.props;
+const { lang, note, avatar, authorName } = Astro.props;
 const s = t(lang);
 ---
 
 {note && (
   <aside class="author-note">
-    <header class="author-note-head">
-      <img src={avatar} alt="" class="author-note-avatar" width="26" height="26" />
+    <img src={avatar} alt="" class="author-note-avatar" width="64" height="64" />
+    <div class="author-note-body">
       <span class="author-note-title">{s.author_note_title}</span>
-    </header>
-    <p class="author-note-text">{note}</p>
+      <p class="author-note-text">{note}</p>
+      {authorName && <span class="author-note-sign">&mdash; {authorName}</span>}
+    </div>
   </aside>
 )}
 
 <style>
   .author-note {
-    margin: 2.4rem 0;
-    padding: 1.2rem 1.4rem 1.3rem;
-    border: 1px solid color-mix(in srgb, var(--accent-3) 40%, var(--border));
-    border-left: 4px solid var(--accent-3);
-    background: color-mix(in srgb, var(--accent-3) 8%, var(--bg-raised));
-    border-radius: 0 var(--radius) var(--radius) 0;
-  }
-  .author-note-head {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.6rem;
+    gap: 1.2rem;
+    margin: 2.4rem 0;
+    padding: 1.3rem;
+    background: var(--bg-raised);
+    border: var(--rule-w) solid var(--rule);
   }
   .author-note-avatar {
-    border-radius: 50%;
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border: var(--rule-w) solid var(--rule);
+    border-radius: 0;
     display: block;
-    flex-shrink: 0;
+  }
+  .author-note-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
   .author-note-title {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
+    font-weight: 700;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--accent-3);
+    color: var(--accent);
   }
   .author-note-text {
     margin: 0;
-    color: var(--text);
-    font-size: 1rem;
-    font-style: italic;
-    line-height: 1.55;
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--text-body);
+  }
+  .author-note-sign {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
   }
 </style>

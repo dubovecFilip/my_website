@@ -2,29 +2,54 @@ import fs from "node:fs";
 import path from "node:path";
 
 /**
- * Reads photos straight out of `public/images/gallery/` at build time.
- * There's no content-collection entry per photo; just drop a file in that
- * folder and it shows up. Newest file (by name, then mtime as a tiebreaker)
- * first.
+ * Collects every image the site ships: the standalone drops in
+ * `public/images/gallery/` and every picture uploaded with an article under
+ * `public/images/articles/<id>/`. Anything added to either place shows up in
+ * the gallery without a second step.
  */
-const GALLERY_DIR = path.join(process.cwd(), "public/images/gallery");
+const PUBLIC_DIR = path.join(process.cwd(), "public");
+const GALLERY_DIR = path.join(PUBLIC_DIR, "images/gallery");
+const ARTICLES_DIR = path.join(PUBLIC_DIR, "images/articles");
 const IMAGE_EXT = /\.(jpe?g|png|webp|avif|gif)$/i;
 
 export interface GalleryPhoto {
   src: string;
   file: string;
+  /** Set when the image came from an article folder. */
+  articleId?: string;
+}
+
+function imagesIn(dir: string): string[] {
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir)
+    .filter((file) => IMAGE_EXT.test(file))
+    .sort((a, b) => a.localeCompare(b));
 }
 
 export function readGalleryPhotos(): GalleryPhoto[] {
-  if (!fs.existsSync(GALLERY_DIR)) return [];
+  const standalone: GalleryPhoto[] = imagesIn(GALLERY_DIR).map((file) => ({
+    src: `/images/gallery/${file}`,
+    file,
+  }));
 
-  return fs
-    .readdirSync(GALLERY_DIR)
-    .filter((file) => IMAGE_EXT.test(file))
-    .sort((a, b) => {
-      const statA = fs.statSync(path.join(GALLERY_DIR, a)).mtimeMs;
-      const statB = fs.statSync(path.join(GALLERY_DIR, b)).mtimeMs;
-      return statB - statA;
-    })
-    .map((file) => ({ src: `/images/gallery/${file}`, file }));
+  const fromArticles: GalleryPhoto[] = [];
+  if (fs.existsSync(ARTICLES_DIR)) {
+    const folders = fs
+      .readdirSync(ARTICLES_DIR, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name);
+
+    for (const articleId of folders) {
+      for (const file of imagesIn(path.join(ARTICLES_DIR, articleId))) {
+        fromArticles.push({
+          src: `/images/articles/${articleId}/${file}`,
+          file,
+          articleId,
+        });
+      }
+    }
+  }
+
+  return [...standalone, ...fromArticles];
 }

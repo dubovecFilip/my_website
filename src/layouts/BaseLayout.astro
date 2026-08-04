@@ -1,23 +1,68 @@
 ---
 import { getCollection } from 'astro:content';
 import '../styles/global.css';
-import FlagIcon from '../components/FlagIcon.astro';
-import { t, otherLang, langMeta, type Lang } from '../i18n/dict';
+import { t, otherLang, languages, langMeta, type Lang } from '../i18n/dict';
 
 interface Props {
   lang: Lang;
   title: string;
   description?: string;
   translationHref?: string;
+  /** Homepage only: the oversized wordmark block under the top bar. */
+  masthead?: boolean;
+  /** Small path line shown next to the wordmark on inner pages. */
+  breadcrumb?: string;
+  /** Article pages: the reading strip pinned under the bar. */
+  readingProgress?: boolean;
+  /** Article pages: the path cell holds the title and only shows once the
+      real headline has scrolled out of view. */
+  scrollTitle?: boolean;
+  /** Pages that exist outside the language trees hide the switcher. */
+  showLangSwitch?: boolean;
+  /** Tools that need more room than the Full HD reading shell allows. */
+  fullBleed?: boolean;
+  /** Tools that fill the viewport do not want a footer under them. */
+  showFooter?: boolean;
 }
 
-const { lang, title, description = 'MOMENTUM: articles, opinions, and things I like.', translationHref } = Astro.props;
+const {
+  lang,
+  title,
+  description = 'MOMENTUM: articles, opinions, and things I like.',
+  translationHref,
+  masthead = false,
+  breadcrumb,
+  readingProgress = false,
+  scrollTitle = false,
+  showLangSwitch = true,
+  fullBleed = false,
+  showFooter = true,
+} = Astro.props;
 const s = t(lang);
 const other = otherLang(lang);
-const flagCode: Record<Lang, 'sk' | 'gb'> = { sk: 'sk', en: 'gb' };
 
 const currentPath = Astro.url.pathname;
-const otherPath = translationHref ?? currentPath.replace(`/${lang}/`, `/${other}/`).replace(new RegExp(`/${lang}$`), `/${other}`);
+
+/** Same page in another language, or the caller's override for the pair. */
+function pathFor(code: Lang): string {
+  if (translationHref && code === other) return translationHref;
+  return currentPath.replace(`/${lang}/`, `/${code}/`).replace(new RegExp(`/${lang}$`), `/${code}`);
+}
+
+const navItems = [
+  { href: `/${lang}/`, label: s.nav_home },
+  { href: `/${lang}/tags/`, label: s.nav_tags },
+  { href: `/${lang}/gallery/`, label: s.nav_gallery },
+  { href: `/${lang}/about/`, label: s.nav_about },
+];
+
+// A nav item is current when the path matches it, or when it is a section
+// root and the path sits inside that section.
+function isCurrent(href: string): boolean {
+  const path = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
+  if (href === `/${lang}/`) return path === `/${lang}/`;
+  return path.startsWith(href);
+}
 
 // Footer data: latest article link + the full slug list so the "random
 // article" button can pick one client-side without a server round trip.
@@ -29,6 +74,7 @@ const footerArticles = await getCollection(
 const footerSorted = footerArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 const latestArticle = footerSorted[0];
 const footerSlugs = footerSorted.map((a) => a.id);
+const year = new Date().getFullYear();
 ---
 
 <!doctype html>
@@ -41,60 +87,132 @@ const footerSlugs = footerSorted.map((a) => a.id);
     <title>{title} · MOMENTUM</title>
     <meta name="description" content={description} />
     <script is:inline>
+      // Light is the default now, so only an explicit dark choice is applied.
       const saved = localStorage.getItem('momentum-theme');
-      if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     </script>
   </head>
   <body>
-    <header class="site-header">
-      <div class="wrap-wide header-inner">
-        <a class="brand" href={`/${lang}/`}>
-          <img src="/images/momentum.png" alt="" class="brand-momentum" width="34" height="34" />
-          <span class="brand-word">MOMENTUM</span>
-        </a>
-        <nav class="site-nav">
-          <a href={`/${lang}/`}>{s.nav_home}</a>
-          <a href={`/${lang}/tags/`}>{s.nav_tags}</a>
-          <a href={`/${lang}/gallery/`}>{s.nav_gallery}</a>
-          <a href={`/${lang}/about/`}>{s.nav_about}</a>
-          <button id="theme-toggle" class="icon-btn" aria-label={s.theme_toggle} title={s.theme_toggle}>
-            <svg id="theme-icon-dark" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-            <svg id="theme-icon-light" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-              <circle cx="12" cy="12" r="4"/>
-              <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
-            </svg>
-          </button>
+    <a class="skip-link" href="#main">{s.skip_to_content}</a>
 
-          <details class="lang-dropdown">
-            <summary aria-label={s.lang_switch}>
-              <FlagIcon code={flagCode[lang]} />
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-            </summary>
-            <div class="lang-menu">
-              <a href={`/${lang}/`} class="lang-item is-current" aria-current="true">
-                <FlagIcon code={flagCode[lang]} /> {langMeta[lang].label}
-              </a>
-              <a href={otherPath} class="lang-item">
-                <FlagIcon code={flagCode[other]} /> {langMeta[other].label}
-              </a>
-            </div>
-          </details>
+    <div class:list={['site-shell', fullBleed && 'is-full']}>
+    <header class="site-header">
+      <div class="bar">
+        <a class="bar-cell brand" href={`/${lang}/`}>MOMENTUM<span class="brand-cursor">_</span></a>
+
+        {breadcrumb && (
+          <div class:list={['bar-cell', 'bar-path', scrollTitle && 'is-scroll-title']} data-scroll-title={scrollTitle ? '' : undefined}>
+            {breadcrumb}
+          </div>
+        )}
+
+        <nav class="bar-nav" aria-label={s.nav_menu}>
+          {navItems.map((item) => (
+            <a href={item.href} class:list={['bar-navlink', isCurrent(item.href) && 'is-current']}>
+              {item.label}
+            </a>
+          ))}
         </nav>
+
+        {showLangSwitch && (
+        <div class="bar-cell bar-lang">
+          <details class="lang-drop">
+            <summary aria-label={s.lang_switch}>
+              <span>{lang.toUpperCase()}</span>
+              <span class="lang-caret" aria-hidden="true">&#9662;</span>
+            </summary>
+            <ul class="lang-menu">
+              {languages.map((code) => (
+                <li>
+                  <a
+                    href={pathFor(code)}
+                    hreflang={code}
+                    class:list={['lang-item', code === lang && 'is-current']}
+                    aria-current={code === lang ? 'true' : undefined}
+                  >
+                    <span class="lang-code">{code.toUpperCase()}</span>
+                    <span class="lang-name">{langMeta[code].label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+        )}
+
+        <div class="bar-cell bar-theme">
+          <span class="theme-label" data-theme-light>{s.theme_light}</span>
+          <button id="theme-toggle" class="theme-switch" type="button" aria-label={s.theme_toggle} title={s.theme_toggle}>
+            <span class="theme-knob"></span>
+          </button>
+          <span class="theme-label theme-label-off" data-theme-dark>{s.theme_dark}</span>
+        </div>
+
+        <button id="drawer-open" class="bar-cell bar-burger" type="button" aria-label={s.nav_menu} aria-expanded="false" aria-controls="drawer">
+          <span aria-hidden="true">&#9776;</span>
+        </button>
       </div>
+
+      {masthead && (
+        <div class="masthead">
+          <div class="masthead-word">MOMEN<span class="masthead-tum">TUM</span></div>
+        </div>
+      )}
+
+      {readingProgress && (
+        <div class="progress" aria-hidden="true">
+          <span class="progress-fill" id="reading-progress"></span>
+        </div>
+      )}
     </header>
 
-    <main>
+    <div class="drawer" id="drawer" hidden>
+      <div class="drawer-bar">
+        <span class="drawer-brand">MOMENTUM</span>
+        <button id="drawer-close" class="drawer-close" type="button" aria-label={s.nav_close}>&times;</button>
+      </div>
+      <nav class="drawer-nav" aria-label={s.nav_menu}>
+        {navItems.map((item) => (
+          <a href={item.href} class:list={['drawer-link', isCurrent(item.href) && 'is-current']}>
+            {item.label}
+          </a>
+        ))}
+      </nav>
+      <div class="drawer-foot">
+        {showLangSwitch && (
+        <div class="drawer-lang">
+          {languages.map((code) => (
+            <a
+              href={pathFor(code)}
+              hreflang={code}
+              class:list={['drawer-lang-opt', code === lang && 'is-current']}
+            >
+              {code.toUpperCase()}
+            </a>
+          ))}
+        </div>
+        )}
+        <div class="drawer-theme">
+          <span>{s.theme_toggle}</span>
+          <button id="drawer-theme-toggle" class="theme-switch" type="button" aria-label={s.theme_toggle}>
+            <span class="theme-knob"></span>
+          </button>
+        </div>
+        <p class="drawer-meta">
+          <a href={`/${lang}/rss.xml`}>{s.footer_rss}</a> &middot; &copy; {year} MOMENTUM
+        </p>
+      </div>
+    </div>
+
+    <main id="main">
       <slot />
     </main>
 
+    {showFooter && (
     <footer class="site-footer">
-      <div class="wrap-wide footer-grid">
+      <div class="footer-cols">
         <div class="footer-col">
-          <h3 class="footer-heading">{s.footer_latest_articles}</h3>
+          <h2 class="footer-heading">{s.footer_latest_articles}</h2>
           <ul class="footer-list">
             {latestArticle && (
               <li>
@@ -112,23 +230,30 @@ const footerSlugs = footerSorted.map((a) => a.id);
         </div>
 
         <div class="footer-col">
-          <h3 class="footer-heading">{s.footer_navigation}</h3>
+          <h2 class="footer-heading">{s.footer_navigation}</h2>
           <ul class="footer-list">
             <li><a href={`/${lang}/tags/`}>{s.nav_tags}</a></li>
+            <li><a href={`/${lang}/gallery/`}>{s.nav_gallery}</a></li>
             <li><a href={`/${lang}/about/`}>{s.nav_about}</a></li>
-            <li><a href={`/${lang}/rss.xml`}>{s.footer_rss}</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
-          <h3 class="footer-heading">{s.footer_meta}</h3>
+          <h2 class="footer-heading">{s.footer_meta}</h2>
           <ul class="footer-list">
-            <li><span>&copy; {new Date().getFullYear()} MOMENTUM</span></li>
+            <li><a href={`/${lang}/rss.xml`}>{s.footer_rss}</a></li>
             <li><span>{s.footer_built_with}</span></li>
           </ul>
         </div>
       </div>
+
+      <div class="footer-bar">
+        <span>&copy; {year} MOMENTUM</span>
+        <span>RSS &middot; ASTRO</span>
+      </div>
     </footer>
+    )}
+    </div>
 
     <script>
       const randomBtn = document.getElementById('footer-random-btn');
@@ -143,176 +268,463 @@ const footerSlugs = footerSorted.map((a) => a.id);
           // no-op: malformed data attribute, nothing to navigate to
         }
       });
-    </script>
 
-    <script is:inline>
-      const darkIcon = document.getElementById('theme-icon-dark');
-      const lightIcon = document.getElementById('theme-icon-light');
-      function syncIcon() {
-        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-        if (darkIcon) darkIcon.style.display = isLight ? 'none' : 'block';
-        if (lightIcon) lightIcon.style.display = isLight ? 'block' : 'none';
+      // Mobile drawer
+      const drawer = document.getElementById('drawer');
+      const openBtn = document.getElementById('drawer-open');
+      const closeBtn = document.getElementById('drawer-close');
+
+      function setDrawer(open: boolean) {
+        if (!drawer) return;
+        drawer.hidden = !open;
+        drawer.classList.toggle('is-open', open);
+        openBtn?.setAttribute('aria-expanded', String(open));
+        document.body.style.overflow = open ? 'hidden' : '';
+        if (open) closeBtn?.focus();
+        else openBtn?.focus();
       }
-      syncIcon();
-      const btn = document.getElementById('theme-toggle');
-      btn?.addEventListener('click', () => {
-        const html = document.documentElement;
-        const isLight = html.getAttribute('data-theme') === 'light';
-        if (isLight) {
-          html.removeAttribute('data-theme');
-          localStorage.setItem('momentum-theme', 'dark');
-        } else {
-          html.setAttribute('data-theme', 'light');
-          localStorage.setItem('momentum-theme', 'light');
+
+      openBtn?.addEventListener('click', () => setDrawer(true));
+      closeBtn?.addEventListener('click', () => setDrawer(false));
+      drawer?.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => setDrawer(false));
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && drawer && !drawer.hidden) setDrawer(false);
+        if (e.key === 'Escape') {
+          document.querySelectorAll('details.lang-drop[open]').forEach((el) => el.removeAttribute('open'));
         }
-        syncIcon();
       });
 
       document.addEventListener('click', (e) => {
-        document.querySelectorAll('details.lang-dropdown[open]').forEach((el) => {
-          if (!(el instanceof HTMLElement)) return;
-          if (!el.contains(e.target)) el.removeAttribute('open');
+        document.querySelectorAll('details.lang-drop[open]').forEach((el) => {
+          if (e.target instanceof Node && !el.contains(e.target)) el.removeAttribute('open');
         });
       });
     </script>
 
+    <script is:inline>
+      (function () {
+        function apply(isDark) {
+          const html = document.documentElement;
+          if (isDark) html.setAttribute('data-theme', 'dark');
+          else html.removeAttribute('data-theme');
+          localStorage.setItem('momentum-theme', isDark ? 'dark' : 'light');
+        }
+        document.querySelectorAll('.theme-switch').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            apply(document.documentElement.getAttribute('data-theme') !== 'dark');
+          });
+        });
+      })();
+    </script>
+
     <style>
-      .site-header {
-        border-bottom: 1px solid var(--border);
-        position: sticky;
-        top: 0;
-        background: color-mix(in srgb, var(--bg) 88%, transparent);
-        backdrop-filter: blur(8px);
-        z-index: 10;
-      }
-      .header-inner {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-top: 0.85rem;
-        padding-bottom: 0.85rem;
-        gap: 1rem;
-      }
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        color: var(--text);
-      }
-      .brand:hover { text-decoration: none; }
-      .brand-momentum {
-        border-radius: 50%;
-        display: block;
-      }
-      .brand-word {
-        font-family: var(--font-display);
-        font-size: 1.15rem;
-        letter-spacing: 0.02em;
-        color: var(--text);
-      }
-      .site-nav {
-        display: flex;
-        align-items: center;
-        gap: 1.1rem;
-        font-size: 0.92rem;
-      }
-      .site-nav > a {
-        color: var(--text-muted);
-      }
-      .site-nav > a:hover {
-        color: var(--accent-3);
-        text-decoration: none;
-      }
-      .icon-btn {
-        background: none;
-        border: 1px solid var(--border);
-        color: var(--text-muted);
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
-      .icon-btn:hover {
-        color: var(--accent-3);
-        border-color: var(--accent-3);
+      /* The editor is a tool, not a reading page, so it may use the whole
+         screen instead of the Full HD column. */
+      :global(.site-shell.is-full) {
+        max-width: none;
+        border-left: none;
+        border-right: none;
       }
 
-      .lang-dropdown {
-        position: relative;
+      .skip-link {
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        z-index: 100;
+        background: var(--accent);
+        color: var(--on-accent);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        padding: 0.8rem 1rem;
       }
-      .lang-dropdown summary {
-        list-style: none;
+      .skip-link:focus {
+        left: 0;
+      }
+
+      /* ---------- Top bar ---------- */
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--bg);
+      }
+      .bar {
+        display: flex;
+        align-items: stretch;
+        border-bottom: var(--rule-w) solid var(--rule);
+      }
+      .bar-cell {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        padding: 0.28rem 0.5rem;
-        cursor: pointer;
-        color: var(--text-muted);
-        user-select: none;
+        padding: 0.7rem 1rem;
+        border-right: var(--rule-w) solid var(--rule);
+        white-space: nowrap;
       }
-      .lang-dropdown summary::-webkit-details-marker { display: none; }
-      .lang-dropdown summary:hover,
-      .lang-dropdown[open] summary {
-        border-color: var(--accent-3);
+      .brand {
+        font-family: var(--font-display);
+        font-weight: 900;
+        font-size: 1.05rem;
+        letter-spacing: 0.01em;
+      }
+      .brand-cursor {
+        color: var(--accent);
+      }
+      .brand:hover {
+        background: var(--rule);
+        color: var(--bg);
+      }
+      /* On article pages this cell carries the headline and only appears
+         once the real one has scrolled away. */
+      .bar-path.is-scroll-title {
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        pointer-events: none;
+      }
+      .bar-path.is-scroll-title.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .bar-path {
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        border-right: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .bar-nav {
+        display: flex;
+        align-items: stretch;
+        margin-left: auto;
+      }
+      .bar-navlink {
+        display: flex;
+        align-items: center;
+        padding: 0.7rem 1.1rem;
+        border-left: var(--rule-w) solid var(--rule);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .bar-navlink:hover {
+        background: var(--rule);
+        color: var(--bg);
+      }
+      .bar-navlink.is-current {
         color: var(--text);
+        font-weight: 700;
+        box-shadow: inset 0 -3px 0 var(--accent);
+      }
+
+      .bar-lang {
+        gap: 0;
+        padding: 0;
+        border-right: var(--rule-w) solid var(--rule);
+        border-left: var(--rule-w) solid var(--rule);
+      }
+      /* A dropdown rather than one cell per language, so adding a third
+         language is a dict entry and nothing else. */
+      .lang-drop {
+        position: relative;
+        height: 100%;
+      }
+      .lang-drop summary {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        height: 100%;
+        padding: 0.7rem 0.9rem;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        background: var(--rule);
+        color: var(--bg);
+        cursor: pointer;
+        list-style: none;
+      }
+      .lang-drop summary::-webkit-details-marker {
+        display: none;
+      }
+      .lang-caret {
+        color: var(--accent);
+        font-size: 0.6rem;
       }
       .lang-menu {
         position: absolute;
-        top: calc(100% + 6px);
+        top: 100%;
         right: 0;
-        min-width: 150px;
-        background: var(--bg-raised);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.35rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.15rem;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        z-index: 30;
+        min-width: 190px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        background: var(--bg);
+        border: var(--rule-w) solid var(--rule);
+        border-top: none;
       }
       .lang-item {
         display: flex;
         align-items: center;
-        gap: 0.55rem;
-        padding: 0.4rem 0.6rem;
-        border-radius: 5px;
-        color: var(--text-muted);
-        font-size: 0.88rem;
-      }
-      .lang-item:hover {
-        background: var(--bg-raised-2);
-        color: var(--text);
-        text-decoration: none;
-      }
-      .lang-item.is-current {
-        color: var(--accent-3);
-      }
-
-      .site-footer {
-        border-top: 1px solid var(--border);
-        margin-top: 4rem;
-        padding: 2.4rem 0 2rem;
-        color: var(--text-faint);
-        font-size: 0.85rem;
-      }
-      .footer-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.8rem;
-      }
-      .footer-heading {
+        gap: 0.7rem;
+        padding: 0.75rem 0.9rem;
         font-family: var(--font-mono);
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--text-muted);
+      }
+      .lang-menu li + li .lang-item {
+        border-top: 2px solid var(--border);
+      }
+      .lang-code {
+        font-weight: 700;
+        color: var(--text);
+      }
+      .lang-item:hover {
+        background: var(--rule);
+        color: var(--bg);
+      }
+      .lang-item:hover .lang-code {
+        color: inherit;
+      }
+      .lang-item.is-current {
+        color: var(--text);
+      }
+      .lang-item.is-current .lang-code {
+        color: var(--accent);
+      }
+
+      .bar-theme {
+        gap: 0.6rem;
+        border-right: none;
+      }
+      .theme-label {
+        font-family: var(--font-mono);
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text);
+      }
+      .theme-label-off {
+        color: var(--text-faint);
+        font-weight: 400;
+      }
+      :global([data-theme='dark']) .theme-label[data-theme-light] {
+        color: var(--text-faint);
+        font-weight: 400;
+      }
+      :global([data-theme='dark']) .theme-label[data-theme-dark] {
+        color: var(--text);
+        font-weight: 700;
+      }
+      .theme-switch {
+        width: 52px;
+        height: 26px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        padding: 2px;
+        background: var(--bg);
+        border: var(--rule-w) solid var(--rule);
+        border-radius: 0;
+        cursor: pointer;
+      }
+      .theme-knob {
+        width: 18px;
+        height: 100%;
+        background: var(--accent);
+        transition: margin-left 0.12s ease;
+      }
+      :global([data-theme='dark']) .theme-knob {
+        margin-left: auto;
+      }
+
+      .bar-burger {
+        display: none;
+        background: none;
+        border: none;
+        border-left: var(--rule-w) solid var(--rule);
+        border-right: none;
+        color: inherit;
+        font-size: 1.1rem;
+        cursor: pointer;
+        margin-left: auto;
+      }
+
+      .progress {
+        height: 6px;
+        background: var(--bg-raised);
+        border-bottom: var(--rule-w) solid var(--rule);
+      }
+      .progress-fill {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: var(--accent);
+      }
+
+      /* ---------- Homepage masthead ---------- */
+
+      .masthead {
+        border-bottom: var(--rule-w) solid var(--rule);
+      }
+      .masthead-word {
+        font-family: var(--font-display);
+        font-weight: 900;
+        font-size: clamp(3.2rem, 13vw, 9.5rem);
+        line-height: 0.8;
+        letter-spacing: -0.05em;
+        padding: 1.4rem var(--pad) 1rem;
+      }
+      .masthead-tum {
+        color: var(--accent);
+      }
+
+      /* ---------- Drawer ---------- */
+
+      .drawer {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+      }
+      .drawer[hidden] {
+        display: none;
+      }
+      .drawer-bar {
+        display: flex;
+        align-items: stretch;
+        justify-content: space-between;
+        border-bottom: var(--rule-w) solid var(--rule);
+      }
+      .drawer-brand {
+        padding: 0.75rem 1rem;
+        font-family: var(--font-display);
+        font-weight: 900;
+        font-size: 1.05rem;
+      }
+      .drawer-close {
+        background: var(--accent);
+        color: var(--on-accent);
+        border: none;
+        border-left: var(--rule-w) solid var(--rule);
+        font-size: 1.4rem;
+        line-height: 1;
+        padding: 0 1.1rem;
+        cursor: pointer;
+      }
+      .drawer-nav {
+        display: flex;
+        flex-direction: column;
+        background: var(--inv-bg);
+        color: var(--inv-text);
+        flex: 1;
+      }
+      .drawer-link {
+        padding: 1.1rem 1rem;
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(1.6rem, 8vw, 2.1rem);
+        line-height: 1.1;
+        border-bottom: 2px solid #33322a;
+      }
+      .drawer-link.is-current {
+        color: var(--accent);
+      }
+      .drawer-foot {
+        background: var(--inv-bg);
+        color: var(--inv-text);
+        padding: 1.2rem 1rem 1.6rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .drawer-lang {
+        display: flex;
+        flex-wrap: wrap;
+        border: var(--rule-w) solid var(--inv-text);
+      }
+      .drawer-lang-opt {
+        flex: 1;
+        text-align: center;
+        padding: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+      }
+      .drawer-lang-opt + .drawer-lang-opt {
+        border-left: var(--rule-w) solid var(--inv-text);
+      }
+      .drawer-lang-opt.is-current {
+        background: var(--inv-text);
+        color: var(--inv-bg);
+        font-weight: 700;
+      }
+      .drawer-theme {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--inv-text-muted);
+      }
+      .drawer-theme .theme-switch {
+        background: transparent;
+        border-color: var(--inv-text);
+      }
+      .drawer-meta {
+        margin: 0;
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--inv-text-muted);
+      }
+      .drawer-meta a:hover {
+        color: var(--accent);
+      }
+
+      /* ---------- Footer ---------- */
+
+      /* Same slab as the statement block on the about page. */
+      .site-footer {
+        border-top: var(--rule-w) solid var(--rule);
+        background: var(--inv-bg);
+        color: var(--inv-text);
+      }
+      .footer-cols {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .footer-col {
+        padding: 1.4rem var(--pad) 1.6rem;
+      }
+      .footer-col + .footer-col {
+        border-left: var(--rule-w) solid var(--inv-text);
+      }
+      .footer-heading {
+        font-family: var(--font-display);
+        font-weight: 900;
+        font-size: 0.95rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
         margin: 0 0 0.8rem 0;
-        font-weight: 600;
       }
       .footer-list {
         list-style: none;
@@ -321,28 +733,58 @@ const footerSlugs = footerSorted.map((a) => a.id);
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        color: var(--inv-text-muted);
       }
-      .footer-list a,
       .footer-link-btn {
-        color: var(--text-faint);
-        font-size: 0.83rem;
+        color: inherit;
+        font: inherit;
         background: none;
         border: none;
         padding: 0;
         cursor: pointer;
-        font-family: inherit;
         text-align: left;
       }
       .footer-list a:hover,
       .footer-link-btn:hover {
-        color: var(--accent-3);
-        text-decoration: none;
+        color: var(--accent);
+      }
+      .footer-bar {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.9rem var(--pad);
+        border-top: var(--rule-w) solid var(--inv-text);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--inv-text-muted);
       }
 
-      @media (max-width: 780px) {
-        .footer-grid {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.6rem 1.2rem;
+      @media (max-width: 900px) {
+        .bar-nav,
+        .bar-theme,
+        .bar-path {
+          display: none;
+        }
+        .bar-burger {
+          display: flex;
+          align-items: center;
+        }
+        .bar-lang {
+          margin-left: auto;
+          border-left: var(--rule-w) solid var(--rule);
+          border-right: none;
+        }
+        .footer-cols {
+          grid-template-columns: 1fr;
+        }
+        .footer-col + .footer-col {
+          border-left: none;
+          border-top: var(--rule-w) solid var(--inv-text);
         }
       }
     </style>

@@ -1,49 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+/* ============================================================
+   MOMENTUM design system
+   Three colours, two typefaces plus a serif for prose, one grid.
+   Every structural line is 3px of ink. Nothing is rounded.
+   ============================================================ */
 
 :root {
-  /* ---- Brand palette (MOMENTUM) ---- */
-  --red: #ef3c39;
-  --red-dim: #c73330;
-  --teal: #2ea5ac;
-  --gold: #ffc93b;
+  /* ---- Brand palette ---- */
+  --cream: #f4f2ec;
+  --rich-black: #111111;
+  --rust: #d93f11;
+  --rust-deep: #b03000;
 
-  /* ---- Dark theme (default) ---- */
-  --bg: #0b0e15;
-  --bg-raised: #12151f;
-  --bg-raised-2: #191d29;
-  --border: #262b3a;
-  --text: #f4f2ec;
-  --text-muted: #9aa0b4;
-  --text-faint: #676d82;
-  --accent: var(--red);
-  --accent-2: var(--teal);
-  --accent-3: var(--gold);
+  /* ---- Light theme (default) ---- */
+  --bg: var(--cream);
+  --bg-raised: #e8e4d9;
+  --bg-raised-2: #ded9cc;
+  --rule: var(--rich-black);
+  --border: #d5d0c2;
+  --text: var(--rich-black);
+  --text-body: #26241f;
+  --text-secondary: #3d3a34;
+  --text-muted: #555555;
+  --text-faint: #a8a396;
+  --accent: var(--rust);
+  --on-accent: #ffffff;
 
-  /* ---- Type scale ---- */
-  --font-display: 'Anton', 'Arial Narrow', sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  /* Inverted block: the dark slab used for heroes and statements. */
+  --inv-bg: var(--rich-black);
+  --inv-text: var(--cream);
+  --inv-text-muted: #8f8a80;
 
-  --radius: 5px;
+  /* Hatching stands in for a missing image. */
+  --hatch: repeating-linear-gradient(45deg, #ded9cc 0 12px, #e9e5da 12px 24px);
+
+  /* ---- Legacy aliases so older components keep resolving ---- */
+  --accent-2: var(--text-muted);
+  --accent-3: var(--rust);
+  --red: var(--rust);
+  --gold: var(--rust);
+  --teal: var(--text-muted);
+
+  /* ---- Type ---- */
+  --font-display: 'Archivo', 'Arial Black', sans-serif;
+  --font-body: 'JetBrains Mono', ui-monospace, monospace;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-serif: 'Newsreader', Georgia, serif;
+
+  /* ---- Metrics ---- */
+  --rule-w: 3px;
+  --pad: clamp(0.9rem, 2.6vw, 1.5rem);
+  --radius: 0;
   --max-width: 780px;
+  --measure: 68ch;
+  --shell: 1920px;
 }
 
-/* Proper light theme — bright background, dark ink, same brand accents
-   re-tuned for contrast against white instead of navy. */
-[data-theme='light'] {
-  --bg: #f7f4ec;
-  --bg-raised: #ffffff;
-  --bg-raised-2: #efe9da;
-  --border: #ddd5c0;
-  --text: #1b1a17;
-  --text-muted: #55524a;
-  --text-faint: #85806f;
-  --red: #d1291f;
-  --teal: #0f7c82;
-  --gold: #b8790a;
-  --accent: var(--red);
-  --accent-2: var(--teal);
-  --accent-3: var(--gold);
+/* Dark mode is a straight inversion: the ink turns cream, the paper turns
+   black, the rust stays exactly where it is because it reads on both. */
+[data-theme='dark'] {
+  --bg: var(--rich-black);
+  --bg-raised: #1b1b18;
+  --bg-raised-2: #23231f;
+  --rule: var(--cream);
+  --border: #33322a;
+  --text: var(--cream);
+  --text-body: #c9c4b8;
+  --text-secondary: #c9c4b8;
+  --text-muted: #8f8a80;
+  --text-faint: #6c675e;
+  --inv-bg: #1c1c19;
+  --inv-text: var(--cream);
+  --inv-text-muted: #8f8a80;
+  --hatch: repeating-linear-gradient(45deg, #2a2925 0 12px, #33322d 12px 24px);
 }
 
 * {
@@ -51,19 +81,22 @@
 }
 
 html {
-  color-scheme: dark;
-}
-[data-theme='light'] {
   color-scheme: light;
+}
+[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  /* Outside the shell the paper goes one shade darker, so on an ultrawide
+     the page reads as a sheet on a desk rather than a stretched layout. */
+  background: var(--bg-raised-2);
   color: var(--text);
   font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -75,135 +108,395 @@ body {
 
 h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   line-height: 1.05;
-  text-transform: uppercase;
   margin: 0 0 0.5em 0;
 }
 
-h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); }
-h2 { font-size: clamp(1.5rem, 4vw, 2.1rem); }
+h1 {
+  font-weight: 900;
+  font-size: clamp(2.4rem, 7vw, 5.2rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+h2 { font-size: clamp(1.5rem, 3.4vw, 2.1rem); }
 h3 { font-size: 1.25rem; }
 
 p { margin: 0 0 1.1em 0; }
 
 a {
-  color: var(--accent-3);
+  color: inherit;
   text-decoration: none;
 }
-a:hover { text-decoration: underline; }
 
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
-  outline: 2px solid var(--accent-3);
-  outline-offset: 2px;
+input:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: var(--rule-w) solid var(--accent);
+  outline-offset: 3px;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ---------- Layout helpers ---------- */
+
+.wrap {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+}
+
+/* The site runs edge to edge up to Full HD, then stops and centres. */
+.site-shell {
+  max-width: var(--shell);
+  margin: 0 auto;
+  background: var(--bg);
+  min-height: 100vh;
+}
+@media (min-width: 1927px) {
+  .site-shell {
+    border-left: var(--rule-w) solid var(--rule);
+    border-right: var(--rule-w) solid var(--rule);
+  }
+}
+
+.wrap-wide {
+  max-width: var(--shell);
+  margin: 0 auto;
+}
+
+.rule-top { border-top: var(--rule-w) solid var(--rule); }
+.rule-bottom { border-bottom: var(--rule-w) solid var(--rule); }
+
+.hatch {
+  background-image: var(--hatch);
+}
+
+/* ---------- Shared type utilities ---------- */
+
+.eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .mono {
   font-family: var(--font-mono);
 }
 
-.wrap {
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: 0 1.25rem;
-}
-
-/* Wider container used on the homepage, which needs room for the
-   two-column (content + sidebar) layout. */
-.wrap-wide {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 1.25rem;
-}
-
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
+.display-xl {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(3rem, 11vw, 6.75rem);
+  line-height: 0.82;
+  letter-spacing: -0.045em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  margin: 0;
 }
 
-.gold-rule {
-  height: 4px;
-  width: 64px;
-  background: linear-gradient(90deg, var(--gold), var(--red));
-  border-radius: 2px;
-  border: none;
-  margin: 0.9rem 0 0 0;
+/* Section header strip: panel background, one hard line under it. */
+.band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem var(--pad);
+  background: var(--bg-raised);
+  border-bottom: var(--rule-w) solid var(--rule);
 }
+.band-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.05rem, 2.4vw, 1.4rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.band-link {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.band-link:hover {
+  background: var(--rule);
+  color: var(--bg);
+}
+
+/* ---------- Tags ---------- */
 
 .tag {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: lowercase;
-  color: var(--accent-2);
-  background: color-mix(in srgb, var(--accent-2) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent-2) 35%, transparent);
-  border-radius: 999px;
-  padding: 0.2em 0.7em;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: inherit;
+  background: none;
+  border: 2px solid currentColor;
+  border-radius: 0;
+  padding: 0.32em 0.7em;
+  line-height: 1.2;
   text-decoration: none;
 }
-.tag:hover {
-  text-decoration: none;
-  border-color: var(--accent-2);
+a.tag:hover {
+  background: var(--rule);
+  color: var(--bg);
+  border-color: var(--rule);
+}
+.tag.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.tag-sm {
+  font-size: 0.6rem;
+  border-width: 1px;
+  padding: 0.28em 0.6em;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: var(--rule-w) solid var(--rule);
+  border-radius: 0;
+  padding: 0.95em 1.4em;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 var(--rule);
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+}
+.btn:hover {
+  background: var(--rule);
+  color: var(--bg);
+  box-shadow: 5px 5px 0 var(--accent);
+}
+.btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+.btn[disabled] {
+  background: var(--bg-raised-2);
+  color: var(--text-faint);
+  border-color: var(--text-faint);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Quiet variant: outline only, used for stacked side actions. */
+.btn-ghost {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: none;
+  color: inherit;
+  border: 2px solid var(--rule);
+  border-radius: 0;
+  padding: 0.75em 0.85em;
+  cursor: pointer;
+}
+.btn-ghost:hover {
+  background: var(--rule);
+  color: var(--bg);
+}
+
+/* ---------- Form controls ---------- */
+
+.field {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 2px solid var(--rule);
+  border-radius: 0;
+  padding: 0.7rem 0.85rem;
+}
+.field::placeholder {
+  color: var(--text-faint);
+}
+
+/* ---------- Article body ---------- */
+
+.article-body {
+  font-family: var(--font-serif);
+  font-size: 1.19rem;
+  line-height: 1.75;
+  color: var(--text-body);
+  max-width: var(--measure);
+  counter-reset: section;
+}
+
+.article-body > p:first-of-type {
+  font-size: 1.35rem;
+  line-height: 1.6;
+  color: var(--text);
 }
 
 .article-body :is(h2, h3) {
-  margin-top: 1.6em;
-  scroll-margin-top: 84px;
+  font-family: var(--font-display);
+  color: var(--text);
+  scroll-margin-top: 90px;
+}
+
+.article-body h2 {
+  counter-increment: section;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  border-top: var(--rule-w) solid var(--rule);
+  margin: 2.2em 0 0.7em;
+  padding-top: 0.55em;
+}
+.article-body h2::before {
+  content: counter(section, decimal-leading-zero);
+  font-weight: 900;
+  font-size: 1.25em;
+  line-height: 0.9;
+  color: var(--accent);
+  flex: none;
+}
+
+.article-body h3 {
+  font-weight: 800;
+  font-size: 1.35rem;
+  line-height: 1.15;
+  margin: 1.9em 0 0.6em;
+}
+
+.article-body a {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.article-body a:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+  text-decoration-color: transparent;
+}
+
+.article-body strong {
+  font-weight: 600;
+  color: var(--text);
 }
 
 .article-body img {
-  max-width: 100%;
-  border-radius: var(--radius);
   display: block;
-  margin: 1.4em 0;
+  width: 100%;
+  border: var(--rule-w) solid var(--rule);
+  border-radius: 0;
+  margin: 1.6em 0;
   cursor: zoom-in;
 }
 
 .article-body figure.article-figure {
-  margin: 1.4em 0;
+  margin: 1.8em 0;
+}
+/* The first image already runs full bleed under the header, so the body
+   copy of it is dropped rather than printed twice. */
+.article-body.has-cover > figure.article-figure:first-of-type {
+  display: none;
 }
 .article-body figure.article-figure img {
   margin: 0;
 }
 .article-body figure.article-figure figcaption {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 0.85rem;
-  color: var(--text-faint);
-  text-align: center;
-  margin-top: 0.5em;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border: var(--rule-w) solid var(--rule);
+  border-top: none;
+  padding: 0.6rem 0.8rem;
+}
+
+/* A quote in the markdown gets the rust bar. */
+.article-body blockquote {
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-left: 6px solid var(--accent);
+  margin: 1.8em 0;
+  padding: 0.2em 0 0.2em 1.1rem;
+}
+.article-body blockquote p:last-child {
+  margin-bottom: 0;
 }
 
 .article-body pre {
   background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: var(--rule-w) solid var(--rule);
+  border-radius: 0;
   padding: 1em;
   overflow-x: auto;
+  font-size: 0.85rem;
 }
 
 .article-body code {
   font-family: var(--font-mono);
-  font-size: 0.9em;
+  font-size: 0.85em;
 }
 
-.article-body blockquote {
-  border-left: 3px solid var(--accent);
-  margin: 1.2em 0;
-  padding: 0.2em 1em;
-  color: var(--text-muted);
+.article-body :not(pre) > code {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  padding: 0.1em 0.35em;
+}
+
+.article-body ul,
+.article-body ol {
+  padding-left: 1.3em;
+}
+.article-body li {
+  margin-bottom: 0.4em;
+}
+
+.article-body hr {
+  border: none;
+  border-top: var(--rule-w) solid var(--rule);
+  margin: 2.4em 0;
 }
 
 hr.divider {
   border: none;
-  border-top: 1px solid var(--border);
-  margin: 2.5rem 0;
+  border-top: var(--rule-w) solid var(--rule);
+  margin: 0;
+}
+
+/* Kept so older markup and the compose preview do not lose their footing. */
+.gold-rule {
+  height: var(--rule-w);
+  width: 72px;
+  background: var(--accent);
+  border: none;
+  margin: 0.9rem 0 0 0;
 }

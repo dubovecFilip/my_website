@@ -1,0 +1,285 @@
+---
+// Full-screen share panel, opened by any element carrying data-share-open.
+// Targets are built client side from the current URL, so the component works
+// on any page without being told where it lives.
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+  title: string;
+}
+
+const { lang, title } = Astro.props;
+const s = t(lang);
+
+const targets = [
+  { id: 'x', label: 'X' },
+  { id: 'facebook', label: 'Facebook' },
+  { id: 'reddit', label: 'Reddit' },
+  { id: 'whatsapp', label: 'WhatsApp' },
+  { id: 'telegram', label: 'Telegram' },
+  { id: 'email', label: 'E-mail' },
+];
+---
+
+<div class="share" id="share-overlay" hidden>
+  <div class="share-panel" role="dialog" aria-modal="true" aria-labelledby="share-heading">
+    <div class="share-bar">
+      <h2 class="share-heading" id="share-heading">{s.share_title}</h2>
+      <button type="button" class="share-close" id="share-close" aria-label={s.share_close}>&times;</button>
+    </div>
+
+    <p class="share-article">{title}</p>
+
+    <div class="share-grid">
+      {targets.map((target) => (
+        <a class="share-target" href="#" data-share-target={target.id} target="_blank" rel="noopener noreferrer">
+          <span class="share-target-label">{target.label}</span>
+          <span class="share-target-mark" aria-hidden="true">&#8599;</span>
+        </a>
+      ))}
+    </div>
+
+    <div class="share-link">
+      <span class="eyebrow">{s.share_link}</span>
+      <div class="share-link-row">
+        <input type="text" class="share-url" id="share-url" readonly value="" aria-label={s.share_link} />
+        <button type="button" class="btn share-copy" id="share-copy" data-done={s.article_share_done}>
+          {s.share_copy}
+        </button>
+      </div>
+    </div>
+
+    <button type="button" class="btn-ghost share-native" id="share-native" hidden>
+      &#9741; {s.share_native}
+    </button>
+  </div>
+</div>
+
+<script>
+  const overlay = document.getElementById('share-overlay') as HTMLDivElement | null;
+  const closeBtn = document.getElementById('share-close');
+  const urlField = document.getElementById('share-url') as HTMLInputElement | null;
+  const copyBtn = document.getElementById('share-copy') as HTMLButtonElement | null;
+  const nativeBtn = document.getElementById('share-native') as HTMLButtonElement | null;
+
+  if (overlay && urlField) {
+    const url = window.location.href;
+    const title = document.title;
+
+    const links: Record<string, string> = {
+      x: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      reddit: `https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`,
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`,
+      telegram: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+      email: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`,
+    };
+
+    urlField.value = url;
+    document.querySelectorAll<HTMLAnchorElement>('[data-share-target]').forEach((link) => {
+      const target = link.dataset.shareTarget ?? '';
+      if (links[target]) link.href = links[target];
+      if (target === 'email') link.removeAttribute('target');
+    });
+
+    if (navigator.share && nativeBtn) nativeBtn.hidden = false;
+
+    function setOpen(open: boolean) {
+      if (!overlay) return;
+      overlay.hidden = !open;
+      overlay.classList.toggle('is-open', open);
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) closeBtn instanceof HTMLElement && closeBtn.focus();
+    }
+
+    document.querySelectorAll('[data-share-open]').forEach((trigger) => {
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        setOpen(true);
+      });
+    });
+
+    closeBtn?.addEventListener('click', () => setOpen(false));
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) setOpen(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !overlay.hidden) setOpen(false);
+    });
+
+    copyBtn?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // Clipboard denied: the field is selectable as the fallback.
+        urlField.select();
+        return;
+      }
+      const original = copyBtn.textContent;
+      copyBtn.textContent = copyBtn.dataset.done || 'Copied';
+      window.setTimeout(() => {
+        copyBtn.textContent = original;
+      }, 1800);
+    });
+
+    nativeBtn?.addEventListener('click', async () => {
+      try {
+        await navigator.share({ title, url });
+        setOpen(false);
+      } catch {
+        // The user dismissed the sheet.
+      }
+    });
+  }
+</script>
+
+<style>
+  .share {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem;
+    background: rgba(17, 17, 17, 0.94);
+  }
+  .share[hidden] {
+    display: none;
+  }
+
+  .share-panel {
+    width: min(560px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--bg);
+    border: var(--rule-w) solid var(--rule);
+    box-shadow: 12px 12px 0 var(--accent);
+  }
+
+  .share-bar {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .share-heading {
+    margin: 0;
+    padding: 0.9rem 1.1rem;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .share-close {
+    background: var(--accent);
+    color: var(--on-accent);
+    border: none;
+    border-left: var(--rule-w) solid var(--rule);
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 0 1.1rem;
+    cursor: pointer;
+  }
+  .share-close:hover {
+    background: var(--rule);
+    color: var(--bg);
+  }
+
+  .share-article {
+    margin: 0;
+    padding: 1.2rem 1.1rem;
+    border-bottom: var(--rule-w) solid var(--rule);
+    background: var(--bg-raised);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+
+  .share-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .share-target {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.9rem 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border);
+  }
+  .share-target:nth-child(odd) {
+    border-right: 2px solid var(--border);
+  }
+  .share-target:nth-last-child(-n + 2) {
+    border-bottom: none;
+  }
+  .share-target-mark {
+    color: var(--accent);
+  }
+  .share-target:hover {
+    background: var(--rule);
+    color: var(--bg);
+  }
+  .share-target:hover .share-target-mark {
+    color: var(--on-accent);
+  }
+
+  .share-link {
+    padding: 1.1rem;
+  }
+  .share-link-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+  }
+  .share-url {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--bg-raised);
+    border: 2px solid var(--rule);
+    border-radius: 0;
+    padding: 0.7rem 0.8rem;
+  }
+  .share-copy {
+    flex: none;
+    box-shadow: 4px 4px 0 var(--rule);
+  }
+
+  .share-native {
+    width: calc(100% - 2.2rem);
+    margin: 0 1.1rem 1.1rem;
+    text-align: center;
+  }
+
+  @media (max-width: 560px) {
+    .share-grid {
+      grid-template-columns: 1fr;
+    }
+    .share-target:nth-child(odd) {
+      border-right: none;
+    }
+    .share-target:nth-last-child(-n + 2) {
+      border-bottom: 2px solid var(--border);
+    }
+    .share-target:last-child {
+      border-bottom: none;
+    }
+    .share-link-row {
+      flex-direction: column;
+    }
+  }
+</style>

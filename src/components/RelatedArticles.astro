@@ -35,21 +35,22 @@ const related = (all as Entry[])
     if (b.shared !== a.shared) return b.shared - a.shared;
     return b.article.data.date.valueOf() - a.article.data.date.valueOf();
   })
-  .slice(0, 3)
+  .slice(0, 2)
   .map(({ article }) => article);
 ---
 
 {related.length > 0 && (
   <section class="related-articles">
-    <h2 class="related-title">{s.related_articles}</h2>
-    <hr class="gold-rule" />
+    <div class="band">
+      <h2 class="band-title">{s.related_articles}</h2>
+    </div>
     <div class="related-grid">
       {related.map((article) => {
         const words = countWords(article.body);
         return (
           <ArticleCard
             lang={lang}
-            variant="grid"
+            variant="compact"
             slug={article.id}
             title={article.data.title}
             description={article.data.description}
@@ -66,18 +67,13 @@ const related = (all as Entry[])
 
 <style>
   .related-articles {
-    margin: 3rem 0 2rem;
-  }
-  .related-title {
-    font-size: 1.4rem;
+    border-top: var(--rule-w) solid var(--rule);
   }
   .related-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-top: 1.6rem;
+    grid-template-columns: repeat(2, 1fr);
   }
-  @media (max-width: 780px) {
+  @media (max-width: 860px) {
     .related-grid {
       grid-template-columns: 1fr;
     }
