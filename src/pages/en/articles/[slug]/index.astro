@@ -82,9 +82,21 @@ const coverImage = extractFirstImage(article.body);
     </div>
 
     <div class:list={['article-layout', hasToc && 'has-toc']}>
-      <aside class="article-rail">
-        {hasToc && <TableOfContents lang={lang} headings={headings} />}
+      {hasToc && (
+        <aside class="toc-rail">
+          <TableOfContents lang={lang} headings={headings} />
+        </aside>
+      )}
 
+      <div class="article-main">
+        <div class:list={['article-body', coverImage && 'has-cover']}>
+          <Content />
+        </div>
+
+        <AuthorNote lang={lang} note={article.data.authorNote} avatar={author.avatar} authorName={author.name} />
+      </div>
+
+      <aside class="article-rail">
         <div class="rail-block">
           <h2 class="rail-title">{s.about_author_title}</h2>
           <div class="rail-author">
@@ -107,14 +119,6 @@ const coverImage = extractFirstImage(article.body);
           </button>
         </div>
       </aside>
-
-      <div class="article-main">
-        <div class:list={['article-body', coverImage && 'has-cover']}>
-          <Content />
-        </div>
-
-        <AuthorNote lang={lang} note={article.data.authorNote} avatar={author.avatar} authorName={author.name} />
-      </div>
     </div>
 
     <div class="mobile-actions">
@@ -245,10 +249,28 @@ const coverImage = extractFirstImage(article.body);
     cursor: zoom-in;
   }
 
+  /* Contents on the left, author and actions on the right, the article in
+     between. Both rails travel with the reader. */
   .article-layout {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 280px;
     align-items: start;
+  }
+  .article-layout.has-toc {
+    grid-template-columns: 300px minmax(0, 1fr) 280px;
+  }
+  .toc-rail {
+    position: sticky;
+    top: 4.4rem;
+    max-height: calc(100vh - 5.4rem);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .toc-rail :global(.toc-desktop) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
   }
   /* The measure stays a measure, so on a wide screen the column centres
      inside the space the old right rail used to take. */
@@ -258,6 +280,10 @@ const coverImage = extractFirstImage(article.body);
     align-items: center;
     padding: 2.4rem var(--pad) 3rem;
     min-width: 0;
+    border-right: var(--rule-w) solid var(--rule);
+  }
+  .article-layout.has-toc .article-main {
+    border-left: var(--rule-w) solid var(--rule);
   }
   .article-main > * {
     width: 100%;
@@ -271,21 +297,12 @@ const coverImage = extractFirstImage(article.body);
     max-width: var(--measure);
   }
 
-  /* Contents, author and actions ride down the page as one sticky column. */
   .article-rail {
     display: flex;
     flex-direction: column;
     position: sticky;
     top: 4.4rem;
     max-height: calc(100vh - 5.4rem);
-    overflow: hidden;
-    border-right: var(--rule-w) solid var(--rule);
-  }
-  /* Long contents scroll inside the rail so the author and the actions
-     never get pushed out of sight. */
-  .article-rail :global(.toc-desktop) {
-    flex: 1;
-    min-height: 0;
     overflow-y: auto;
   }
   .rail-block {
@@ -364,7 +381,6 @@ const coverImage = extractFirstImage(article.body);
      and the actions move to a bar under the article. */
   .mobile-actions {
     display: none;
-    border-bottom: var(--rule-w) solid var(--rule);
     background: var(--bg-raised);
   }
   .mobile-action {
@@ -391,16 +407,22 @@ const coverImage = extractFirstImage(article.body);
   }
 
   @media (max-width: 1200px) {
-    .article-layout {
+    .article-layout,
+    .article-layout.has-toc {
       grid-template-columns: 1fr;
     }
+    .toc-rail,
     .article-rail {
       position: static;
       max-height: none;
       overflow: visible;
+    }
+    .article-main,
+    .article-layout.has-toc .article-main {
+      border-left: none;
       border-right: none;
     }
-    .article-rail :global(.toc-desktop) {
+    .toc-rail :global(.toc-desktop) {
       overflow: visible;
     }
     .rail-block {

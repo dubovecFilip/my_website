@@ -53,7 +53,7 @@ const archiveCount = String(articles.length).padStart(2, '0');
   )}
 
   <div class="band">
-    <h2 class="band-title">{s.nav_tags} / {archiveCount}</h2>
+    <h2 class="band-title">{s.nav_tags}</h2>
     <a class="band-link" href={`/${lang}/tags/`}>{s.all_tags} &#9656;</a>
   </div>
 
@@ -185,7 +185,7 @@ const archiveCount = String(articles.length).padStart(2, '0');
     }
     .hero-art {
       min-height: 190px;
-      border-top: var(--rule-w) solid var(--rule);
+      border-bottom: var(--rule-w) solid var(--rule);
       order: -1;
     }
   }

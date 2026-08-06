@@ -702,9 +702,12 @@ const year = new Date().getFullYear();
 
       /* ---------- Footer ---------- */
 
-      /* Same slab as the statement block on the about page. */
+      /* Same slab as the statement block on the about page. The negative
+         margin lets this rule sit on top of the one the last section already
+         drew, instead of stacking into a double thickness line. */
       .site-footer {
         border-top: var(--rule-w) solid var(--rule);
+        margin-top: calc(var(--rule-w) * -1);
         background: var(--inv-bg);
         color: var(--inv-text);
       }

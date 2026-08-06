@@ -321,21 +321,6 @@ a.tag:hover {
   color: var(--bg);
 }
 
-/* ---------- Form controls ---------- */
-
-.field {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--text);
-  background: var(--bg);
-  border: 2px solid var(--rule);
-  border-radius: 0;
-  padding: 0.7rem 0.85rem;
-}
-.field::placeholder {
-  color: var(--text-faint);
-}
-
 /* ---------- Article body ---------- */
 
 .article-body {
