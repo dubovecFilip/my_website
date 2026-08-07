@@ -1,5 +1,5 @@
 ---
-// One editor for both languages, so it lives outside the /sk/ and /en/ trees.
+// Jeden editor pre obe mutácie, preto žije mimo /sk/ a /en/ stromu.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ComposeEditor from '../components/ComposeEditor.astro';
 import { defaultLang } from '../i18n/dict';
@@ -7,12 +7,10 @@ import { defaultLang } from '../i18n/dict';
 
 <BaseLayout
   lang={defaultLang}
-  title="Editor"
-  description="Internal tool for writing and managing MOMENTUM articles."
-  breadcrumb="Editor"
-  showLangSwitch={false}
-  fullBleed
-  showFooter={false}
+  title="Compose"
+  description="Editor článkov MOMENTUM_."
+  chrome={false}
+  noIndex
 >
   <ComposeEditor />
 </BaseLayout>

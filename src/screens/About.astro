@@ -1,0 +1,350 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { authors, defaultAuthor } from '../data/authors';
+import { socialLinks } from '../data/social';
+import { languages, t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+
+const person = authors[defaultAuthor];
+const alternates = languages.map((code) => ({ lang: code, href: `/${code}/about/` }));
+
+/* Tri princípy fungovania webu, texty výhradne zo slovníka. */
+const principles = [
+  { n: '01', title: d.about_principle_1_title, text: d.about_principle_1_text },
+  { n: '02', title: d.about_principle_2_title, text: d.about_principle_2_text },
+  { n: '03', title: d.about_principle_3_title, text: d.about_principle_3_text },
+];
+---
+
+<BaseLayout lang={lang} title={d.about_title} active="about" alternates={alternates}>
+  <div class="shell">
+    <!-- Nadpis je centrovaný, popiska sedí pod ním. -->
+    <header class="about-head">
+      <h1 class="about-title">{d.about_title}</h1>
+      <p class="about-eyebrow">{d.about_eyebrow}</p>
+    </header>
+
+    <div class="about-body">
+      <div class="about-text">
+        <p class="about-motto">{d.about_motto}</p>
+        <p class="about-p">{d.about_lead}</p>
+
+        <h2 class="about-h2">{d.about_what_title}</h2>
+        <p class="about-p">{d.about_what_body}</p>
+
+        <h2 class="about-h2">{d.about_how_title}</h2>
+        <ol class="principles">
+          {
+            principles.map((principle) => (
+              <li class="principle reveal">
+                <span class="principle-n">{principle.n}</span>
+                <h3 class="principle-title">{principle.title}</h3>
+                <p class="principle-text">{principle.text}</p>
+              </li>
+            ))
+          }
+        </ol>
+
+        <p class="about-p">{d.about_how_body}</p>
+      </div>
+
+      <!-- Jediné miesto na webe, kde je autor prítomný aj s odkazmi. -->
+      <div class="about-side">
+      <aside class="about-author">
+        <img
+          class="about-avatar"
+          src={person.avatar}
+          alt=""
+          width="88"
+          height="88"
+          loading="lazy"
+        />
+
+        <div>
+          <p class="about-name">{person.name}</p>
+          <p class="about-role">{d.about_author_role}</p>
+        </div>
+
+        <p class="about-bio">{d.about_author_bio}</p>
+
+        <span class="about-rule" aria-hidden="true"></span>
+
+        <ul class="about-links">
+          {
+            socialLinks.map((link) => (
+              <li>
+                <a class="about-link" href={link.url} rel="me noopener" target="_blank">
+                  <span>{link.label}</span>
+                  <span class="about-link-mark" aria-hidden="true">
+                    ↗
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </aside>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .about-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+    padding: 66px 0 44px;
+  }
+
+  .about-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(52px, 10.4vw, 168px);
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .about-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .about-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: var(--sp-64);
+    padding-bottom: var(--section-gap);
+  }
+
+  .about-text {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    max-width: 760px;
+  }
+
+  .about-motto {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 1.14;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .about-h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--fs-section);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    margin-top: 10px;
+  }
+
+  .about-p {
+    font-size: 17.5px;
+    line-height: 1.75;
+    color: var(--ink-2);
+  }
+
+  /* Tri princípy vedľa seba, každý vo vlastnej ploche. */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .principle {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-10);
+    padding: 22px;
+    border-radius: var(--r-card);
+    background: var(--surface-2);
+  }
+
+  .principle-n {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--accent-text);
+  }
+
+  .principle-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .principle-text {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-3);
+  }
+
+  .about-side {
+    min-width: 0;
+  }
+
+  .about-author {
+    position: sticky;
+    top: calc(var(--header-now, var(--header-h)) + var(--sticky-top));
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 28px;
+    border-radius: 24px;
+    background: var(--surface-2);
+  }
+
+  .about-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: var(--r-pill);
+    object-fit: cover;
+    background: var(--grad-placeholder);
+  }
+
+  .about-name {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .about-role {
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  .about-bio {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--ink-3);
+  }
+
+  .about-rule {
+    display: block;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* Odkazy sú široké len na svoj text, aby šípka ostala pri popisku
+     a nerozťahovala sa cez celú kartu. */
+  .about-links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-10);
+  }
+
+  /* Položka musí byť flex, inak jej výšku určuje zdedené riadkovanie tela
+     (32 px) a odkazy sa od seba odtlačia bez ohľadu na gap. */
+  .about-links li {
+    display: flex;
+  }
+
+  .about-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-10);
+    line-height: 1.2;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    transition: color var(--t);
+  }
+
+  @media (hover: hover) {
+    .about-link:hover {
+      color: var(--ink);
+    }
+
+    .about-link:hover .about-link-mark {
+      color: var(--accent-text);
+    }
+  }
+
+  /* Na dotykových zariadeniach musí cieľ ostať aspoň 44 px vysoký. */
+  @media (hover: none) {
+    .about-links {
+      gap: 0;
+    }
+
+    .about-link {
+      min-height: var(--touch);
+    }
+  }
+
+  .about-link-mark {
+    color: #5a564f;
+    transition: color var(--t);
+  }
+
+  @media (max-width: 1179px) {
+    .about-body {
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: var(--sp-38);
+    }
+
+    .about-motto {
+      font-size: 32px;
+    }
+  }
+
+  /* Karta autora ide pod text. */
+  @media (max-width: 767px) {
+    .about-head {
+      padding: var(--sp-38) 0 var(--sp-26);
+    }
+
+    .about-body {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--sp-26);
+    }
+
+    .about-author {
+      position: static;
+      padding: var(--sp-22);
+    }
+
+    .principles {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .about-motto {
+      font-size: 26px;
+    }
+
+    .about-p {
+      font-size: 15.5px;
+    }
+  }
+</style>

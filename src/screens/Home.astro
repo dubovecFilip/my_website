@@ -1,0 +1,110 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroTitle from '../components/HeroTitle.astro';
+import FeatureCard from '../components/FeatureCard.astro';
+import ArticleGrid from '../components/ArticleGrid.astro';
+import { getArticles, selectHome, tagCounts } from '../utils/articles';
+import { languages, t, type Lang } from '../i18n/dict';
+import { articleCount } from '../utils/format';
+
+interface Props {
+  lang: Lang;
+  /** Náhľadový režim Compose. */
+  preview?: 'home' | 'archive' | 'article';
+}
+
+const { lang, preview } = Astro.props;
+const d = t(lang);
+
+const articles = await getArticles(lang);
+const home = selectHome(articles);
+
+const tagRank: Record<string, number> = {};
+for (const tag of tagCounts(articles)) tagRank[tag.name] = tag.count;
+
+const alternates = languages.map((code) => ({ lang: code, href: `/${code}/` }));
+---
+
+<BaseLayout preview={preview}  lang={lang} active="home" alternates={alternates} ogType="website" brandAfterHero>
+  <div class="shell">
+    <HeroTitle lang={lang} />
+  </div>
+
+  {
+    home.feature ? (
+      <>
+        <div class="shell feature-slot">
+          <FeatureCard
+            article={home.feature}
+            lang={lang}
+            label={home.featureLabel}
+            tagRank={tagRank}
+          />
+        </div>
+
+        {home.grid.length > 0 && (
+          <section class="shell more rule" aria-labelledby="more-title">
+            <div class="more-head">
+              <h2 class="section-title" id="more-title">
+                {d.home_more}
+              </h2>
+              {home.showArchiveLink && (
+                <a class="more-link mono" href={`/${lang}/articles/`}>
+                  {d.home_archive_link} ({home.total}) →
+                </a>
+              )}
+            </div>
+
+            <ArticleGrid articles={home.grid} lang={lang} tagRank={tagRank} />
+          </section>
+        )}
+      </>
+    ) : (
+      /* Hero ostáva, mriežka aj odkaz do archívu zmiznú úplne.
+         Žiadne zástupné karty ani ukážkový obsah. */
+      <div class="shell">
+        <p class="home-empty">{d.empty_home}</p>
+      </div>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .feature-slot {
+    padding-bottom: var(--section-gap);
+  }
+
+  .more {
+    padding-block: var(--section-gap);
+  }
+
+  .more-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-22);
+    flex-wrap: wrap;
+    margin-bottom: var(--sp-26);
+  }
+
+  .more-link {
+    color: var(--accent-text);
+    letter-spacing: 0.16em;
+    transition: color var(--t);
+  }
+
+  @media (hover: hover) {
+    .more-link:hover {
+      color: var(--ink);
+    }
+  }
+
+  .home-empty {
+    padding-bottom: var(--sp-80);
+    font-size: var(--fs-lead);
+    color: var(--ink-3);
+    text-align: center;
+    max-width: 48ch;
+    margin-inline: auto;
+  }
+</style>

@@ -1,0 +1,146 @@
+---
+import type { MonthGroup } from '../utils/articles';
+import { t, type Lang } from '../i18n/dict';
+import { monthLabel, articleCount } from '../utils/format';
+
+interface Props {
+  lang: Lang;
+  months: MonthGroup[];
+}
+
+const { lang, months } = Astro.props;
+const d = t(lang);
+
+const max = Math.max(1, ...months.map((m) => m.articles.length));
+const first = months[0];
+const last = months[months.length - 1];
+---
+
+{
+  months.length > 1 && (
+    <div class="timeline" data-timeline>
+      <p class="timeline-head">
+        <span>{d.archive_rhythm}</span>
+        <span class="timeline-hint">{d.archive_rhythm_hint}</span>
+      </p>
+
+      <ol class="timeline-bars">
+        {months.map((month) => (
+          <li>
+            <button
+              type="button"
+              class="timeline-bar"
+              style={`--h:${Math.max(4, Math.round((month.articles.length / max) * 100))}%`}
+              data-month={month.key}
+              aria-pressed="false"
+              disabled={month.articles.length === 0}
+              title={`${monthLabel(month.month, month.year, lang)} · ${articleCount(month.articles.length, lang)}`}
+            >
+              <span class="sr-only">
+                {monthLabel(month.month, month.year, lang)} · {articleCount(month.articles.length, lang)}
+              </span>
+              <span class="timeline-fill" aria-hidden="true" />
+            </button>
+          </li>
+        ))}
+      </ol>
+
+      <p class="timeline-scale">
+        <span>{first && monthLabel(first.month, first.year, lang)}</span>
+        <span>{last && monthLabel(last.month, last.year, lang)}</span>
+      </p>
+    </div>
+  )
+}
+
+<style>
+  /* Rytmus písania je vlastná plocha vedľa nadpisu, zarovnaná na jeho účiaru. */
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-12);
+    padding: 24px 26px 22px;
+    border-radius: var(--r-card);
+    background: var(--surface-2);
+  }
+
+  .timeline-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-14);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  .timeline-hint {
+    color: #4d4941;
+    letter-spacing: 0.1em;
+  }
+
+  .timeline-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 7px;
+    height: 104px;
+  }
+
+  .timeline-bars li {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    min-width: 0;
+  }
+
+  .timeline-bar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    padding: 0;
+    border-radius: 4px;
+  }
+
+  .timeline-fill {
+    display: block;
+    width: 100%;
+    height: var(--h);
+    border-radius: 4px;
+    background: rgba(244, 242, 236, 0.14);
+    transition: background-color var(--t), height var(--t);
+  }
+
+  @media (hover: hover) {
+    .timeline-bar:not(:disabled):hover .timeline-fill {
+      background: rgba(244, 242, 236, 0.2);
+    }
+  }
+
+  .timeline-bar[aria-pressed='true'] .timeline-fill {
+    background: var(--accent);
+  }
+
+  .timeline-bar:disabled {
+    cursor: default;
+  }
+
+  .timeline-scale {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #5a564f;
+  }
+
+  @media (max-width: 767px) {
+    .timeline {
+      display: none;
+    }
+  }
+</style>

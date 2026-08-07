@@ -1,251 +1,332 @@
-export const languages = ["en", "sk"] as const;
+export const languages = ['sk', 'en'] as const;
 export type Lang = (typeof languages)[number];
-export const defaultLang: Lang = "sk";
+export const defaultLang: Lang = 'sk';
 
-// Metadata for the language dropdown. Add more entries here later if the site
-// ever grows past SK/EN; the dropdown UI already supports any number of languages.
-export const langMeta: Record<Lang, { label: string; flag: string }> = {
-  sk: { label: "Slovenčina", flag: "🇸🇰" },
-  en: { label: "English", flag: "🇬🇧" },
+/**
+ * Jazyky v dropdowne. `soon: true` sa vykreslí ako nedostupná položka so
+ * značkou ČOSKORO (sekcia 07): nemá vlastnú mutáciu a nedá sa vybrať.
+ */
+export const langMeta: Record<string, { label: string; short: string; soon?: boolean }> = {
+  sk: { label: 'Slovenčina', short: 'SK' },
+  en: { label: 'English', short: 'EN' },
+  es: { label: 'Español', short: 'ES', soon: true },
 };
 
 export const dict = {
-  en: {
-    tagline: "Rants, ramblings and things I like",
-    nav_home: "Home",
-    nav_tags: "Archive",
-    nav_about: "The Project",
-    nav_gallery: "Gallery",
-    home_latest: "Latest articles",
-    home_empty: "Nothing posted yet. Check back soon.",
-    read_more: "Read article",
-    back_home: "Back to all articles",
-    written_by: "Written by",
-    published_on: "Published",
-    all_tags: "Archive of articles",
-    tagged_with: "Tagged",
-    articles_in_tag: "articles",
-    footer_rss: "RSS feed",
-    lang_switch: "Language",
-    theme_toggle: "Switch theme",
-    skip_to_content: "Skip to content",
-    nav_menu: "Menu",
-    nav_close: "Close menu",
-    theme_light: "Light",
-    theme_dark: "Dark",
-    filter_all: "All",
-    search_label: "Search",
-    label_articles: "Articles",
-    archive_filter_label: "Filter by tag",
-    archive_clear: "Clear filters",
-    article_top: "Back to top",
-    article_share: "Share",
-    share_title: "Share this article",
-    share_link: "Link",
-    share_copy: "Copy link",
-    share_native: "System share",
-    share_close: "Close",
-    article_share_done: "Link copied",
-    gallery_zoom: "Enlarge",
-    gallery_count: "photos",
-    about_stack: "Built with",
-    suggest_soon: "Got an idea for an article? Submissions are coming soon.",
-    not_found_title: "Page not found",
-    not_found_body: "This page wandered off. Let's get you back.",
-    about_title: "The Project",
-    about_eyebrow: "Why this exists",
-    about_motto:
-      "MOMENTUM — because when an idea hits, I drop it here right away and keep the flow going. Keep the momentum.",
-    about_purpose_1:
-      "MOMENTUM is where I stash ideas before they slip away. Posts about games, music, 3D printing, modding, and whatever else grabs my attention. No schedule, no promises, just whatever comes to mind.",
-    about_purpose_2:
-      "The name is on purpose. When something clicks, I want to capture it right away and move on. Keeping that sense of momentum going while it lasts.",
-    about_author_title: "Author",
-    about_intro_1:
-      "MOMENTUM is run by BOGGELINO, an informatics student at Žilina University.",
-    about_intro_2:
-      "I'm into gaming, I make amateur 3D models on the side, and I've got a habit of diving headfirst into whatever new thing I get curious about: modding, servers, whatever it is that week.",
-    about_links_title: "Find me elsewhere",
-    featured_label: "Pinned post",
-    featured_latest_label: "Latest post",
-    sidebar_about: "About me",
-    sidebar_recent: "Recent posts",
-    sidebar_categories: "Categories",
-    sidebar_empty: "Nothing here yet.",
-    gallery_title: "Gallery",
-    gallery_intro:
-      "Photos I want to keep around somewhere. No big context, just here.",
-    gallery_empty: "No photos here yet. Check back soon.",
-
-    // Search / archive page
-    search_placeholder: "Search articles...",
-    search_random: "Random",
-    search_random_title: "Open a random article",
-    search_sort_label: "Sort",
-    sort_newest: "Newest first",
-    sort_oldest: "Oldest first",
-    sort_reading_time: "Reading time",
-    sort_alphabetical: "Alphabetical",
-    search_no_results: "No articles match your search.",
-    search_tags_heading: "Tags",
-
-    // Table of contents
-    toc_title: "Contents",
-
-    // Related articles
-    related_articles: "Related Articles",
-
-    // Article statistics
-    stats_title: "Article Statistics",
-    stats_words: "Words",
-    stats_reading_time: "Reading Time",
-    stats_images: "Images",
-    stats_headings: "Headings",
-    stats_minutes: "min",
-
-    // Author's note
-    author_note_title: "Author's Note",
-
-    // Footer
-    footer_latest_articles: "Latest Articles",
-    footer_latest_article: "Latest article",
-    footer_random_article: "Random article",
-    footer_navigation: "Navigation",
-    footer_social: "Social",
-    footer_meta: "Meta",
-    footer_built_with: "Built with Astro",
-  },
   sk: {
-    tagline: "Nadávanie, blúznenie a veci, čo mám rád",
-    nav_home: "Domov",
-    nav_tags: "Archív",
-    nav_about: "O projekte",
-    nav_gallery: "Galéria",
-    home_latest: "Najnovšie články",
-    home_empty: "Zatiaľ tu nič nie je. Skús to znova neskôr.",
-    read_more: "Čítať článok",
-    back_home: "Späť na všetky články",
-    written_by: "Napísal",
-    published_on: "Publikované",
-    all_tags: "Archív článkov",
-    tagged_with: "Štítok",
-    articles_in_tag: "článkov",
-    footer_rss: "RSS kanál",
-    lang_switch: "Jazyk",
-    theme_toggle: "Prepnúť režim",
-    skip_to_content: "Preskočiť na obsah",
-    nav_menu: "Menu",
-    nav_close: "Zavrieť menu",
-    theme_light: "Svetlý",
-    theme_dark: "Tmavý",
-    filter_all: "Všetko",
-    search_label: "Hľadať",
-    label_articles: "Články",
-    archive_filter_label: "Filtrovať podľa štítku",
-    archive_clear: "Zrušiť filtre",
-    article_top: "Na začiatok",
-    article_share: "Zdieľať",
-    share_title: "Zdieľať článok",
-    share_link: "Odkaz",
-    share_copy: "Kopírovať odkaz",
-    share_native: "Systémové zdieľanie",
-    share_close: "Zavrieť",
-    article_share_done: "Odkaz skopírovaný",
-    gallery_zoom: "Zväčšiť",
-    gallery_count: "fotiek",
-    about_stack: "Postavené na",
-    suggest_soon: "Máš nápad na článok? Návrhy čoskoro spustíme.",
-    not_found_title: "Stránka nenájdená",
-    not_found_body: "Táto stránka sa niekam zatúlala. Poď späť.",
-    about_title: "O projekte",
-    about_eyebrow: "Prečo to existuje",
+    /* Identita ------------------------------------------------------- */
+    site_name: 'MOMENTUM',
+    site_tagline: 'Zapíš to skôr, než to stihneš prehodnotiť.',
+    site_slogan:
+      'Zapíš to skôr, než to stihneš prehodnotiť. Denník nápadov, poznámok a rozpracovaných myšlienok.',
+    site_description:
+      'Denník nápadov, poznámok a rozpracovaných myšlienok. Píše BOGGELINO.',
+    footer_rights: '© 2026 BOGGELINO',
+
+    /* Navigácia ------------------------------------------------------ */
+    nav_home: 'Domov',
+    nav_archive: 'Archív',
+    nav_about: 'O projekte',
+    nav_menu: 'Menu',
+    nav_close: 'Zavrieť',
+    skip_to_content: 'Preskočiť na obsah',
+    lang_switch: 'Jazyk',
+    lang_soon: 'Čoskoro',
+
+    /* Homepage ------------------------------------------------------- */
+    label_pinned: 'Pripnutý článok',
+    label_latest: 'Najnovší článok',
+    read_more: 'Čítaj viac',
+    home_more: 'Ďalšie články',
+    home_archive_link: 'Archív',
+    empty_home: 'Prvý nápad je na ceste. Zatiaľ tu nie je čo čítať.',
+
+    /* Karta ---------------------------------------------------------- */
+    badge_new: 'Nové',
+    badge_pinned: 'Pinned',
+    badge_draft: 'Rozpísané',
+
+    /* Stránka článku ------------------------------------------------- */
+    published: 'Publikované',
+    draft_state: 'Rozpísané',
+    draft_band: 'Práca na ceste, text sa ešte mení',
+    draft_last_edit: 'Posledná úprava',
+    toc_title: 'Obsah',
+    reading_progress: 'Priebeh čítania',
+    count_chapter_one: 'kapitola',
+    count_chapter_few: 'kapitoly',
+    count_chapter_many: 'kapitol',
+    article_top: 'Na začiatok',
+    article_archive: 'Archív článkov',
+    article_share: 'Zdieľať',
+    share_copied: 'Odkaz skopírovaný',
+    author_of_article: 'Autor článku',
+    related_title: 'Súvisiace články',
+    related_note: 'Vybrané podľa štítkov',
+    series_label: 'Séria',
+    series_follows: 'Nadväzuje na',
+    series_next: 'Pokračuje',
+    series_children: 'Nadväzuje',
+    series_children_note: 'Od najnovšieho',
+    reading_unit: 'min',
+    reading_suffix: 'čítania',
+
+    /* Archív --------------------------------------------------------- */
+    archive_title: 'Archív',
+    archive_rhythm: 'Rytmus písania',
+    archive_rhythm_hint: 'Klik na stĺpec odfiltruje mesiac',
+    archive_search: 'Hľadanie',
+    archive_search_placeholder: 'Názov alebo popis článku…',
+    archive_tags: 'Štítky',
+    archive_tags_placeholder: 'Hľadať v štítkoch…',
+    archive_tags_hidden: 'Štítky bez zhody sú skryté',
+    archive_clear: 'Vyčistiť',
+    archive_sort: 'Zoradenie',
+    archive_all: 'Všetky články podľa mesiacov',
+    label_filter: 'Filter',
+    label_sorted: 'Zoradené',
+    label_search: 'Hľadanie',
+    archive_filters: 'Filtre',
+    view_grid: 'Mriežka',
+    view_list: 'Zoznam',
+    page_of: 'Strana',
+    prev_page: 'Predchádzajúca strana',
+    next_page: 'Nasledujúca strana',
+    take_me_somewhere: 'Vezmi ma niekam',
+
+    sort_newest: 'Najnovšie',
+    sort_oldest: 'Najstaršie',
+    sort_alpha: 'A – Z',
+    sort_reading: 'Čas čítania',
+
+    /* Počty ---------------------------------------------------------- */
+    count_article_one: 'článok',
+    count_article_few: 'články',
+    count_article_many: 'článkov',
+    count_tag_one: 'štítok',
+    count_tag_few: 'štítky',
+    count_tag_many: 'štítkov',
+    count_result_one: 'výsledok',
+    count_result_few: 'výsledky',
+    count_result_many: 'výsledkov',
+    results_none: '0 výsledkov',
+
+    /* Prázdne stavy -------------------------------------------------- */
+    empty_filter_title: 'Nič také tu zatiaľ nie je',
+    empty_filter_hint: 'Pre tento výber nemám žiadny článok.',
+    empty_clear: 'Vyčistiť filtre',
+
+    /* Vyhľadávanie --------------------------------------------------- */
+    search_open: 'Hľadať',
+    search_placeholder: 'Hľadať v celom webe…',
+    search_articles: 'Články',
+    search_tags: 'Štítky',
+    search_hint: 'Píš a vyber si z výsledkov.',
+    search_empty: 'Nič sa nenašlo.',
+    search_kind_article: 'Článok',
+    search_kind_tag: 'Štítok',
+
+    /* O projekte ----------------------------------------------------- */
+    about_title: 'O projekte',
+    about_eyebrow: 'Prečo táto stránka vôbec existuje',
     about_motto:
-      "MOMENTUM — preto, lebo keď ma niečo napadne, dám to hneď sem a udržím si tak flow. Svoje momentum.",
-    about_purpose_1:
-      "MOMENTUM je miesto, kam si ukladám myšlienky skôr, než mi vyprchajú. Články o hrách, hudbe, 3D tlači, moddingu a čomkoľvek inom, čo ma práve chytí. Bez harmonogramu, bez sľubov, jednoducho tak, ako mi to príde.",
-    about_purpose_2:
-      "Meno nie je náhodné. Keď ma niečo napadne, chcem si to hneď zachytiť a ísť ďalej. Udržať si ten pocit rozbehu, kým ešte trvá.",
-    about_author_title: "Autor",
-    about_intro_1:
-      "Za MOMENTOM stojí BOGGELINO, študent informatiky na Žilinskej univerzite.",
-    about_intro_2:
-      "Bavia ma hry, popri tom robím amatérske 3D modely a mám taký zvyk vrhnúť sa naplno do čohokoľvek nového, čo ma zaujme: modding, servery, čokoľvek to práve je.",
-    about_links_title: "Nájdeš ma aj tu",
-    featured_label: "Pripnutý článok",
-    featured_latest_label: "Najnovší článok",
-    sidebar_about: "O mne",
-    sidebar_recent: "Posledné príspevky",
-    sidebar_categories: "Kategórie",
-    sidebar_empty: "Zatiaľ tu nič nie je.",
-    gallery_title: "Galéria",
-    gallery_intro:
-      "Fotky, ktoré si chcem nechať niekde poruke. Bez veľkého kontextu, jednoducho tu sú.",
-    gallery_empty: "Zatiaľ tu nie sú žiadne fotky. Skús to znova neskôr.",
+      'MOMENTUM: preto, lebo keď ma niečo napadne, dám to hneď sem a udržím si tak flow.',
+    about_lead:
+      'Nápad má krátku životnosť. Kým si nájdem správny nástroj, správny čas a správnu náladu, je z neho polovica. Tento web je pokus túto stratu odstrániť: textové pole, priečinok, hotovo.',
+    about_what_title: 'Čo tu nájdeš',
+    about_what_body:
+      'Poznámky, rozpracované myšlienky, technické zápisky a občas dlhší text, ktorý sa rozrástol viac, než mal. Nič z toho neprešlo redakciou, a to je zámer, nie ospravedlnenie.',
+    about_how_title: 'Ako to funguje',
+    about_how_body:
+      'Články sú obyčajné .md súbory. Stránka je statická, bez databázy a bez prihlasovania. Do budúcna počítam s tým, že sem budú môcť písať aj iní ľudia. Zatiaľ je to jednosmerka.',
+    about_principle_1_title: 'Bez čakania',
+    about_principle_1_text: 'Nápad ide na web v deň, keď vznikne. Aj keď nie je hotový.',
+    about_principle_2_title: 'Bez redakcie',
+    about_principle_2_text:
+      'Text sa neupravuje spätne. Staré zápisky ostávajú také, aké boli.',
+    about_principle_3_title: 'Bez balastu',
+    about_principle_3_text: 'Žiadne cookie lišty, žiadne odbery, žiadne sledovanie.',
+    about_author_role: 'Autor a jediný redaktor',
+    about_author_bio:
+      'Píšem o tom, ako veci robím, nie o tom, ako by sa mali robiť. Väčšinou v noci, väčšinou naraz.',
 
-    // Search / archive page
-    search_placeholder: "Hľadať v článkoch...",
-    search_random: "Náhodný",
-    search_random_title: "Otvoriť náhodný článok",
-    search_sort_label: "Zoradiť",
-    sort_newest: "Najnovšie",
-    sort_oldest: "Najstaršie",
-    sort_reading_time: "Čas čítania",
-    sort_alphabetical: "Abecedne",
-    search_no_results: "Hľadaniu nezodpovedajú žiadne články.",
-    search_tags_heading: "Štítky",
+    /* 404 ------------------------------------------------------------ */
+    not_found_title: 'Stránka nenájdená',
+    not_found_body:
+      'Táto stránka sa niekam zatúlala. Nápad, ktorý tu mal byť, sa asi nestihol zapísať včas.',
+    not_found_home: 'Späť na hlavnú',
+    not_found_search: 'Prehľadať archív',
+    not_found_latest: 'Najnovšie články',
+    not_found_error: 'Chyba 404',
 
-    // Table of contents
-    toc_title: "Obsah",
+    /* Chýbajúci preklad ---------------------------------------------- */
+    missing_translation: 'Tento článok existuje zatiaľ len po slovensky.',
+    missing_translation_en: 'Tento článok existuje zatiaľ len po anglicky.',
+    missing_read_original: 'Prečítať pôvodinu',
+    missing_see_archive: 'Zobraziť slovenský archív',
 
-    // Related articles
-    related_articles: "Súvisiace články",
+    /* Ostatné -------------------------------------------------------- */
+    rss: 'RSS kanál',
+    print_source: 'Zdroj',
+  },
 
-    // Article statistics
-    stats_title: "Štatistiky článku",
-    stats_words: "Slová",
-    stats_reading_time: "Čas čítania",
-    stats_images: "Obrázky",
-    stats_headings: "Nadpisy",
-    stats_minutes: "min",
+  en: {
+    site_name: 'MOMENTUM',
+    site_tagline: 'Write it down before you talk yourself out of it.',
+    site_slogan:
+      'Write it down before you talk yourself out of it. A log of ideas, notes and half-finished thoughts.',
+    site_description: 'A log of ideas, notes and half-finished thoughts. By BOGGELINO.',
+    footer_rights: '© 2026 BOGGELINO',
 
-    // Author's note
-    author_note_title: "Poznámka autora",
+    nav_home: 'Home',
+    nav_archive: 'Archive',
+    nav_about: 'The Project',
+    nav_menu: 'Menu',
+    nav_close: 'Close',
+    skip_to_content: 'Skip to content',
+    lang_switch: 'Language',
+    lang_soon: 'Soon',
 
-    // Footer
-    footer_latest_articles: "Najnovšie články",
-    footer_latest_article: "Najnovší článok",
-    footer_random_article: "Náhodný článok",
-    footer_navigation: "Navigácia",
-    footer_social: "Sociálne siete",
-    footer_meta: "Meta",
-    footer_built_with: "Postavené na Astro",
+    label_pinned: 'Pinned article',
+    label_latest: 'Latest article',
+    read_more: 'Read more',
+    home_more: 'More articles',
+    home_archive_link: 'Archive',
+    empty_home: 'The first idea is on its way. Nothing to read here yet.',
+
+    badge_new: 'New',
+    badge_pinned: 'Pinned',
+    badge_draft: 'In progress',
+
+    published: 'Published',
+    draft_state: 'In progress',
+    draft_band: 'Work in progress, this text is still changing',
+    draft_last_edit: 'Last edited',
+    toc_title: 'Contents',
+    reading_progress: 'Reading progress',
+    count_chapter_one: 'chapter',
+    count_chapter_few: 'chapters',
+    count_chapter_many: 'chapters',
+    article_top: 'Back to top',
+    article_archive: 'Article archive',
+    article_share: 'Share',
+    share_copied: 'Link copied',
+    author_of_article: 'Article author',
+    related_title: 'Related articles',
+    related_note: 'Chosen by tags',
+    series_label: 'Series',
+    series_follows: 'Follows',
+    series_next: 'Continues in',
+    series_children: 'Followed by',
+    series_children_note: 'Newest first',
+    reading_unit: 'min',
+    reading_suffix: 'read',
+
+    archive_title: 'Archive',
+    archive_rhythm: 'Writing rhythm',
+    archive_rhythm_hint: 'Click a column to filter that month',
+    archive_search: 'Search',
+    archive_search_placeholder: 'Article title or description…',
+    archive_tags: 'Tags',
+    archive_tags_placeholder: 'Search tags…',
+    archive_tags_hidden: 'Tags without matches are hidden',
+    archive_clear: 'Clear',
+    archive_sort: 'Sort',
+    archive_all: 'All articles by month',
+    label_filter: 'Filter',
+    label_sorted: 'Sorted',
+    label_search: 'Search',
+    archive_filters: 'Filters',
+    view_grid: 'Grid',
+    view_list: 'List',
+    page_of: 'Page',
+    prev_page: 'Previous page',
+    next_page: 'Next page',
+    take_me_somewhere: 'Take me somewhere',
+
+    sort_newest: 'Newest',
+    sort_oldest: 'Oldest',
+    sort_alpha: 'A – Z',
+    sort_reading: 'Reading time',
+
+    count_article_one: 'article',
+    count_article_few: 'articles',
+    count_article_many: 'articles',
+    count_tag_one: 'tag',
+    count_tag_few: 'tags',
+    count_tag_many: 'tags',
+    count_result_one: 'result',
+    count_result_few: 'results',
+    count_result_many: 'results',
+    results_none: '0 results',
+
+    empty_filter_title: 'Nothing like that here yet',
+    empty_filter_hint: 'No article matches this selection.',
+    empty_clear: 'Clear filters',
+
+    search_open: 'Search',
+    search_placeholder: 'Search the whole site…',
+    search_articles: 'Articles',
+    search_tags: 'Tags',
+    search_hint: 'Type and pick from the results.',
+    search_empty: 'Nothing found.',
+    search_kind_article: 'Article',
+    search_kind_tag: 'Tag',
+
+    about_title: 'The Project',
+    about_eyebrow: 'Why this page exists at all',
+    about_motto:
+      'MOMENTUM: because when an idea hits, it goes straight here and the flow keeps going.',
+    about_lead:
+      'An idea has a short shelf life. By the time I find the right tool, the right moment and the right mood, half of it is gone. This site is an attempt to remove that loss: a text field, a folder, done.',
+    about_what_title: 'What you will find here',
+    about_what_body:
+      'Notes, unfinished thoughts, technical scribbles and occasionally a longer text that grew more than it should have. None of it went through an editor. That is the point, not an excuse.',
+    about_how_title: 'How it works',
+    about_how_body:
+      'Articles are plain .md files. The site is static, with no database and no login. Eventually other people may be able to write here. For now it is a one-way street.',
+    about_principle_1_title: 'No waiting',
+    about_principle_1_text:
+      'An idea goes live the day it appears. Even when it is not finished.',
+    about_principle_2_title: 'No editing',
+    about_principle_2_text:
+      'Texts are not rewritten later. Old notes stay exactly as they were.',
+    about_principle_3_title: 'No clutter',
+    about_principle_3_text: 'No cookie bars, no newsletters, no tracking.',
+    about_author_role: 'Author and only editor',
+    about_author_bio:
+      'I write about how I do things, not how they should be done. Mostly at night, mostly in one sitting.',
+
+    not_found_title: 'Page not found',
+    not_found_body:
+      'This page wandered off. The idea that should have been here probably never got written down in time.',
+    not_found_home: 'Back to home',
+    not_found_search: 'Search the archive',
+    not_found_latest: 'Latest articles',
+    not_found_error: 'Error 404',
+
+    missing_translation: 'This one exists only in Slovak.',
+    missing_translation_en: 'This one exists only in English.',
+    missing_read_original: 'Read the original',
+    missing_see_archive: 'See the English archive',
+
+    rss: 'RSS feed',
+    print_source: 'Source',
   },
 } as const;
 
-export function t(lang: Lang) {
-  return dict[lang];
+export type Dict = (typeof dict)['sk'];
+
+export function t(lang: Lang): Dict {
+  return dict[lang] as Dict;
 }
 
 export function otherLang(lang: Lang): Lang {
-  return lang === "en" ? "sk" : "en";
+  return lang === 'en' ? 'sk' : 'en';
 }
 
-// Lightweight relative-time formatter used in the homepage sidebar
-// (kept out of the main dict since it needs a numeric argument).
-export function relativeTime(date: Date, lang: Lang): string {
-  const days = Math.max(
-    0,
-    Math.floor((Date.now() - date.getTime()) / 86_400_000),
-  );
-
-  if (lang === "sk") {
-    if (days === 0) return "dnes";
-    if (days === 1) return "pred 1 dňom";
-    if (days >= 2 && days <= 4) return `pred ${days} dňami`;
-    return `pred ${days} dňami`;
-  }
-
-  if (days === 0) return "today";
-  if (days === 1) return "1 day ago";
-  return `${days} days ago`;
+/** Rovnaká obrazovka v inom jazyku, prepnutie drží čitateľa na mieste. */
+export function swapLangInPath(path: string, target: Lang): string {
+  const stripped = path.replace(/^\/(sk|en)(?=\/|$)/, '');
+  return `/${target}${stripped || '/'}`;
 }

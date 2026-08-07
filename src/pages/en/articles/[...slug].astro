@@ -1,0 +1,22 @@
+---
+import ArticleScreen from '../../../screens/ArticleScreen.astro';
+import MissingTranslation from '../../../screens/MissingTranslation.astro';
+import CanonicalRedirect from '../../../screens/CanonicalRedirect.astro';
+import { articlePaths } from '../../../utils/article-paths';
+
+export async function getStaticPaths() {
+  return articlePaths('en');
+}
+
+const { lang, id, missing, redirectTo } = Astro.props;
+---
+
+{
+  redirectTo ? (
+    <CanonicalRedirect to={redirectTo} lang={lang} />
+  ) : missing ? (
+    <MissingTranslation lang={lang} id={id} />
+  ) : (
+    <ArticleScreen lang={lang} id={id} />
+  )
+}

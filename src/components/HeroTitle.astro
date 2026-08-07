@@ -1,0 +1,100 @@
+---
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+  slogan?: string;
+}
+
+const { lang, slogan } = Astro.props;
+const d = t(lang);
+const word = d.site_name;
+const text = slogan ?? d.site_slogan;
+const letters = [...word];
+---
+
+<section class="hero" data-hero aria-labelledby="hero-title">
+  <h1 class="hero-title" id="hero-title">
+    <span class="sr-only">{word}_</span>
+    <span class="hero-word" aria-hidden="true">
+      {
+        letters.map((letter, index) => (
+          <span class="hero-letter" style={`--i:${index}`}>
+            {letter}
+          </span>
+        ))
+      }
+      <span class="hero-letter wm-bar" style={`--i:${letters.length}`} />
+    </span>
+  </h1>
+  <p class="hero-slogan mono">{text}</p>
+</section>
+
+<style>
+  /* Hero najviac 68 vh, horná hrana hlavnej karty musí byť vidieť. */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-22);
+    max-height: 68vh;
+    padding-block: clamp(var(--sp-38), 7vh, var(--sp-80));
+    text-align: center;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(56px, 12.2vw, var(--fs-hero));
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  /* Nie flex: podčiarkovník musí sedieť na účiare cez vertical-align. */
+  .hero-word {
+    display: block;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .hero-letter {
+    display: inline-block;
+    animation: hero-letter-in calc(420ms * var(--motion)) var(--ease) both;
+    animation-delay: calc(var(--i) * 30ms * var(--motion));
+  }
+
+  /* Podčiarkovník v Antone sedí hlboko pod účiarou, jemne ho zdvihneme,
+     aby čítal ako súčasť slova, nie ako samostatná značka. */
+  @keyframes hero-letter-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .hero-slogan {
+    max-width: 62ch;
+    color: var(--ink-3);
+    letter-spacing: 0.14em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-letter {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hero {
+      max-height: none;
+      padding-block: var(--sp-38);
+    }
+  }
+</style>

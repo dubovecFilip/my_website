@@ -1,0 +1,298 @@
+---
+import LangSwitch from './LangSwitch.astro';
+import { t, type Lang } from '../i18n/dict';
+import type { Alternate } from '../layouts/BaseLayout.astro';
+
+interface Props {
+  lang: Lang;
+  active?: 'home' | 'archive' | 'about' | null;
+  alternates?: Alternate[];
+  /**
+   * Na homepage je značka v strede stránky, preto sa v hlavičke objaví až
+   * potom, ako obrie MOMENTUM_ odscrolluje preč.
+   */
+  brandAfterHero?: boolean;
+}
+
+const { lang, active = null, alternates = [], brandAfterHero = false } = Astro.props;
+const d = t(lang);
+
+const nav = [
+  { key: 'home', label: d.nav_home, href: `/${lang}/` },
+  { key: 'archive', label: d.nav_archive, href: `/${lang}/articles/` },
+  { key: 'about', label: d.nav_about, href: `/${lang}/about/` },
+] as const;
+---
+
+<header class="header" data-header data-brand-after-hero={brandAfterHero ? '' : undefined}>
+  <div class="header-inner shell">
+    <div class="header-left">
+      <a class="brand" href={`/${lang}/`} aria-label={`${d.site_name}_`}>
+        <span aria-hidden="true">{d.site_name}<span class="wm-bar" /></span>
+      </a>
+    </div>
+
+    <nav class="nav" aria-label={d.nav_menu}>
+      <ul class="nav-list">
+        {
+          nav.map((item) => (
+            <li>
+              <a
+                class="nav-link"
+                href={item.href}
+                aria-current={active === item.key ? 'page' : undefined}
+              >
+                <span>{item.label}</span>
+                <span class="nav-mark" aria-hidden="true" />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="header-tools">
+      <button type="button" class="tool-btn" data-search-open aria-label={d.search_open}>
+        <svg viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+          <circle cx="8" cy="8" r="5.4" />
+          <path d="M12 12l3.4 3.4" />
+        </svg>
+      </button>
+      <LangSwitch lang={lang} alternates={alternates} />
+      <button
+        type="button"
+        class="burger"
+        data-nav-toggle
+        aria-expanded="false"
+        aria-label={d.nav_menu}
+      >
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 80;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header-inner {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: var(--sp-22);
+    height: var(--header-h);
+    transition: height var(--t-state) var(--ease);
+  }
+
+  /* Po 80 px scrollu hlavička zhustne. */
+  :global(.header.is-condensed) .header-inner {
+    height: var(--header-h-condensed);
+  }
+
+  .header-left {
+    justify-self: start;
+    min-width: 0;
+  }
+
+  /* Značka sa na homepage objaví až po odscrollovaní hero. */
+  [data-brand-after-hero] .brand {
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+  }
+
+  :global(.header.is-brand-shown) .brand {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    transition:
+      opacity var(--t-state) var(--ease),
+      transform var(--t-state) var(--ease);
+    font-family: var(--font-display);
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+
+
+  .nav {
+    justify-self: center;
+  }
+
+  .nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-12);
+  }
+
+  /* Podčiarknutie je krátka čiarka pod popiskom, presúva sa medzi položkami. */
+  .nav-link {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: var(--touch);
+    padding: 0 12px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    transition: color var(--t);
+  }
+
+  @media (hover: hover) {
+    .nav-link:hover {
+      color: var(--ink-2);
+    }
+  }
+
+  .nav-mark {
+    width: 16px;
+    height: 2px;
+    border-radius: var(--r-pill);
+    background: transparent;
+    transition: background-color var(--t-state) var(--ease);
+  }
+
+  .nav-link[aria-current='page'] {
+    color: var(--ink);
+  }
+
+  .nav-link[aria-current='page'] .nav-mark {
+    background: var(--accent);
+  }
+
+  .header-tools {
+    justify-self: end;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-10);
+  }
+
+  .tool-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--r-pill);
+    background: var(--fill-strong);
+    color: var(--ink-3);
+    transition: background-color var(--t), color var(--t);
+  }
+
+  .tool-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
+  @media (hover: hover) {
+    .tool-btn:hover {
+      background: rgba(244, 242, 236, 0.1);
+      color: var(--ink);
+    }
+  }
+
+  .burger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch);
+    height: var(--touch);
+    border-radius: var(--r-pill);
+    background: var(--fill-strong);
+    color: var(--ink-3);
+    transition: background-color var(--t), color var(--t);
+  }
+
+  .burger span,
+  .burger span::before,
+  .burger span::after {
+    display: block;
+    width: 15px;
+    height: 1.5px;
+    background: currentColor;
+    border-radius: 2px;
+  }
+
+  .burger span::before,
+  .burger span::after {
+    content: '';
+    position: relative;
+  }
+
+  .burger span::before {
+    top: -5px;
+  }
+
+  .burger span::after {
+    top: 3.5px;
+  }
+
+  /* Mobil: navigácia v hamburgeri (sekcia 12). */
+  @media (max-width: 767px) {
+    .header-inner {
+      grid-template-columns: 1fr auto;
+    }
+
+    .burger {
+      display: inline-flex;
+    }
+
+    .nav {
+      grid-column: 1 / -1;
+      justify-self: stretch;
+      display: none;
+      padding-bottom: var(--sp-12);
+    }
+
+    :global(.header.is-open) .nav {
+      display: block;
+    }
+
+    :global(.header.is-open) .header-inner {
+      height: auto;
+      padding-top: var(--sp-12);
+    }
+
+    .nav-list {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 2px;
+    }
+
+    .nav-link {
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: var(--sp-12);
+      border-radius: var(--r-item);
+      background: var(--fill-2);
+      padding-inline: 16px;
+    }
+
+    .nav-mark {
+      order: -1;
+      width: 12px;
+    }
+  }
+</style>

@@ -1,0 +1,266 @@
+/* ==========================================================================
+   Text článku: používa stránka článku aj náhľad v Compose.
+   ========================================================================== */
+
+.article-body {
+  max-width: var(--measure);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.article-body > * + * {
+  margin-top: var(--sp-22);
+}
+
+.article-body h2,
+.article-body h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  scroll-margin-top: calc(var(--header-h) + var(--sp-22));
+}
+
+.article-body h2 {
+  font-size: var(--fs-h2);
+  line-height: 1.2;
+  margin-top: var(--sp-56);
+}
+
+.article-body h3 {
+  font-size: var(--fs-h3);
+  line-height: 1.2;
+  margin-top: var(--sp-38);
+}
+
+.article-body strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.article-body em {
+  font-style: italic;
+}
+
+/* Odkaz v texte */
+.article-body a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(242, 114, 74, 0.5);
+  transition: color var(--t), text-decoration-color var(--t);
+}
+
+@media (hover: hover) {
+  .article-body a:hover {
+    color: var(--accent-text);
+    text-decoration-color: var(--accent-text);
+  }
+}
+
+/* Citát */
+.article-body blockquote {
+  margin-block: var(--sp-38);
+  padding: var(--sp-14) 0 var(--sp-14) var(--sp-22);
+  border-left: 2px solid var(--accent);
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.article-body blockquote p + p {
+  margin-top: var(--sp-12);
+}
+
+/* Zoznamy: odrážka v accente */
+.article-body ul,
+.article-body ol {
+  padding-left: var(--sp-22);
+}
+
+.article-body ul li,
+.article-body ol li {
+  position: relative;
+  padding-left: var(--sp-14);
+}
+
+.article-body li + li {
+  margin-top: var(--sp-10);
+}
+
+.article-body ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.article-body ol {
+  counter-reset: item;
+}
+
+.article-body ol li::before {
+  counter-increment: item;
+  content: counter(item, decimal-leading-zero);
+  position: absolute;
+  left: -6px;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-sm);
+  letter-spacing: 0.12em;
+  color: var(--accent-text);
+}
+
+/* Kód */
+.article-body code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--fill);
+  color: var(--ink);
+}
+
+.article-body pre {
+  padding: var(--sp-22);
+  border-radius: var(--r-field);
+  background: var(--surface-2);
+  overflow-x: auto;
+}
+
+.article-body pre code {
+  padding: 0;
+  background: none;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+/* Tabuľka */
+.article-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.article-body th,
+.article-body td {
+  padding: var(--sp-10) var(--sp-12);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.article-body th {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-sm);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+/* Oddeľovač */
+.article-body hr {
+  border: 0;
+  height: 1px;
+  background: var(--line);
+  margin-block: var(--sp-38);
+}
+
+/* Obrázok v texte: bez gradientu, popis vycentrovaný pod ním. */
+.article-body .article-figure,
+.article-body figure {
+  margin-block: var(--sp-38);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+}
+
+.article-body figure > img,
+.article-body > img {
+  width: 100%;
+  border-radius: var(--r-field);
+  filter: blur(12px);
+  opacity: 0;
+  transition:
+    filter var(--t-enter) var(--ease),
+    opacity var(--t-enter) var(--ease);
+}
+
+.article-body img.is-loaded {
+  filter: none;
+  opacity: 1;
+}
+
+html:not(.js) .article-body img {
+  filter: none;
+  opacity: 1;
+}
+
+.article-body figcaption {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  color: var(--ink-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .article-body figure > img,
+  .article-body > img {
+    filter: none;
+    opacity: 1;
+    transition: none;
+  }
+}
+
+/* Potvrdenie / oznam */
+.toast {
+  position: fixed;
+  right: var(--sp-22);
+  bottom: var(--sp-22);
+  z-index: 140;
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  box-shadow: var(--shadow);
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ok);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--t-panel) var(--ease), transform var(--t-panel) var(--ease);
+}
+
+.toast.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* +N v štítkoch */
+.tag-more {
+  color: var(--accent-text);
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+}
+
+/* Dotykový cieľ sa rozšíri neviditeľnou plochou, aby štítok ostal drobný. */
+.tag-more::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--touch);
+  transform: translateY(-50%);
+}

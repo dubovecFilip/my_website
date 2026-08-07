@@ -1,89 +1,38 @@
 ---
-// Stand-in artwork for articles that ship without an image. Rather than an
-// empty box it prints the MOMENTUM mark on a hatched field, with the hatch
-// angle and the mark position derived from the title so two articles sitting
-// next to each other never look identical.
+/**
+ * Karta bez obrázka (sekcia 09 D): náhľad sa nahradí tichým monogramom na
+ * tmavšej ploche, nikdy sivým štvorcom ani ikonou zlomeného obrázka.
+ */
 interface Props {
-  seed: string;
-  /** "plate" is the small card thumb, "band" is the wide cover strip. */
-  variant?: 'plate' | 'band';
+  ratio?: string;
+  class?: string;
 }
 
-const { seed, variant = 'plate' } = Astro.props;
-
-let hash = 0;
-for (const ch of seed) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-
-const angles = [45, -45, 90];
-const angle = angles[hash % angles.length];
-const id = `ph-${(hash % 100000).toString(36)}`;
-const width = variant === 'band' ? 1200 : 400;
-const height = variant === 'band' ? 320 : 260;
-const markSize = variant === 'band' ? 120 : 96;
+const { ratio = '16 / 9', class: className = '' } = Astro.props;
 ---
 
-<div class:list={['placeholder', `is-${variant}`]} aria-hidden="true">
-  <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid slice" role="presentation">
-    <defs>
-      <pattern id={id} width="24" height="24" patternUnits="userSpaceOnUse" patternTransform={`rotate(${angle})`}>
-        <rect width="24" height="24" class="ph-field" />
-        <rect width="12" height="24" class="ph-stripe" />
-      </pattern>
-    </defs>
-
-    <rect width={width} height={height} fill={`url(#${id})`} />
-
-    <g transform={`translate(${width / 2 - markSize / 2} ${height / 2 - markSize / 2})`}>
-      <rect width={markSize} height={markSize} class="ph-plate" />
-      <text
-        x={markSize / 2 - markSize * 0.08}
-        y={markSize * 0.7}
-        text-anchor="middle"
-        class="ph-letter"
-        style={`font-size:${markSize * 0.58}px`}
-      >M</text>
-      <rect
-        x={markSize * 0.62}
-        y={markSize * 0.58}
-        width={markSize * 0.22}
-        height={markSize * 0.1}
-        class="ph-cursor"
-      />
-    </g>
-  </svg>
+<div class:list={['ph', className]} style={`--ph-ratio:${ratio}`} aria-hidden="true">
+  <span class="ph-mark">M<span class="wm-bar" /></span>
 </div>
 
 <style>
-  .placeholder {
-    position: absolute;
-    inset: 0;
+  .ph {
+    aspect-ratio: var(--ph-ratio);
     width: 100%;
-    height: 100%;
+    display: grid;
+    place-items: center;
+    background: var(--grad-placeholder);
   }
-  .placeholder.is-band {
-    position: relative;
-    height: 260px;
-  }
-  .placeholder svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
-  .ph-field {
-    fill: var(--bg-raised-2);
-  }
-  .ph-stripe {
-    fill: var(--bg-raised);
-  }
-  .ph-plate {
-    fill: var(--rule);
-  }
-  .ph-letter {
-    fill: var(--bg);
+
+  .ph-mark {
     font-family: var(--font-display);
-    font-weight: 900;
+    font-size: clamp(24px, 12cqw, 44px);
+    line-height: 1;
+    letter-spacing: -0.015em;
+    color: rgba(244, 242, 236, 0.14);
   }
-  .ph-cursor {
-    fill: var(--accent);
+
+  .ph-mark :global(.wm-bar) {
+    color: rgba(242, 114, 74, 0.3);
   }
 </style>

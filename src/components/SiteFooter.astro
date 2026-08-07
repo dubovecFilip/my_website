@@ -1,0 +1,108 @@
+---
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+---
+
+<footer class="footer">
+  <div class="footer-inner shell">
+    <!-- Obrie tiché MOMENTUM_, o odtieň svetlejšie než plocha päty. -->
+    <a class="footer-brand" href={`/${lang}/`} aria-label={`${d.site_name}_`}>
+      <span aria-hidden="true">{d.site_name}<span class="wm-bar" /></span>
+    </a>
+
+    <div class="footer-side">
+      <a class="footer-link" href={`/${lang}/rss.xml`}>{d.rss}</a>
+      <span class="footer-rights">{d.footer_rights}</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: var(--sp-80);
+    background: var(--surface-sunken);
+  }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-26);
+    flex-wrap: wrap;
+    padding-block: 42px;
+  }
+
+  .footer-brand :global(.wm-bar) {
+    color: #2a2a2a;
+    transition: color var(--t);
+  }
+
+  .footer-brand {
+    font-family: var(--font-display);
+    font-size: 58px;
+    line-height: 1;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+    transition: color var(--t);
+  }
+
+  @media (hover: hover) {
+    .footer-brand:hover {
+      color: #262626;
+    }
+
+    .footer-brand:hover :global(.wm-bar) {
+      color: var(--accent);
+    }
+  }
+
+  .footer-side {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-22);
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #5a564f;
+  }
+
+  .footer-link {
+    color: inherit;
+    transition: color var(--t);
+  }
+
+  @media (hover: hover) {
+    .footer-link:hover {
+      color: var(--ink-2);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .footer-inner {
+      padding-block: var(--sp-26);
+      gap: var(--sp-14);
+    }
+
+    .footer-brand {
+      font-size: 40px;
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--touch);
+    }
+
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--touch);
+    }
+  }
+</style>

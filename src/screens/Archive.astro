@@ -1,0 +1,491 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import FilterPanel from '../components/FilterPanel.astro';
+import MonthTimeline from '../components/MonthTimeline.astro';
+import EmptyState from '../components/EmptyState.astro';
+import { getArticles, tagCounts, groupByMonth, monthTimeline } from '../utils/articles';
+import { languages, t, type Lang } from '../i18n/dict';
+import { articleCount, tagCountLabel, monthLabel, isoDate } from '../utils/format';
+
+interface Props {
+  lang: Lang;
+  /** Náhľadový režim Compose. */
+  preview?: 'home' | 'archive' | 'article';
+}
+
+const { lang, preview } = Astro.props;
+const d = t(lang);
+
+const articles = await getArticles(lang);
+const tags = tagCounts(articles);
+const groups = groupByMonth(articles);
+const timeline = monthTimeline(articles);
+
+const tagRank: Record<string, number> = {};
+for (const tag of tags) tagRank[tag.name] = tag.count;
+
+/* Tlačidlo „Vezmi ma niekam“ sa objaví až od 10 článkov v danom jazyku. */
+const showRandom = articles.length >= 10;
+
+const alternates = languages.map((code) => ({ lang: code, href: `/${code}/articles/` }));
+
+/* Popisky pre riadok výsledkov skladá klient, texty ide zo slovníka. */
+const labels = {
+  all: d.archive_all,
+  filter: d.label_filter,
+  sorted: d.label_sorted,
+  search: d.label_search,
+  page: d.page_of,
+  none: d.results_none,
+  one: d.count_result_one,
+  few: d.count_result_few,
+  many: d.count_result_many,
+  tagOne: d.count_tag_one,
+  tagFew: d.count_tag_few,
+  tagMany: d.count_tag_many,
+};
+---
+
+<BaseLayout preview={preview}  lang={lang} title={d.archive_title} active="archive" alternates={alternates}>
+  <div class="shell arch" data-arch data-labels={JSON.stringify(labels)}>
+    <!-- Nadpis je ukotvený vľavo; os sedí na úrovni jeho účiary. -->
+    <header class="arch-head">
+      <div class="arch-title-block">
+        <h1 class="arch-title">{d.archive_title}</h1>
+        <p class="arch-counts">
+          <span class="arch-pill">{articleCount(articles.length, lang)}</span>
+          <span class="arch-pill">{tagCountLabel(tags.length, lang)}</span>
+        </p>
+      </div>
+
+      <MonthTimeline lang={lang} months={timeline} />
+    </header>
+
+    <div class="arch-body">
+      <aside class="arch-filters" data-filter-shell>
+        <button type="button" class="filters-toggle btn btn-ghost" data-filters-open>
+          {d.archive_filters}
+          <span class="filters-badge mono-sm" data-filters-badge hidden>0</span>
+        </button>
+
+        <div class="arch-filters-inner">
+          <FilterPanel lang={lang} tags={tags} />
+          <button type="button" class="filters-close btn btn-ghost" data-filters-close>
+            {d.nav_close}
+          </button>
+        </div>
+      </aside>
+
+      <section class="arch-list" aria-label={d.archive_title}>
+        <div class="arch-bar">
+          <p class="arch-result mono" data-result aria-live="polite">{d.archive_all}</p>
+
+          <div class="arch-tools">
+            <div class="view" role="group" aria-label={d.view_grid} data-view-switch>
+              <button type="button" class="view-btn is-on" data-view="grid" aria-pressed="true">
+                ▦ {d.view_grid}
+              </button>
+              <button type="button" class="view-btn" data-view="list" aria-pressed="false">
+                ☰ {d.view_list}
+              </button>
+            </div>
+            <p class="arch-page mono-sm" data-page-label></p>
+          </div>
+        </div>
+
+        {
+          articles.length === 0 ? (
+            <EmptyState title={d.empty_home}>
+              <a class="btn btn-ghost" href={`/${lang}/`}>
+                {d.nav_home}
+              </a>
+            </EmptyState>
+          ) : (
+            <div class="arch-grid" data-list data-mode="grid">
+              {groups.map((group) => [
+                <p class="month" data-month-head={group.key}>
+                  <span class="month-label">{monthLabel(group.month, group.year, lang)}</span>
+                  <span class="month-rule" aria-hidden="true" />
+                  <span class="month-count mono-sm">
+                    {articleCount(group.articles.length, lang)}
+                  </span>
+                </p>,
+                ...group.articles.map((article) => (
+                  <div
+                    class="arch-cell reveal"
+                    data-item
+                    data-id={article.id}
+                    data-month={group.key}
+                    data-item-tags={article.tags.join('|')}
+                    data-title={article.title}
+                    data-desc={article.description}
+                    data-date={isoDate(article.date)}
+                    data-reading={article.readingTime}
+                    data-href={article.href}
+                  >
+                    <ArticleCard article={article} lang={lang} tagRank={tagRank} showPinned />
+                  </div>
+                )),
+              ])}
+            </div>
+          )
+        }
+
+        <div class="arch-empty" data-empty hidden>
+          <EmptyState title={d.empty_filter_title} hint={d.empty_filter_hint}>
+            <button type="button" class="btn btn-primary" data-clear-all>{d.empty_clear}</button>
+          </EmptyState>
+        </div>
+
+        <nav class="pager" data-pagination aria-label={d.page_of} hidden>
+          <button type="button" class="pager-arrow" data-page-prev aria-label={d.prev_page}>←</button>
+          <ol class="pager-list" data-page-list></ol>
+          <button type="button" class="pager-arrow" data-page-next aria-label={d.next_page}>→</button>
+        </nav>
+
+        {
+          showRandom && (
+            <p class="arch-random">
+              <button type="button" class="btn btn-ghost" data-random>
+                <span class="arch-random-mark" aria-hidden="true">
+                  ⤳
+                </span>
+                {d.take_me_somewhere}
+              </button>
+            </p>
+          )
+        }
+      </section>
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  import { initArchive } from '../scripts/archive';
+  initArchive();
+  document.addEventListener('astro:page-load', initArchive);
+</script>
+
+<style>
+  .arch {
+    padding-block: var(--sp-56) 0;
+  }
+
+  .arch-head {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(420px, 1fr);
+    gap: var(--sp-64);
+    align-items: end;
+    padding-bottom: var(--sp-38);
+  }
+
+  .arch-title-block {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .arch-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(56px, 11vw, 168px);
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .arch-counts {
+    display: flex;
+    gap: var(--sp-10);
+    flex-wrap: wrap;
+  }
+
+  .arch-pill {
+    padding: 8px 15px;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .arch-body {
+    display: grid;
+    grid-template-columns: var(--filter-w) minmax(0, 1fr);
+    gap: 44px;
+  }
+
+  /* Stĺpec je vysoký ako celý riadok, lepí sa až jeho vnútro. */
+  .arch-filters {
+    min-width: 0;
+  }
+
+  .arch-filters-inner {
+    position: sticky;
+    top: calc(var(--header-now, var(--header-h)) + var(--sticky-top));
+  }
+
+  .filters-toggle,
+  .filters-close {
+    display: none;
+  }
+
+  .arch-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-38);
+  }
+
+  .arch-bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-22);
+    flex-wrap: wrap;
+  }
+
+  .arch-result {
+    color: var(--ink-3);
+    letter-spacing: 0.12em;
+  }
+
+  .arch-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-16, 16px);
+  }
+
+  .view {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+  }
+
+  .view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-6);
+    height: 32px;
+    padding: 0 14px;
+    border-radius: var(--r-pill);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    transition: background-color var(--t), color var(--t);
+  }
+
+  @media (hover: hover) {
+    .view-btn:hover {
+      color: var(--ink-2);
+    }
+  }
+
+  .view-btn.is-on {
+    background: var(--ink);
+    color: var(--surface);
+    font-weight: 700;
+  }
+
+  .arch-page {
+    color: var(--ink-4);
+    letter-spacing: 0.12em;
+  }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    gap: var(--gap-grid);
+  }
+
+  .arch-grid[data-mode='list'] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-6);
+  }
+
+  /* Nadpis mesiaca: názov, tenká linka a počet vpravo. */
+  .month {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-top: var(--sp-22);
+    font-family: var(--font-display);
+    font-size: 26px;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .arch-grid > .month:first-child {
+    padding-top: 0;
+  }
+
+  .month-rule {
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .month-count {
+    color: var(--ink-4);
+    letter-spacing: 0.08em;
+  }
+
+  .arch-cell {
+    display: flex;
+    min-width: 0;
+  }
+
+  .arch-cell > :global(*) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Karty sa presunú na nové miesto, zoznam neprebliká. */
+  .arch-cell.is-moving {
+    transition: transform var(--t-filter) var(--ease);
+  }
+
+  /* Stránkovanie -------------------------------------------------------- */
+
+  .pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .pager-list {
+    display: flex;
+    gap: 8px;
+  }
+
+  .pager-arrow,
+  :global(.pager-num) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--touch);
+    height: var(--touch);
+    padding: 0 16px;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    transition: background-color var(--t), color var(--t), opacity var(--t);
+  }
+
+  @media (hover: hover) {
+    .pager-arrow:not(:disabled):hover,
+    :global(.pager-num:hover) {
+      background: rgba(244, 242, 236, 0.1);
+      color: var(--ink);
+    }
+  }
+
+  :global(.pager-num[aria-current='page']) {
+    background: var(--ink);
+    color: var(--surface);
+  }
+
+  /* Šípka na kraji je jediný prvok, ktorý sa stlmí namiesto skrytia,
+     inak by sa riadok stránkovania pri prechode medzi stranami posúval. */
+  .pager-arrow:disabled {
+    opacity: 0.35;
+    color: var(--ink-4);
+    cursor: default;
+  }
+
+  .arch-random {
+    display: flex;
+    justify-content: center;
+  }
+
+  .arch-random-mark {
+    color: var(--accent-text);
+  }
+
+  /* Tablet: úzky filter + 2 stĺpce. */
+  @media (max-width: 1179px) {
+    .arch-head {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--sp-26);
+      align-items: start;
+    }
+
+    .arch-body {
+      grid-template-columns: 240px minmax(0, 1fr);
+      gap: var(--sp-26);
+    }
+
+    .arch-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .arch-grid[data-mode='list'] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  /* Mobil: filtre v paneli cez celú obrazovku, mesiace sa nezobrazujú. */
+  @media (max-width: 767px) {
+    .arch-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .arch-filters {
+      position: static;
+    }
+
+    .filters-toggle {
+      display: inline-flex;
+      width: 100%;
+    }
+
+    .filters-badge {
+      padding: 2px 8px;
+      border-radius: var(--r-pill);
+      background: var(--accent);
+      color: var(--ink);
+    }
+
+    .arch-filters-inner {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      display: none;
+      flex-direction: column;
+      gap: var(--sp-22);
+      padding: var(--sp-22);
+      background: var(--surface);
+      overflow-y: auto;
+    }
+
+    :global(.arch-filters.is-open) .arch-filters-inner {
+      display: flex;
+    }
+
+    .filters-close {
+      display: inline-flex;
+    }
+
+    .month {
+      display: none;
+    }
+
+    .arch-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

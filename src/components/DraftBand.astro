@@ -1,0 +1,85 @@
+---
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+---
+
+<!--
+  Rozpísaný článok (sekcia 09 E): šrafovaný pás pri ľavej hrane textu beží po
+  celej výške článku a nikdy nezasahuje do písma; pás na spodku okna ostáva
+  prilepený počas celého čítania.
+-->
+<span class="draft-rail" aria-hidden="true"></span>
+
+<div class="draft-band" role="status">
+  <span class="draft-hatch" aria-hidden="true"></span>
+  <span class="draft-text mono-sm">{d.draft_band}</span>
+  <span class="draft-hatch" aria-hidden="true"></span>
+</div>
+
+<style>
+  .draft-rail {
+    position: absolute;
+    left: -26px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    border-radius: 3px;
+    background: var(--grad-draft);
+    pointer-events: none;
+  }
+
+  .draft-band {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    gap: var(--sp-14);
+    height: 34px;
+    padding-inline: var(--pad-page);
+    background: rgba(17, 17, 17, 0.94);
+    border-top: 1px solid rgba(217, 134, 31, 0.35);
+    backdrop-filter: blur(6px);
+  }
+
+  .draft-hatch {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--grad-draft);
+  }
+
+  .draft-text {
+    color: var(--draft);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1179px) {
+    .draft-rail {
+      left: -14px;
+      width: 4px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .draft-rail {
+      display: none;
+    }
+
+    .draft-hatch {
+      display: none;
+    }
+
+    .draft-band {
+      justify-content: center;
+    }
+  }
+</style>

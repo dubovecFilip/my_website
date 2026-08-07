@@ -1,0 +1,11 @@
+---
+// Náhľad stránky článku pre Compose. Berie najnovší článok ako kostru
+// a obsah doň doplní klient z rozpísaného článku.
+import ArticleScreen from '../../../screens/ArticleScreen.astro';
+import { getArticles } from '../../../utils/articles';
+import { defaultLang } from '../../../i18n/dict';
+
+const [newest] = await getArticles(defaultLang);
+---
+
+{newest && <ArticleScreen lang={defaultLang} id={newest.id} preview="article" />}

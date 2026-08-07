@@ -1,0 +1,258 @@
+---
+import { langMeta, t, type Lang } from '../i18n/dict';
+import type { Alternate } from '../layouts/BaseLayout.astro';
+
+interface Props {
+  lang: Lang;
+  /** Cieľové adresy tej istej obrazovky v ostatných jazykoch. */
+  alternates?: Alternate[];
+}
+
+const { lang, alternates = [] } = Astro.props;
+const d = t(lang);
+
+const targets = new Map(alternates.map((a) => [a.lang, a.href]));
+
+/* Poradie je pevné: slovenčina, angličtina, potom pripravované jazyky. */
+const items = Object.entries(langMeta).map(([code, meta]) => ({
+  code,
+  ...meta,
+  href: targets.get(code),
+  current: code === lang,
+}));
+
+const currentMeta = langMeta[lang];
+---
+
+<div class="lang" data-lang-switch>
+  <button
+    type="button"
+    class="lang-trigger"
+    aria-haspopup="listbox"
+    aria-expanded="false"
+    aria-label={d.lang_switch}
+    data-lang-trigger
+  >
+    <span class="lang-short" data-lang-short>{currentMeta.short}</span>
+    <span class="lang-full" data-lang-full aria-hidden="true">{currentMeta.label}</span>
+    <span class="lang-arrow" aria-hidden="true">▾</span>
+  </button>
+
+  <ul class="lang-panel" role="listbox" aria-label={d.lang_switch} data-lang-panel hidden>
+    {
+      items.map((item) => (
+        <li role="presentation">
+          {item.soon || !item.href ? (
+            <span class="lang-item is-soon" role="option" aria-disabled="true" aria-selected="false">
+              <span class="lang-dot" aria-hidden="true">
+                •
+              </span>
+              <span class="lang-name">{item.label}</span>
+              <span class="lang-soon">{d.lang_soon}</span>
+            </span>
+          ) : (
+            <a
+              class="lang-item"
+              role="option"
+              aria-selected={item.current ? 'true' : 'false'}
+              href={item.href}
+              hreflang={item.code}
+            >
+              <span class="lang-dot" aria-hidden="true">
+                •
+              </span>
+              <span class="lang-name">{item.label}</span>
+            </a>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<script>
+  import { initLangSwitch } from '../scripts/lang-switch';
+  initLangSwitch();
+  document.addEventListener('astro:page-load', initLangSwitch);
+</script>
+
+<style>
+  .lang {
+    position: relative;
+    flex: none;
+  }
+
+  /* Spúšťač sa roztiahne na pevné šírky, cez auto by animácia preskočila. */
+  .lang-trigger {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-6);
+    width: 66px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: var(--r-pill);
+    background: var(--fill-strong);
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    overflow: hidden;
+    white-space: nowrap;
+    transition:
+      width var(--t-state) var(--ease),
+      height var(--t-state) var(--ease),
+      border-radius var(--t-state) var(--ease),
+      background-color var(--t-state) var(--ease),
+      color var(--t-state) var(--ease);
+  }
+
+  @media (hover: hover) {
+    .lang-trigger:hover {
+      background: rgba(244, 242, 236, 0.1);
+      color: var(--ink);
+    }
+  }
+
+  .lang-trigger[aria-expanded='true'] {
+    width: 172px;
+    height: 46px;
+    border-radius: 20px;
+    background: rgba(244, 242, 236, 0.14);
+    color: var(--ink);
+  }
+
+  .lang-short {
+    flex: none;
+  }
+
+  .lang-full {
+    flex: 1;
+    min-width: 0;
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    text-align: left;
+    transition: opacity var(--t-state) var(--ease);
+  }
+
+  .lang-trigger[aria-expanded='true'] .lang-short {
+    display: none;
+  }
+
+  .lang-trigger[aria-expanded='true'] .lang-full {
+    opacity: 1;
+    width: auto;
+  }
+
+  .lang-arrow {
+    margin-left: auto;
+    flex: none;
+    font-size: 10px;
+    transition: transform var(--t-state) var(--ease);
+  }
+
+  .lang-trigger[aria-expanded='true'] .lang-arrow {
+    transform: rotate(180deg);
+  }
+
+  /* Panel nabehne až po roztiahnutí spúšťača, oneskorenie 60 ms. */
+  .lang-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    min-width: 172px;
+    padding: 6px;
+    border-radius: var(--r-field);
+    background: var(--surface-2);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      opacity var(--t-panel) var(--ease),
+      transform var(--t-panel) var(--ease);
+  }
+
+  .lang-panel.is-open {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(60ms * var(--motion));
+  }
+
+  .lang-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-10);
+    min-height: var(--touch);
+    padding: 0 12px;
+    border-radius: var(--r-item);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    transition: background-color var(--t), color var(--t);
+  }
+
+  @media (hover: hover) {
+    .lang-item:not(.is-soon):hover {
+      background: var(--fill-strong);
+      color: var(--ink);
+    }
+  }
+
+  .lang-item[aria-selected='true'] {
+    color: var(--ink);
+    background: var(--fill-strong);
+  }
+
+  .lang-item[aria-selected='true'] .lang-dot {
+    color: var(--accent-text);
+  }
+
+  .lang-dot {
+    color: rgba(244, 242, 236, 0.18);
+  }
+
+  .lang-item.is-soon {
+    color: var(--ink-4);
+    cursor: not-allowed;
+  }
+
+  .lang-soon {
+    margin-left: auto;
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.16em;
+    color: var(--ink-4);
+  }
+
+  .lang-name {
+    text-transform: none;
+    letter-spacing: 0.06em;
+  }
+
+  /* Dotykový cieľ má aj tu aspoň 44 pt. */
+  @media (max-width: 767px) {
+    .lang-trigger {
+      height: var(--touch);
+    }
+
+    .lang-trigger[aria-expanded='true'] {
+      height: 50px;
+    }
+  }
+
+  /* Pri obmedzenom pohybe sa spúšťač zväčší okamžite, bez prechodu. */
+  @media (prefers-reduced-motion: reduce) {
+    .lang-trigger,
+    .lang-full,
+    .lang-arrow,
+    .lang-panel {
+      transition: none;
+    }
+    .lang-panel.is-open {
+      transition-delay: 0ms;
+    }
+  }
+</style>

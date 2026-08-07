@@ -1,0 +1,84 @@
+---
+import { authors, defaultAuthor, type AuthorId } from '../data/authors';
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+  author?: string;
+  note?: string;
+  /** Na stránke O projekte je karta širšia a s odkazmi. */
+  variant?: 'article' | 'about';
+}
+
+const { lang, author, note, variant = 'article' } = Astro.props;
+const d = t(lang);
+
+const key = (author && author in authors ? author : defaultAuthor) as AuthorId;
+const person = authors[key];
+---
+
+<aside class:list={['author', `author-${variant}`]} data-author-card>
+  <div class="author-head">
+    <img class="author-avatar" src={person.avatar} alt="" width="56" height="56" loading="lazy" />
+    <div>
+      <p class="author-name">{person.name}</p>
+      <p class="author-role mono-sm">
+        {variant === 'about' ? d.about_author_role : d.author_of_article}
+      </p>
+    </div>
+  </div>
+
+  {note && <p class="author-note">„{note}“</p>}
+
+  <slot />
+</aside>
+
+<style>
+  .author {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-14);
+    padding: var(--sp-22);
+    border-radius: var(--r-card);
+    background: var(--surface-2);
+  }
+
+  .author-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-12);
+  }
+
+  .author-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--r-pill);
+    object-fit: cover;
+    background: var(--grad-placeholder);
+  }
+
+  .author-name {
+    font-family: var(--font-display);
+    font-size: 21px;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .author-role {
+    color: var(--ink-4);
+  }
+
+  .author-note {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    font-style: italic;
+  }
+
+  .author-about {
+    gap: var(--sp-22);
+    padding: var(--sp-26);
+  }
+</style>

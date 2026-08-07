@@ -1,0 +1,178 @@
+/* ==========================================================================
+   Tlačová podoba článku · A4 (sekcia 10)
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm;
+  }
+
+  :root {
+    --motion: 0;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Skryje sa navigácia, obsah, karta autora, súvisiace články aj tlačidlá. */
+  .header,
+  .footer,
+  .skip-link,
+  [data-search],
+  [data-progress],
+  [data-toc],
+  [data-author-card],
+  [data-related],
+  [data-continue],
+  [data-filters],
+  [data-pagination],
+  [data-view-switch],
+  [data-timeline],
+  .btn,
+  button {
+    display: none !important;
+  }
+
+  .page,
+  .page-main,
+  .shell {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  /* Anton ostáva len v nadpisoch, text prechádza na 10,5 pt. */
+  body,
+  p,
+  li,
+  figcaption {
+    font-family: 'Inter', serif !important;
+    font-size: 10.5pt !important;
+    line-height: 1.5 !important;
+    color: #000 !important;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: 'Anton', sans-serif !important;
+    color: #000 !important;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h1 {
+    font-size: 26pt !important;
+    line-height: 1.05 !important;
+  }
+
+  h2 {
+    font-size: 15pt !important;
+    margin-top: 14pt !important;
+  }
+
+  h3 {
+    font-size: 12.5pt !important;
+  }
+
+  .article-body {
+    max-width: none !important;
+  }
+
+  /* Obrázky sa tlačia v šírke textového stĺpca, nikdy cez celú stranu. */
+  .article-body img,
+  figure img {
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    filter: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  figure::after {
+    display: none !important;
+  }
+
+  figcaption {
+    font-style: italic;
+    color: #444 !important;
+  }
+
+  /* Odkazy v texte sa vypíšu v zátvorke za textom odkazu. */
+  .article-body a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 8.5pt;
+    color: #555;
+    word-break: break-all;
+  }
+
+  blockquote {
+    border-left: 2pt solid #000 !important;
+    padding-left: 8pt !important;
+    font-style: italic;
+  }
+
+  pre,
+  code {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 9pt !important;
+    background: #f2f2f2 !important;
+    color: #000 !important;
+  }
+
+  /* V hlavičke názov webu a dátum, v päte plná URL. */
+  .print-head,
+  .print-foot {
+    display: block !important;
+    position: fixed;
+    left: 0;
+    right: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 7.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  .print-head {
+    top: 0;
+    display: flex !important;
+    justify-content: space-between;
+    border-bottom: 0.4pt solid #bbb;
+    padding-bottom: 3pt;
+  }
+
+  .print-foot {
+    bottom: 0;
+    border-top: 0.4pt solid #bbb;
+    padding-top: 3pt;
+    word-break: break-all;
+  }
+
+  .draft-band,
+  .draft-rail {
+    display: none !important;
+  }
+
+  .badge,
+  .tag {
+    border: 0.4pt solid #999 !important;
+    background: none !important;
+    color: #333 !important;
+  }
+}
+
+/* Mimo tlače tieto prvky neexistujú. */
+.print-head,
+.print-foot {
+  display: none;
+}

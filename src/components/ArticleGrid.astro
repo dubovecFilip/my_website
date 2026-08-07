@@ -1,0 +1,69 @@
+---
+import ArticleCard from './ArticleCard.astro';
+import type { Article } from '../utils/articles';
+import type { Lang } from '../i18n/dict';
+
+interface Props {
+  articles: Article[];
+  lang: Lang;
+  variant?: 'grid' | 'list';
+  tagRank?: Record<string, number>;
+  showPinned?: boolean;
+}
+
+const { articles, lang, variant = 'grid', tagRank = {}, showPinned = false } = Astro.props;
+---
+
+<div class:list={['grid', `grid-${variant}`]}>
+  {
+    articles.map((article, index) => (
+      <div class="grid-cell reveal" style={`--reveal-delay:${Math.min(index, 8) * 40}ms`}>
+        <ArticleCard
+          article={article}
+          lang={lang}
+          variant={variant}
+          tagRank={tagRank}
+          showPinned={showPinned}
+        />
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  /* auto-fill (nie auto-fit) drží prázdne stĺpce, pri jednom článku sa
+     karta neroztiahne cez celý riadok a nikdy nevzniknú štyri stĺpce. */
+  .grid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    gap: var(--gap-grid);
+  }
+
+  .grid-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-6);
+  }
+
+  .grid-cell {
+    display: flex;
+    min-width: 0;
+  }
+
+  .grid-cell > :global(*) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  @media (max-width: 1179px) and (min-width: 768px) {
+    .grid-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767px) {
+    .grid-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

@@ -1,0 +1,461 @@
+---
+import type { TagCount } from '../utils/articles';
+import { SORT_KEYS } from '../utils/articles';
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+  tags: TagCount[];
+}
+
+const { lang, tags } = Astro.props;
+const d = t(lang);
+
+const sortLabels: Record<string, string> = {
+  newest: d.sort_newest,
+  oldest: d.sort_oldest,
+  alpha: d.sort_alpha,
+  reading: d.sort_reading,
+};
+---
+
+<form class="filters" data-filters onsubmit="return false">
+  <!-- Hľadanie a zoradenie sú pevne hore; vlastný scroll má len zoznam štítkov. -->
+  <div class="filters-block">
+    <p class="filters-label">{d.archive_search}</p>
+    <div class="pill-field">
+      <span class="pill-icon" aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        data-filter-q
+        placeholder={d.archive_search_placeholder}
+        aria-label={d.archive_search}
+        autocomplete="off"
+      />
+      <span class="pill-count" data-q-count hidden></span>
+      <button type="button" class="pill-clear" data-q-clear hidden aria-label={d.archive_clear}>
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <div class="filters-block filters-tags">
+    <p class="filters-label">
+      {d.archive_tags}
+      <button type="button" class="filters-clear" data-tags-clear hidden>
+        {d.archive_clear} (<span data-tags-clear-count>0</span>)
+      </button>
+    </p>
+
+    <div class="pill-field is-small">
+      <span class="pill-icon" aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        data-tag-search
+        placeholder={d.archive_tags_placeholder}
+        aria-label={d.archive_tags}
+        autocomplete="off"
+      />
+    </div>
+
+    <ul class="tag-list" data-tag-list>
+      {
+        tags.map((tag) => (
+          <li>
+            <button
+              type="button"
+              class="tag-row"
+              data-tag={tag.name}
+              data-base-count={tag.count}
+              aria-pressed="false"
+            >
+              <span class="tag-dot" aria-hidden="true" />
+              <span class="tag-name">{tag.name}</span>
+              <span class="tag-count" data-tag-count>
+                {tag.count}
+              </span>
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+
+    <p class="filters-note">{d.archive_tags_hidden}</p>
+  </div>
+
+  <div class="filters-block">
+    <p class="filters-label">{d.archive_sort}</p>
+    <div class="sort" data-sort>
+      <button
+        type="button"
+        class="sort-trigger"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        data-sort-trigger
+      >
+        <span data-sort-current>{d.sort_newest}</span>
+        <span class="sort-arrow" aria-hidden="true">▾</span>
+      </button>
+
+      <ul class="sort-panel" role="listbox" aria-label={d.archive_sort} data-sort-panel hidden>
+        {
+          SORT_KEYS.map((key) => (
+            <li role="presentation">
+              <button
+                type="button"
+                class="sort-item"
+                role="option"
+                aria-selected={key === 'newest' ? 'true' : 'false'}
+                data-sort-value={key}
+                data-sort-label={sortLabels[key]}
+              >
+                <span class="sort-label">{sortLabels[key]}</span>
+                <span class="sort-mark" aria-hidden="true">
+                  •
+                </span>
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</form>
+
+<style>
+  .filters {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-26);
+    max-height: calc(100vh - var(--header-now, var(--header-h)) - var(--sticky-top) * 2);
+  }
+
+  .filters-block {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-12);
+    min-height: 0;
+  }
+
+  .filters-tags {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .filters-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-10);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  .filters-clear {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+    transition: color var(--t);
+  }
+
+  @media (hover: hover) {
+    .filters-clear:hover {
+      color: var(--ink);
+    }
+  }
+
+  /* Polia vo filtri sú pilulky, nie boxy. */
+  .pill-field {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-12);
+    min-height: var(--touch);
+    padding: 0 18px;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    transition: background-color var(--t);
+  }
+
+  .pill-field.is-small {
+    padding: 0 16px;
+    min-height: 40px;
+    background: var(--fill-2);
+  }
+
+  .pill-field:focus-within {
+    background: var(--fill-strong);
+  }
+
+  .pill-icon {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-4);
+  }
+
+  .pill-field input {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  .pill-field.is-small input {
+    font-size: 13px;
+  }
+
+  .pill-field input::placeholder {
+    color: var(--ink-4);
+  }
+
+  .pill-field input::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  .pill-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-text);
+  }
+
+  .pill-clear {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--r-pill);
+    color: var(--ink-4);
+    font-size: 12px;
+    transition: color var(--t), background-color var(--t);
+  }
+
+  @media (hover: hover) {
+    .pill-clear:hover {
+      color: var(--ink);
+      background: var(--fill);
+    }
+  }
+
+  /* Zoznam štítkov má vlastný scroll; vybrané sa presunú na vrch. */
+  .tag-list {
+    flex: 1;
+    min-height: 0;
+    max-height: 340px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 4px;
+  }
+
+  .tag-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-10);
+    width: 100%;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 14px;
+    background: var(--fill-2);
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-align: left;
+    transition: background-color var(--t), color var(--t);
+  }
+
+  @media (hover: hover) {
+    .tag-row:hover {
+      background: var(--fill-strong);
+      color: var(--ink-2);
+    }
+  }
+
+  .tag-row[aria-pressed='true'] {
+    background: rgba(217, 63, 17, 0.14);
+    color: var(--ink);
+  }
+
+  .tag-dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    background: rgba(244, 242, 236, 0.16);
+    transition: background-color var(--t);
+  }
+
+  .tag-row[aria-pressed='true'] .tag-dot {
+    background: var(--accent);
+  }
+
+  .tag-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tag-count {
+    flex: none;
+    font-size: 11px;
+    color: #5a564f;
+  }
+
+  .tag-row[aria-pressed='true'] .tag-count {
+    color: var(--accent-text);
+  }
+
+  /* Štítok pri výbere pulzne raz. */
+  .tag-row.is-pulse {
+    animation: tag-pulse calc(220ms * var(--motion)) var(--ease);
+  }
+
+  @keyframes tag-pulse {
+    50% {
+      transform: scale(1.03);
+    }
+  }
+
+  .filters-note {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.6;
+    color: #5a564f;
+  }
+
+  /* Zoradenie ---------------------------------------------------------- */
+
+  .sort {
+    position: relative;
+  }
+
+  .sort-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-12);
+    width: 100%;
+    min-height: var(--touch);
+    padding: 0 18px;
+    border-radius: var(--r-field);
+    background: var(--fill);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: background-color var(--t);
+  }
+
+  @media (hover: hover) {
+    .sort-trigger:hover {
+      background: var(--fill-strong);
+    }
+  }
+
+  .sort-arrow {
+    color: var(--ink-3);
+    font-size: 10px;
+    transition: transform var(--t-state) var(--ease);
+  }
+
+  .sort-trigger[aria-expanded='true'] .sort-arrow {
+    transform: rotate(180deg);
+  }
+
+  .sort-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    padding: 6px;
+    border-radius: var(--r-field);
+    background: var(--surface-2);
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(-6px);
+    transition: opacity var(--t-panel) var(--ease), transform var(--t-panel) var(--ease);
+  }
+
+  .sort-panel.is-open {
+    opacity: 1;
+    transform: none;
+  }
+
+  .sort-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-12);
+    width: 100%;
+    min-height: 40px;
+    padding: 0 13px;
+    border-radius: var(--r-item);
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    transition: background-color var(--t), color var(--t);
+  }
+
+  @media (hover: hover) {
+    .sort-item:hover {
+      background: var(--fill-strong);
+      color: var(--ink);
+    }
+  }
+
+  .sort-item[aria-selected='true'] {
+    color: var(--ink);
+    background: var(--fill-strong);
+  }
+
+  /* Značka výberu sedí vpravo a je viditeľná len pri zvolenej položke. */
+  .sort-mark {
+    color: transparent;
+  }
+
+  .sort-item[aria-selected='true'] .sort-mark {
+    color: var(--accent);
+  }
+
+  @media (max-width: 767px) {
+    .filters {
+      max-height: none;
+    }
+
+    .tag-row,
+    .sort-item {
+      min-height: var(--touch);
+    }
+
+    .pill-field.is-small {
+      min-height: var(--touch);
+    }
+
+    .tag-list {
+      max-height: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sort-panel,
+    .sort-arrow,
+    .tag-row.is-pulse {
+      transition: none;
+      animation: none;
+    }
+  }
+</style>

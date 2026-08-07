@@ -1,0 +1,370 @@
+---
+import '../styles/article.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import AuthorCard from '../components/AuthorCard.astro';
+import DraftBand from '../components/DraftBand.astro';
+import SeriesThread from '../components/SeriesThread.astro';
+import RelatedArticles from '../components/RelatedArticles.astro';
+import { getArticles, getArticle, selectRelated, seriesFor, tagCounts } from '../utils/articles';
+import { getEntry, render } from 'astro:content';
+import { languages, t, otherLang, type Lang } from '../i18n/dict';
+import { formatDate, isoDate, readingTimeShort, readingTimeLong } from '../utils/format';
+
+interface Props {
+  lang: Lang;
+  /** Náhľadový režim Compose. */
+  preview?: 'home' | 'archive' | 'article';
+  id: string;
+}
+
+const { lang, id, preview } = Astro.props;
+const d = t(lang);
+
+const articles = await getArticles(lang);
+const article = await getArticle(lang, id);
+if (!article) throw new Error(`[obsah] Článok ${id} v jazyku ${lang} neexistuje.`);
+
+const entry = await getEntry(lang === 'sk' ? 'articles-sk' : 'articles-en', id);
+if (!entry) throw new Error(`[obsah] Chýba záznam ${id} (${lang}).`);
+
+const { Content, headings } = await render(entry);
+
+const related = selectRelated(articles, article);
+
+const tagRank: Record<string, number> = {};
+for (const tag of tagCounts(articles)) tagRank[tag.name] = tag.count;
+const series = seriesFor(articles, article);
+const other = otherLang(lang);
+
+/* Jazykové mutácie sa párujú cez rovnaké ID. Ak preklad nie je, prepínač
+   vedie na obrazovku s oznamom, nikdy na 404. */
+const otherArticles = await getArticles(other);
+const otherArticle = otherArticles.find((a) => a.id === id);
+
+const alternates = [
+  { lang, href: article.href },
+  {
+    lang: other,
+    href: otherArticle ? otherArticle.href : `/${other}/articles/${id}-${article.slug}/`,
+  },
+];
+
+const ogImage = `/${lang}/og/${id}.png`;
+const statusLabel = article.draft ? d.draft_state : d.published;
+---
+
+<BaseLayout preview={preview}
+  lang={lang}
+  title={article.title}
+  description={article.description}
+  ogImage={ogImage}
+  ogType="article"
+  alternates={alternates}
+  active={null}
+>
+  <div
+    class="progress-track"
+    role="progressbar"
+    aria-label={d.reading_progress}
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow="0"
+    data-progress-track
+  >
+    <span class="progress-bar" data-progress></span>
+  </div>
+
+  <div class="print-head">
+    <span>{d.site_name}_</span>
+    <span>{formatDate(article.date)}</span>
+  </div>
+  <div class="print-foot">
+    {new URL(article.href, Astro.site ?? 'https://boggelino.netlify.app').href}
+  </div>
+
+  <div class="shell art">
+    <aside class="art-toc">
+      <div class="art-sticky">
+        <TableOfContents lang={lang} headings={headings} />
+      </div>
+    </aside>
+
+    <article
+      class:list={['art-main', article.draft && 'is-draft']}
+      data-article
+      data-article-id={article.id}
+      data-article-lang={lang}
+      data-article-title={article.title}
+    >
+      {article.draft && <DraftBand lang={lang} />}
+
+      <header class="art-head">
+        <p class="art-status mono">
+          <span class:list={['art-state', article.draft ? 'is-draft' : 'is-live']}>
+            {statusLabel}
+          </span>
+          <time datetime={isoDate(article.date)}>{formatDate(article.date)}</time>
+          <span aria-hidden="true">·</span>
+          <span aria-label={readingTimeLong(article.readingTime, lang)}>
+            {readingTimeShort(article.readingTime, lang)}
+          </span>
+        </p>
+
+        <SeriesThread lang={lang} series={series} />
+
+        <h1 class="art-title">{article.title}</h1>
+
+        {article.description && <p class="art-lead">{article.description}</p>}
+
+        {
+          article.tags.length > 0 && (
+            <p class="art-tags">
+              {article.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </p>
+          )
+        }
+      </header>
+
+      <div class="article-body">
+        <Content />
+      </div>
+
+      {
+        /* Zoznam sa zobrazí len pri dvoch a viac pokračovaniach; vtedy sa niť
+           „Séria 2 / 3“ nad textom vypne. */
+        series.children.length > 1 && (
+          <div class="art-children">
+            <RelatedArticles
+              lang={lang}
+              articles={series.children}
+              heading={`${d.series_children} (${series.children.length})`}
+              note={d.series_children_note}
+              compact
+            />
+          </div>
+        )
+      }
+
+    </article>
+
+    <aside class="art-side">
+      <div class="art-sticky">
+        <AuthorCard lang={lang} author={article.author} note={article.authorNote} />
+
+        <nav class="art-nav" aria-label={d.nav_menu}>
+          <a class="art-nav-link" href="#obsah">↑ {d.article_top}</a>
+          <a class="art-nav-link" href={`/${lang}/articles/`}>← {d.article_archive}</a>
+          <button type="button" class="art-nav-link" data-share data-share-done={d.share_copied}>
+            ↗ {d.article_share}
+          </button>
+        </nav>
+      </div>
+    </aside>
+  </div>
+
+  {
+    /* Súvisiace články sedia cez celú šírku obsahu, obsah + text + autor. */
+    related.length > 0 && (
+      <div class="shell art-related">
+        <RelatedArticles lang={lang} articles={related} tagRank={tagRank} />
+      </div>
+    )
+  }
+</BaseLayout>
+
+<script>
+  import { initArticle } from '../scripts/article';
+  initArticle();
+  document.addEventListener('astro:page-load', initArticle);
+</script>
+
+<style>
+  /* Priebeh čítania: 2 px accentový prúžok viazaný priamo na scroll,
+     bez tranzície, aby nezaostával. */
+  .progress-track {
+    position: sticky;
+    top: var(--header-now, var(--header-h));
+    z-index: 75;
+    height: 2px;
+    background: rgba(244, 242, 236, 0.06);
+  }
+
+  .progress-bar {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  .art {
+    display: grid;
+    grid-template-columns: var(--toc-w) minmax(0, 1fr) var(--author-w);
+    gap: var(--sp-56);
+    /* Bez align-items: start, bočné stĺpce musia byť vysoké ako celý riadok,
+       inak sa sticky prvok vnútri nemá o čo oprieť. */
+    padding-block: var(--section-gap);
+  }
+
+  /* Oba bočné stĺpce idú so scrollom a ostávajú pod hlavičkou. */
+  .art-sticky {
+    position: sticky;
+    top: calc(var(--header-now, var(--header-h)) + var(--sticky-top));
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-22);
+    max-height: calc(100vh - var(--header-now, var(--header-h)) - var(--sticky-top) * 2);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .art-main {
+    position: relative;
+    min-width: 0;
+    max-width: var(--text-max);
+  }
+
+  .art-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-14);
+    margin-bottom: var(--sp-38);
+  }
+
+  .art-status {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-10);
+    flex-wrap: wrap;
+    color: var(--ink-4);
+  }
+
+  .art-state {
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.18em;
+  }
+
+  .art-state.is-live {
+    background: rgba(242, 114, 74, 0.12);
+    color: var(--accent-text);
+  }
+
+  .art-state.is-draft {
+    background: rgba(217, 134, 31, 0.15);
+    color: var(--draft);
+  }
+
+  .art-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--fs-h1);
+    line-height: 0.98;
+    color: var(--ink);
+    max-width: 18ch;
+  }
+
+  .art-lead {
+    font-size: var(--fs-lead);
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+
+  .art-tags {
+    display: flex;
+    gap: var(--sp-6);
+    flex-wrap: wrap;
+  }
+
+  .art-children {
+    margin-top: var(--section-gap);
+    max-width: var(--measure);
+  }
+
+  /* Navigácia pod autorom je úzka, len text, žiadne plochy cez celý stĺpec. */
+  .art-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-12);
+    padding-top: var(--sp-14);
+    border-top: 1px solid var(--line);
+  }
+
+  .art-nav-link {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--ink-3);
+    transition: color var(--t);
+  }
+
+  @media (hover: hover) {
+    .art-nav-link:hover {
+      color: var(--ink);
+    }
+  }
+
+  .art-related {
+    padding-bottom: var(--section-gap);
+  }
+
+  .is-draft .article-body {
+    padding-bottom: var(--sp-38);
+  }
+
+  /* Tablet: obsah aj autor v pravom stĺpci. */
+  @media (max-width: 1179px) {
+    .art {
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: var(--sp-38);
+    }
+
+    .art-toc {
+      grid-column: 1 / -1;
+      order: -1;
+    }
+
+    .art-sticky {
+      position: static;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .art-side .art-sticky {
+      position: sticky;
+      top: calc(var(--header-h) + var(--sticky-top));
+    }
+  }
+
+  /* Mobil: jeden stĺpec, autor až pod textom. */
+  @media (max-width: 767px) {
+    .art {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--sp-26);
+    }
+
+    .art-side {
+      grid-column: 1;
+    }
+
+    .art-side .art-sticky {
+      position: static;
+    }
+
+    .art-title {
+      max-width: none;
+    }
+  }
+</style>

@@ -1,0 +1,55 @@
+---
+interface Props {
+  title: string;
+  hint?: string;
+  class?: string;
+}
+
+const { title, hint, class: className = '' } = Astro.props;
+---
+
+<div class:list={['empty', className]}>
+  <h3 class="empty-title">{title}</h3>
+  {hint && <p class="empty-hint">{hint}</p>}
+  <div class="empty-actions">
+    <slot />
+  </div>
+</div>
+
+<style>
+  /* Prázdny stav vždy ponúkne cestu von, nikdy nezostane len oznam. */
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-14);
+    padding: var(--sp-56) var(--sp-38);
+    border-radius: var(--r-surface);
+    background: var(--surface-2);
+  }
+
+  .empty-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 34px;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .empty-hint {
+    font-size: var(--fs-card-desc);
+    color: var(--ink-3);
+    max-width: 52ch;
+  }
+
+  .empty-actions {
+    display: flex;
+    gap: var(--sp-10);
+    flex-wrap: wrap;
+  }
+
+  .empty-actions:empty {
+    display: none;
+  }
+</style>

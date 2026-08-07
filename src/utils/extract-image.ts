@@ -1,11 +1,18 @@
 /**
- * Returns the URL of the first `![alt](url)` image found in a markdown
- * article body, or undefined if the article has no images. Used on the
- * homepage to give grid cards a real cover photo when one exists, falling
- * back to a generated gradient thumb otherwise.
+ * Článok nemá titulný obrázok, prvý obrázok v texte je zároveň náhľad
+ * všade inde (sekcia 16, pravidlo 03). Tieto dve funkcie sú jediný zdroj
+ * náhľadu pre karty, OG kartu aj zdieľanie.
  */
+
+const FIRST_IMAGE = /!\[([^\]]*)\]\(([^)\s]+)/;
+
 export function extractFirstImage(body: string | undefined): string | undefined {
   if (!body) return undefined;
-  const match = body.match(/!\[[^\]]*\]\(([^)\s]+)/);
-  return match?.[1];
+  return body.match(FIRST_IMAGE)?.[2];
+}
+
+export function extractFirstImageAlt(body: string | undefined): string | undefined {
+  if (!body) return undefined;
+  const alt = body.match(FIRST_IMAGE)?.[1]?.trim();
+  return alt ? alt : undefined;
 }

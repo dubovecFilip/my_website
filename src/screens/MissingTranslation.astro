@@ -1,0 +1,110 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import RelatedArticles from '../components/RelatedArticles.astro';
+import { getArticles } from '../utils/articles';
+import { t, otherLang, langMeta, type Lang } from '../i18n/dict';
+import { articleCount } from '../utils/format';
+
+interface Props {
+  /** Jazyk, v ktorom čitateľ pristál, oznam je v ňom. */
+  lang: Lang;
+  id: string;
+}
+
+const { lang, id } = Astro.props;
+const d = t(lang);
+
+const source = otherLang(lang);
+const original = (await getArticles(source)).find((a) => a.id === id);
+if (!original) throw new Error(`[obsah] Pôvodina ${id} (${source}) neexistuje.`);
+
+/* Zoznam v archíve ukáže len preložené články. */
+const here = await getArticles(lang);
+
+const notice = source === 'sk' ? d.missing_translation : d.missing_translation_en;
+const archiveLabel = `${d.missing_see_archive} (${articleCount(here.length, lang)})`;
+
+const alternates = [
+  { lang: source, href: original.href },
+  { lang, href: `/${lang}/articles/${id}-${original.slug}/` },
+];
+---
+
+<BaseLayout
+  lang={lang}
+  title={original.title}
+  description={original.description}
+  alternates={alternates}
+  noIndex
+>
+  <div class="shell missing">
+    <p class="missing-flag mono">
+      <span class="missing-icon" aria-hidden="true">⚠</span>
+      {notice}
+    </p>
+
+    <h1 class="missing-title">{original.title}</h1>
+    <p class="missing-desc">{original.description}</p>
+
+    <div class="missing-actions">
+      <a class="btn btn-primary" href={original.href} hreflang={source}>
+        {d.missing_read_original} · {langMeta[source].short}
+      </a>
+      <a class="btn btn-ghost" href={`/${lang}/articles/`}>{archiveLabel}</a>
+    </div>
+
+    {here.length > 0 && <RelatedArticles lang={lang} articles={here.slice(0, 3)} heading={d.not_found_latest} note="" />}
+  </div>
+</BaseLayout>
+
+<style>
+  .missing {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-22);
+    padding-block: var(--section-gap);
+    max-width: var(--measure);
+  }
+
+  .missing-flag {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-10);
+    padding: 8px 14px;
+    border-radius: var(--r-pill);
+    background: rgba(217, 134, 31, 0.14);
+    color: var(--draft);
+    letter-spacing: 0.12em;
+  }
+
+  .missing-icon {
+    font-size: 13px;
+  }
+
+  .missing-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--fs-h1);
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .missing-desc {
+    font-size: var(--fs-lead);
+    line-height: 1.6;
+    color: var(--ink-3);
+  }
+
+  .missing-actions {
+    display: flex;
+    gap: var(--sp-10);
+    flex-wrap: wrap;
+  }
+
+  .missing :global(.related) {
+    align-self: stretch;
+    margin-top: var(--sp-22);
+  }
+</style>

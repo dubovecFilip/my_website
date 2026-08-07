@@ -1,0 +1,349 @@
+---
+import PlaceholderArt from './PlaceholderArt.astro';
+import type { Article } from '../utils/articles';
+import { t, type Lang } from '../i18n/dict';
+import { formatDate, isoDate, readingTimeShort, readingTimeLong } from '../utils/format';
+
+interface Props {
+  article: Article;
+  lang: Lang;
+  /** Pripnutie je vedomé rozhodnutie, dostane plnú accentovú plochu.
+      Najnovší je len stav, preto je označený potichu. */
+  label: 'pinned' | 'latest';
+  tagRank?: Record<string, number>;
+}
+
+const { article, lang, label, tagRank = {} } = Astro.props;
+const d = t(lang);
+
+const tags = [...article.tags].sort((a, b) => (tagRank[b] ?? 0) - (tagRank[a] ?? 0));
+const labelText = label === 'pinned' ? d.label_pinned : d.label_latest;
+---
+
+<article
+  class:list={['feature', article.draft && 'is-draft']}
+  data-card-id={article.id}
+  data-card-lang={lang}
+>
+  <a class="feature-link" href={article.href}>
+    <span class="sr-only">{article.title}</span>
+  </a>
+
+  <div class="feature-text">
+    <p class:list={['feature-label', label === 'pinned' ? 'is-pinned' : 'is-latest']}>
+      {article.draft ? d.badge_draft : labelText}
+    </p>
+
+    <h2 class="feature-title">{article.title}</h2>
+    {article.description && <p class="feature-desc">{article.description}</p>}
+
+    {
+      tags.length > 0 && (
+        <p class="feature-tags" data-tagrow>
+          {tags.map((tag) => (
+            <span class="tag">{tag}</span>
+          ))}
+        </p>
+      )
+    }
+
+    <p class="feature-meta mono">
+      <time datetime={isoDate(article.date)}>{formatDate(article.date)}</time>
+      <span aria-hidden="true">·</span>
+      {
+        article.draft ? (
+          <span class="feature-draft">{d.badge_draft}</span>
+        ) : (
+          <span class="feature-time" aria-label={readingTimeLong(article.readingTime, lang)}>
+            <svg class="icon-clock" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="8" r="6.25" />
+              <path d="M8 4.4V8l2.5 1.6" />
+            </svg>
+            {readingTimeShort(article.readingTime, lang)}
+          </span>
+        )
+      }
+    </p>
+
+    <p class="feature-cta">
+      <span class="btn btn-primary">{d.read_more} →</span>
+    </p>
+  </div>
+
+  <div class="feature-media">
+    {
+      article.image ? (
+        <img src={article.image} alt="" width="700" height="380" decoding="async" />
+      ) : (
+        <PlaceholderArt ratio="700 / 380" />
+      )
+    }
+  </div>
+</article>
+
+<style>
+  /* Karta má pevnú výšku 380 px (sekcia 13). Obrázok sa prispôsobuje jej,
+     nikdy naopak, preto je vybraný z toku a orezáva sa cez object-fit. */
+  .feature {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    align-items: stretch;
+    height: 380px;
+    background: var(--surface-2);
+    border-radius: var(--r-surface);
+    overflow: hidden;
+    transition:
+      background-color var(--t-state) var(--ease),
+      box-shadow var(--t-state) var(--ease);
+  }
+
+  @media (hover: hover) {
+    .feature:hover {
+      background: var(--surface-3);
+      box-shadow: var(--shadow);
+    }
+
+    .feature:hover .feature-media img {
+      transform: scale(1.03);
+    }
+
+    .feature:hover .btn {
+      filter: brightness(1.08);
+    }
+  }
+
+  .feature-link {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    border-radius: inherit;
+  }
+
+  .feature-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -4px;
+  }
+
+  /* min-height: 0 zabráni tomu, aby dlhý text roztiahol pevnú výšku karty. */
+  .feature > * {
+    min-height: 0;
+  }
+
+  .feature-text {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-12);
+    padding: var(--sp-34) var(--sp-38);
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .feature-label {
+    align-self: flex-start;
+    padding: 6px 14px;
+    border-radius: var(--r-pill);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* Jediný takto zvýraznený prvok na obrazovke. */
+  .feature-label.is-pinned {
+    background: var(--accent);
+    color: var(--ink);
+  }
+
+  .feature-label.is-latest {
+    background: var(--fill);
+    color: var(--ink-3);
+  }
+
+  .is-draft .feature-label {
+    background: rgba(217, 134, 31, 0.16);
+    color: var(--draft);
+  }
+
+  .feature-label,
+  .feature-title,
+  .feature-tags,
+  .feature-meta,
+  .feature-cta {
+    flex: none;
+  }
+
+  .feature-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /*
+   * Popis dostane priestor, ktorý zvýši po zvyšku karty, a najviac tri riadky.
+   * Keď sa nezmestí celý, posledný riadok sa stráca do podkladu, nikdy sa
+   * nereže v strede slova (sekcia 09 A).
+   */
+  .feature-desc {
+    position: relative;
+    flex: 0 1 auto;
+    min-height: 0;
+    font-size: var(--fs-lead);
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 46ch;
+    max-height: calc(var(--fs-lead) * 1.6 * 3);
+    overflow: hidden;
+  }
+
+  .feature-desc::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 18px;
+    /* Neskorý nábeh, aby krátky popis, ktorý sa celý zmestí, neztmavol. */
+    background: linear-gradient(180deg, rgba(24, 24, 24, 0) 0%, rgba(24, 24, 24, 0) 45%, var(--surface-2) 100%);
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .feature:hover .feature-desc::after {
+      background: linear-gradient(180deg, rgba(31, 31, 31, 0) 0%, rgba(31, 31, 31, 0) 45%, var(--surface-3) 100%);
+    }
+  }
+
+  .feature-tags {
+    display: flex;
+    gap: var(--sp-6);
+    flex-wrap: wrap;
+    overflow: hidden;
+  }
+
+  .feature-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-10);
+    color: var(--ink-4);
+  }
+
+  .feature-draft {
+    color: var(--draft);
+  }
+
+  .feature-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-text);
+  }
+
+  .icon-clock {
+    width: 12px;
+    height: 12px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .feature-cta {
+    margin-top: 2px;
+  }
+
+  .feature-media {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-media img,
+  .feature-media :global(.ph) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--t-state) var(--ease);
+  }
+
+  /* Obrázok vpravo prechádza gradientom do textu. */
+  .feature-media::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--grad-hero);
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .feature:hover .feature-media::before {
+      background: linear-gradient(
+        90deg,
+        var(--surface-3) 0%,
+        rgba(31, 31, 31, 0.86) 26%,
+        rgba(31, 31, 31, 0) 62%
+      );
+    }
+  }
+
+  @media (max-width: 1179px) {
+    .feature-title {
+      font-size: 44px;
+    }
+  }
+
+  /* Na mobile sa karta rozdelí na obrázok nad textom. */
+  @media (max-width: 767px) {
+    /* Na mobile sa karta rozdelí a výšku určuje text nad ním. */
+    .feature {
+      grid-template-columns: 1fr;
+      grid-template-areas: 'media' 'text';
+      height: auto;
+    }
+
+    .feature-text {
+      grid-area: text;
+      padding: var(--sp-22);
+    }
+
+    .feature-media {
+      grid-area: media;
+      aspect-ratio: 16 / 9;
+    }
+
+    .feature-title {
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+    }
+
+    .feature-desc {
+      max-height: none;
+    }
+
+    .feature-desc::after {
+      display: none;
+    }
+
+    .feature-media::before {
+      background: linear-gradient(180deg, rgba(24, 24, 24, 0) 55%, var(--surface-2) 100%);
+    }
+
+    .feature-title {
+      font-size: 32px;
+    }
+  }
+</style>

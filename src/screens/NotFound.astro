@@ -1,0 +1,248 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getArticles } from '../utils/articles';
+import { languages, t, type Lang } from '../i18n/dict';
+import { formatDate, isoDate, readingTimeShort } from '../utils/format';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+
+/* Ak ID nepozná vôbec, ukáže vyhľadávanie a tri najnovšie články. */
+const latest = (await getArticles(lang)).slice(0, 3);
+const alternates = languages.map((code) => ({ lang: code, href: `/${code}/404/` }));
+---
+
+<BaseLayout lang={lang} title="404" alternates={alternates} noIndex>
+  <div class="shell nf">
+    <p class="nf-code" aria-hidden="true">404</p>
+    <h1 class="nf-title">{d.not_found_title}</h1>
+    <p class="nf-body">{d.not_found_body}</p>
+
+    <div class="nf-actions">
+      <a class="btn btn-primary" href={`/${lang}/`}>← {d.not_found_home}</a>
+      <a class="btn btn-ghost" href={`/${lang}/articles/`}>{d.not_found_search}</a>
+      <button type="button" class="nf-search" data-search-open>
+        <span class="nf-search-icon" aria-hidden="true">⌕</span>
+        <span>{d.search_placeholder}</span>
+      </button>
+    </div>
+
+    {
+      latest.length > 0 && (
+        <section class="nf-latest" aria-labelledby="nf-latest-title">
+          <h2 class="mono-sm" id="nf-latest-title">
+            {d.not_found_latest}
+          </h2>
+          <ul class="nf-list">
+            {latest.map((article) => (
+              <li>
+                <a class="nf-item" href={article.href}>
+                  <span class="nf-item-title">{article.title}</span>
+                  <span class="nf-item-meta mono-sm">
+                    <time datetime={isoDate(article.date)}>{formatDate(article.date)}</time>
+                    <span aria-hidden="true">·</span>
+                    {readingTimeShort(article.readingTime, lang)}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <p class="nf-meta mono-sm" data-nf-meta>
+      {d.not_found_error} · {lang.toUpperCase()} · <span data-nf-path></span>
+    </p>
+  </div>
+</BaseLayout>
+
+<script>
+  /* Zlý jazykový prefix ponúkne tú istú stránku v druhom jazyku. Nikdy sa
+     nehádže podobnosť, pri číselnom ID je „najbližší“ článok náhodný. */
+  function initNotFound() {
+    const path = document.querySelector<HTMLElement>('[data-nf-path]');
+    if (path) path.textContent = location.pathname;
+
+    const match = location.pathname.match(/^\/(sk|en)\//);
+    const current = document.documentElement.lang;
+    if (!match || match[1] === current) return;
+
+    const swapped = location.pathname.replace(/^\/(sk|en)\//, `/${current}/`);
+    fetch(swapped, { method: 'HEAD' })
+      .then((response) => {
+        if (!response.ok) return;
+        const box = document.querySelector('[data-nf-meta]');
+        const link = document.createElement('a');
+        link.className = 'nf-swap';
+        link.href = swapped;
+        link.textContent = swapped;
+        box?.after(link);
+      })
+      .catch(() => undefined);
+  }
+
+  initNotFound();
+  document.addEventListener('astro:page-load', initNotFound);
+</script>
+
+<style>
+  .nf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-22);
+    padding-block: var(--sp-80) var(--section-gap);
+    text-align: center;
+  }
+
+  .nf-code {
+    font-family: var(--font-display);
+    font-size: clamp(96px, 20vw, 220px);
+    line-height: 0.9;
+    letter-spacing: -0.015em;
+    color: var(--accent);
+    animation: nf-breathe 6s ease-in-out infinite;
+  }
+
+  /* 404: číslo sa jemne nadýchne. */
+  @keyframes nf-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nf-code {
+      animation: none;
+    }
+  }
+
+  .nf-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: var(--fs-section);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .nf-body {
+    max-width: 46ch;
+    font-size: var(--fs-lead);
+    color: var(--ink-3);
+  }
+
+  .nf-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-10);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nf-search {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-10);
+    min-height: var(--touch);
+    padding: 0 16px;
+    border-radius: var(--r-pill);
+    background: var(--fill-2);
+    color: var(--ink-4);
+    font-size: 14px;
+    transition: background-color var(--t), color var(--t);
+  }
+
+  @media (hover: hover) {
+    .nf-search:hover {
+      background: var(--fill-strong);
+      color: var(--ink-2);
+    }
+  }
+
+  .nf-latest {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-10);
+    padding-top: var(--sp-22);
+    border-top: 1px solid var(--line);
+    text-align: left;
+  }
+
+  .nf-latest h2 {
+    color: var(--ink-4);
+  }
+
+  .nf-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nf-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-14);
+    min-height: var(--touch);
+    padding: 8px 12px;
+    border-radius: var(--r-item);
+    transition: background-color var(--t);
+  }
+
+  @media (hover: hover) {
+    .nf-item:hover {
+      background: var(--fill-strong);
+    }
+  }
+
+  .nf-item-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  .nf-item-meta {
+    flex: none;
+    display: flex;
+    gap: var(--sp-6);
+    color: var(--ink-4);
+  }
+
+  .nf-meta {
+    color: var(--ink-4);
+  }
+
+  :global(.nf-swap) {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.16em;
+    color: var(--accent-text);
+  }
+
+  /* 404 ostáva centrovaná na všetkých zariadeniach; na mobile idú
+     tlačidlá pod seba. */
+  @media (max-width: 767px) {
+    .nf-actions {
+      flex-direction: column;
+      align-self: stretch;
+    }
+
+    .nf-actions > * {
+      width: 100%;
+    }
+  }
+</style>

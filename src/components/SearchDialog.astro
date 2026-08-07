@@ -1,0 +1,195 @@
+---
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = t(lang);
+---
+
+<div class="search" data-search hidden data-lang={lang}>
+  <div class="search-scrim" data-search-scrim></div>
+
+  <div class="search-panel" role="dialog" aria-modal="true" aria-label={d.search_open}>
+    <div class="search-field">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        data-search-input
+        placeholder={d.search_placeholder}
+        aria-label={d.search_open}
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+
+    <div class="search-results" data-search-results>
+      <p class="search-hint mono-sm">{d.search_hint}</p>
+    </div>
+  </div>
+</div>
+
+<script
+  is:inline
+  define:vars={{
+    labels: {
+      articles: d.search_articles,
+      tags: d.search_tags,
+      empty: d.search_empty,
+      kindArticle: d.search_kind_article,
+      kindTag: d.search_kind_tag,
+      draft: d.badge_draft,
+    },
+  }}
+>
+  window.__momentumSearchLabels = labels;
+</script>
+
+<style>
+  .search {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: flex;
+    justify-content: center;
+    padding: 12vh var(--sp-22) var(--sp-22);
+  }
+
+  .search-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 10, 0.72);
+    opacity: 0;
+    transition: opacity var(--t-panel) var(--ease);
+  }
+
+  :global(.search.is-open) .search-scrim {
+    opacity: 1;
+  }
+
+  .search-panel {
+    position: relative;
+    width: min(640px, 100%);
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--r-surface);
+    background: var(--surface-2);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-6px);
+    transition:
+      opacity var(--t-panel) var(--ease),
+      transform var(--t-panel) var(--ease);
+  }
+
+  :global(.search.is-open) .search-panel {
+    opacity: 1;
+    transform: none;
+  }
+
+  .search-field {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-12);
+    padding: 0 20px;
+    height: 62px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .search-icon {
+    color: var(--ink-4);
+    font-size: 17px;
+  }
+
+  .search-field input {
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .search-field input::placeholder {
+    color: var(--ink-4);
+  }
+
+  .search-field input::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  .search-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--sp-10);
+  }
+
+  .search-hint,
+  :global(.search-empty) {
+    padding: var(--sp-22);
+    color: var(--ink-4);
+    text-align: center;
+  }
+
+  :global(.search-group) {
+    padding: var(--sp-10) var(--sp-12) var(--sp-6);
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  :global(.search-item) {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-12);
+    min-height: var(--touch);
+    padding: 8px 12px;
+    border-radius: var(--r-item);
+    color: var(--ink-2);
+    transition: background-color var(--t), color var(--t);
+  }
+
+  :global(.search-item .s-title) {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+  }
+
+  :global(.search-item .s-kind) {
+    font-family: var(--font-mono);
+    font-size: var(--fs-mono-sm);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+  }
+
+  :global(.search-item.is-active),
+  :global(.search-item:hover) {
+    background: var(--fill-strong);
+    color: var(--ink);
+  }
+
+  :global(.search-item.is-active .s-kind) {
+    color: var(--accent-text);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .search-scrim,
+    .search-panel {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .search {
+      padding-top: 6vh;
+    }
+  }
+</style>

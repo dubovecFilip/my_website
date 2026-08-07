@@ -1,202 +1,184 @@
-# MOMENTUM — personal blog
+# MOMENTUM_
 
-Author/persona: BOGGELINO.
+Denník nápadov, poznámok a rozpracovaných myšlienok. Statický web v Astro,
+nasadzovaný na Netlify. Táto verzia je implementáciou návrhu **MOMENTUM · Prehľad
+· v2 · 2026**, čísla sekcií nižšie odkazujú naň.
 
-Built with [Astro](https://astro.build). Bilingual (SK/EN), full-text search and tag
-filtering, related articles, a table of contents on every longer post, image
-captions and a lightbox, reading time and article statistics, an optional
-author's note, RSS, dark/light theme toggle.
+Verejný web má päť obrazoviek (homepage, článok, archív, o projekte, 404) a jeden
+editor (`/compose/`). Slovenčina aj angličtina majú vlastný prefix v
+adrese; koreň `/` presmeruje na `/sk/`.
 
-## Contents
+---
 
-- [Running it locally](#running-it-locally)
-- [Project structure](#project-structure)
-- [Adding an article](#adding-an-article-recommended-way)
-- [Adding an article manually](#adding-an-article-manually-without-the-tool)
-- [What an article page includes](#what-an-article-page-includes)
-- [Homepage](#homepage)
-- [Archive and search page](#archive-and-search-page)
-- [Gallery](#gallery)
-- [Authors](#authors)
-- [Design](#design)
-- [Bilingual content](#bilingual-content)
-- [Deploying](#deploying)
-- [Coming later](#coming-later)
-
-## Running it locally
+## Spustenie
 
 ```bash
 npm install
-npm run dev
+npm run dev      # vývojový server
+npm run build    # statický výstup do dist/
+npm run preview  # náhľad hotového buildu
 ```
 
-Then open http://localhost:4321, it'll redirect to the Slovak homepage.
+Node 22.12 alebo novší.
 
-## Project structure
+---
+
+## Adresy
+
+| Obrazovka       | SK                                | EN                                |
+| --------------- | --------------------------------- | --------------------------------- |
+| Homepage        | `/sk/`                            | `/en/`                            |
+| Článok          | `/sk/articles/836206-[slug]/`     | `/en/articles/836206-[slug]/`     |
+| Archív          | `/sk/articles/`                   | `/en/articles/`                   |
+| O projekte      | `/sk/about/`                      | `/en/about/`                      |
+| 404             | `/sk/404/`                        | `/en/404/`                        |
+| Compose         | `/compose/`, bez jazykového prefixu                          ||
+
+Kanonické je **číselné ID**; slug za ním je len čitateľná ozdoba. Samotné
+`/sk/articles/836206/` sa presmeruje na plný tvar, pravidlá sa generujú pri
+builde do `dist/_redirects`.
+
+---
+
+## Ako je to poskladané
 
 ```
 src/
-  pages/sk/, pages/en/     route trees, mirrored 1:1 across both languages
-  content/articles/sk/     Slovak articles, one Markdown file per article ID
-  content/articles/en/     English articles, same ID as the SK counterpart
-  content.config.ts        frontmatter schema for articles
-  components/              Astro components (cards, TOC, lightbox, stats, etc.)
-  layouts/BaseLayout.astro header, nav, theme toggle, language switcher, footer
-  i18n/dict.ts             every UI string, in both languages
-  data/authors.ts          author id to name and avatar mapping
-  data/social.ts           social links (used on the About page)
-  styles/global.css        color and font tokens, global element styles
-  utils/                   small helper functions
-tools/compose.html         standalone article editor, opened directly in a browser
-public/images/articles/<ID>/  images for a specific article
-public/images/gallery/        photos shown on the /gallery page
+  content.config.ts        kolekcie articles-sk / articles-en
+  content/articles/{sk,en}/<id>.md
+  i18n/dict.ts             všetky texty rozhrania, nikdy natvrdo v komponente
+  data/authors.ts          autori
+  data/social.ts           odkazy na stránke O projekte
+  data/redirects.json      tabuľka starých ID → nové ID
+  utils/
+    articles.ts            načítanie, pravidlá výberu, kontroly obsahu
+    article-paths.ts       getStaticPaths vrátane chýbajúcich prekladov
+    format.ts              dátumy, čas čítania, slovenské tvary počtov
+    og.ts                  generovanie OG karty (satori + resvg)
+    feed.ts                RSS pre jednu mutáciu
+  layouts/BaseLayout.astro hlavička, päta, meta, prechod stránok
+  screens/                 celé obrazovky, jazyk dostávajú ako prop
+  components/              opakované prvky
+  scripts/                 klientská logika (archív, článok, vyhľadávanie, …)
+  styles/
+    global.css             tokeny zo sekcie 13 a 16, fonty, resety
+    article.css            text článku (používa aj náhľad v Compose)
+    print.css              tlačová podoba A4
+  integrations/redirects.mjs   zápis dist/_redirects po builde
+public/fonts/              self-hostované woff2 subsety
+src/assets/fonts/          zlúčené ttf len pre generovanie OG kariet
 ```
 
-## Adding an article (recommended way)
+Stránky v `src/pages/{sk,en}/` sú tenké, importujú obrazovku zo `src/screens/`
+a odovzdajú jej jazyk. Vďaka tomu je logika na jednom mieste a mutácia sa nedá
+rozísť.
 
-Open `tools/compose.html` directly in your browser (just double-click it, no server
-needed), or visit `/sk/compose` / `/en/compose` on the running site for the same
-editor styled to match the live design. Fill in the fields, write in the big text
-box (Markdown, with a live preview on the right), and either save straight into your
-project folder or download the `.md` file and move it into:
-
-- `src/content/articles/sk/<ID>.md`, Slovak version
-- `src/content/articles/en/<ID>.md`, English version
-
-Use the **same ID** for both language versions of the same article. That's how the
-language switcher on the article page knows they're the same post, and how related
-articles and everything else that pairs SK/EN content stays in sync.
-
-### Adding images to an article
-
-Use the "Pridaj obrázok" file picker in the editor. It inserts the right Markdown
-into your text automatically. It can't upload the file for you (browsers can't write
-arbitrary files to disk), so you'll need to manually copy the image file into
-`public/images/articles/<ID>/` under the same filename it inserted.
-
-Any image written as its own `![alt text](...)` line (not mixed inline with other
-text) automatically renders as a captioned figure on the live site, using the alt
-text as the caption underneath the photo. The same alt text also becomes the label
-shown when that image is opened in the lightbox, so writing a real, descriptive alt
-text is worth doing, it isn't just for accessibility here.
-
-## Adding an article manually (without the tool)
-
-Create a `.md` file in `src/content/articles/sk/` or `/en/`, filename equal to the
-article ID (e.g. `2.md`):
-
-```markdown
----
-title: "My New Article"
-description: "One sentence shown on the homepage card."
-date: 2026-08-01
-tags: ["gaming", "music"]
-author: "boggelino"
-authorNote: "Optional aside shown near the end of the article, e.g. version or context notes."
 ---
 
-Write your article here. Normal Markdown: **bold**, _italic_, [links](https://example.com),
-![image](/images/articles/2/photo.jpg), code blocks, > blockquotes, etc.
+## Frontmatter článku
 
-## A heading like this
-Any `##` or `###` heading automatically shows up in the table of contents on the
-article page. `#` isn't needed since the title already serves that role.
+```yaml
+---
+title: "Manifest jedného nápadu"
+description: "Keď ma niečo napadne, dám to sem, hneď, bez redakcie."
+date: 2026-07-14
+tags: ["manifest", "proces"]
+author: "boggelino"      # voliteľné, predvolene boggelino
+slug: "vlastny-slug"     # voliteľné, inak sa odvodí z názvu
+follows: "742018"        # voliteľné, ID predchádzajúceho článku v sérii
+draft: false             # true = rozpísané: verejné, ale so značkou
+pinned: false            # pripnutý môže byť vždy len jeden článok v jazyku
+authorNote: "…"          # voliteľná poznámka do pravého stĺpca
+---
 ```
 
-Field notes:
+ID článku je názov súboru (`836206.md`). Jazykové mutácie sa párujú cez **rovnaké
+ID**, nikdy cez názov. Obrázky patria do `public/images/articles/<id>/` a v texte
+sa odkazujú absolútnou cestou.
 
-- `tags`, `draft`, `pinned`, and `authorNote` are all optional.
-- `draft: true` hides the article without deleting it.
-- `pinned: true` features it at the top of the homepage. Only one article should be
-  pinned at a time, the compose tool automatically unpins whichever one was pinned
-  before when you pin a new one.
-- `authorNote` renders as a small aside near the end of the article when present,
-  and is skipped entirely when omitted.
+**Build zlyhá**, keď: sú dva pripnuté články v jednom jazyku, vznikne cyklus v
+poli `follows`, `follows` odkazuje na neznáme ID, alebo je článok naraz rozpísaný
+aj pripnutý. Chýbajúci obrázok je len varovanie.
 
-## What an article page includes
+---
 
-All of the following is generated automatically from the article's Markdown and
-frontmatter, there's nothing extra to configure per article:
+## Pravidlá, na ktorých web stojí
 
-- **Table of contents**, built from `##`/`###` headings. Sticky sidebar on desktop,
-  collapsible section on mobile, with the currently visible heading highlighted as
-  you scroll. Articles with fewer than two headings simply don't get one.
-- **Image captions**, any image on its own line renders as a captioned figure using
-  its alt text.
-- **Image lightbox**, clicking any image opens it full screen with a dark overlay,
-  previous and next navigation (arrow keys, on-screen buttons, or swipe on mobile),
-  and click-to-zoom.
-- **Reading time**, shown next to the publish date, both on the article page itself
-  and on every card that lists the article elsewhere on the site.
-- **Author's note**, the optional `authorNote` field, shown when present.
-- **Article statistics**, a small block with word count, reading time, image count,
-  and heading count.
-- **Related articles**, up to three other same-language articles, ranked by how many
-  tags they share with the current one (ties broken by newest). Only appears when
-  there's an actual overlap, no unrelated filler just to fill the section.
+- **Článok nemá titulný obrázok.** Prvý obrázok v texte je zároveň náhľad na
+  karte aj v zdieľaní.
+- **Karta je jeden odkaz na celú plochu.** Štítky na nej sú len text; filtruje sa
+  zo zoznamu v archíve.
+- **Jeden accentový prvok na obrazovku.** `#d93f11` pre nadpisy od 24 px, plochy
+  a značky; `#f2724a` pre všetok accentový text pod 24 px.
+- **Autor je len na stránke O projekte a v pravom stĺpci článku.**
+- **Homepage ukazuje hlavnú kartu a najviac 9 ďalších**, dokopy 10. Odkaz do
+  archívu sa objaví až od 11. článku.
+- **Delenie na mesiace platí len pre nefiltrovaný archív** zoradený od
+  najnovšieho.
+- **Nikdy sa nedopĺňajú prázdne karty**, aby mriežka vyzerala plná.
+- **Fokusový prstenec 2 px sa neodstraňuje.**
+- **Obsah sa nad 1440 px centruje**, nikdy sa neroztiahne cez celú šírku okna.
+- **Pri `prefers-reduced-motion` je pohyb nulový**, premenná `--motion` sa
+  nastaví na 0 a web ostane plne funkčný.
 
-## Homepage
+Web sa dá čítať aj bez JavaScriptu: text článku, navigácia aj celý zoznam v
+archíve sa vykreslia zo servera. Filtrovanie, vyhľadávanie a sledovanie čítania
+sú nadstavba.
 
-Features the pinned article (or the newest one, if nothing is pinned) at the top,
-followed by a grid of the rest with a sidebar (about blurb, recent posts, top
-categories by article count).
+---
 
-## Archive and search page
+## Compose
 
-`/sk/tags/` (and `/en/tags/`) is a full search page:
+`/compose/` je editor článkov. Nasadzuje sa spolu s webom, ale bežnému
+návštevníkovi je na nič: pracuje s **priečinkom projektu** cez File System
+Access API (Chrome, Edge), takže bez vybraného priečinku nemá čo načítať ani
+kam uložiť. Preto nepotrebuje prihlásenie.
 
-- Instant search across title, description, and tags as you type.
-- Tag checkboxes in the sidebar use AND logic, checking multiple tags narrows to
-  articles that have all of them, and each checkbox shows a live count of how many
-  results it would leave if selected.
-- Sort by newest, oldest, reading time, or alphabetically.
-- A random button jumps to a random article from whatever's currently visible in
-  the filtered and searched results.
+Čo vie: zoznam článkov so stavmi a akciami, výber autora zo `src/data/authors.ts`,
+formulár s kontrolou dĺžok (názov 60, popis 64, slug 80 znakov, prekročený slug
+uloženie blokuje), tri náhľady v reálnych rozmeroch pre desktop, tablet aj mobil
+(hlavná karta, karta v mriežke, stránka článku), náhľad lokalizácie a zápis
+priamo do projektu.
 
-Individual tag pages still exist at `/sk/tags/<tag>/` for direct links, but the
-search page above is the main way to browse.
+Web nemá klávesové skratky. Všetko sa ovláda tlačidlami; keď pôvodné ovládanie
+odscrolluje z obrazu, dole nabehne plávajúca lišta s prepínačom jazyka a oboma
+tlačidlami na uloženie.
 
-## Gallery
+Každé uloženie je jeden commit, správa sa skladá automaticky a kopíruje sa do
+schránky.
 
-`/gallery` reads photos straight out of `public/images/gallery/` at build time,
-newest file first. No content collection entry needed per photo, just drop a file
-in and it shows up, laid out with a loose CSS-columns masonry grid.
+---
 
-## Authors
+## Build a nasadenie
 
-Defined in `src/data/authors.ts`. Right now there's just `boggelino` (avatar =
-`/images/boggelino.png`). If you ever open up article submissions to others, add
-them here and set `author: "their-id"` in their article's frontmatter, their avatar
-and name will show up automatically next to "Written by".
+`npm run build` vyprodukuje:
 
-## Design
+- statické HTML pre všetky obrazovky a obe mutácie,
+- OG kartu 1200 × 630 pre každý článok (`/sk/og/<id>.png`),
+- index vyhľadávania (`/search-index.json`),
+- RSS pre obe mutácie a `sitemap.xml`,
+- `dist/_redirects` s presmerovaním z holého ID na plný tvar a s tabuľkou
+  starých ID zo `src/data/redirects.json`.
 
-Color and font tokens live in `src/styles/global.css` (`:root` = dark theme,
-`[data-theme='light']` = light theme, same variable names in both, so anything new
-should reference the variables rather than hardcoding a color). Layout, nav, and
-footer: `src/layouts/BaseLayout.astro`. Icons: `src/components/SocialIcon.astro`
-and `src/components/FlagIcon.astro`, plain hand-drawn SVGs, not brand assets, easy
-to restyle.
+Nasadenie je push, Netlify build spustí `npm run build` a publikuje `dist/`.
 
-Theme preference (dark or light) is remembered in the browser and applied before
-the page paints, so there's no flash of the wrong theme on load.
+### Fonty
 
-## Bilingual content
+Anton, Inter a JetBrains Mono sú self-hostované v `public/fonts/` ako woff2
+subsety (latin + latin-ext) z balíkov `@fontsource/*`, ktoré sú vo
+`devDependencies`. Ak pribudne rez alebo váha, skopíruj príslušný súbor z
+`node_modules/@fontsource/<rodina>/files/` a dopíš `@font-face` do
+`src/styles/global.css`.
 
-Every page exists once under `/sk/` and once under `/en/`, and every article can
-have a Slovak file, an English file, or both, matched by filename. If only one
-language exists for a given article, the language switcher on that article sends
-the reader to the other language's homepage instead of a broken link. All UI text
-(navigation, buttons, labels) lives in `src/i18n/dict.ts`, one object per language,
-so adding or changing any on-page text happens there rather than in the page files
-themselves.
+`src/assets/fonts/*.ttf` sú zlúčené subsety (latin + latin-ext v jednom súbore),
+ktoré potrebuje satori pri generovaní OG kariet, satori medzi subsetmi
+nefallbackuje, takže bez zlúčenia by chýbala diakritika.
 
-## Deploying
+---
 
-Push to GitHub, connected to Netlify, every `git push` auto-deploys. Build command
-`npm run build`, output directory `dist`.
+## Stav
 
-## Coming later
-
-- Article submission and approval flow (readers suggest, you approve)
-- Comments (likely via Giscus)
+Prvé spustenie aj druhá vlna sú implementované: séria a nadväznosť, prečítané a
+rozčítané, náhodný článok, chýbajúci preklad, vyhľadávanie cez lupu v hlavičke,
+generované OG karty, chybové stavy Compose, tlačová podoba a beh bez
+JavaScriptu.

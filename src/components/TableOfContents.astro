@@ -1,7 +1,8 @@
 ---
 import { t, type Lang } from '../i18n/dict';
+import { chapterCount } from '../utils/format';
 
-interface Heading {
+export interface Heading {
   depth: number;
   slug: string;
   text: string;
@@ -13,196 +14,163 @@ interface Props {
 }
 
 const { lang, headings } = Astro.props;
-const s = t(lang);
+const d = t(lang);
 
-// Ignore H1 (the article title already exists), only H2/H3.
-// H2 entries carry the same running number the article body prints.
-let section = 0;
+/*
+ * Do obsahu idú len H2 a H3 (sekcia 14). Číslujú sa výhradne H2, pretože tie
+ * sú kapitoly. H3 je podkapitola a namiesto čísla dostane pomlčku, aby
+ * číslovanie kapitol ostalo súvislé.
+ */
+let chapter = 0;
 const items = headings
   .filter((h) => h.depth === 2 || h.depth === 3)
   .map((h) => {
-    if (h.depth === 2) section += 1;
-    return { ...h, marker: h.depth === 2 ? String(section).padStart(2, '0') : '\u2014' };
+    if (h.depth === 2) chapter += 1;
+    return { ...h, mark: h.depth === 2 ? String(chapter).padStart(2, '0') : '–' };
   });
 ---
 
-{items.length > 0 && (
-  <>
-    <nav class="toc toc-desktop" aria-label={s.toc_title}>
-      <span class="toc-title">{s.toc_title}</span>
-      <ul class="toc-list">
-        {items.map((h) => (
-          <li class:list={[`toc-depth-${h.depth}`]}>
-            <a href={`#${h.slug}`} data-toc-link data-toc-slug={h.slug}>
-              <span class="toc-marker">{h.marker}</span>
-              <span class="toc-text">{h.text}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
+{
+  items.length > 0 && (
+    <nav class="toc" data-toc aria-labelledby="toc-title">
+      <details class="toc-shell" data-toc-details open>
+        <summary class="toc-head">
+          <span class="mono-sm" id="toc-title">
+            {d.toc_title}
+          </span>
+          <span class="toc-count mono-sm">{chapterCount(chapter, lang)}</span>
+        </summary>
+
+        <ol class="toc-list">
+          {items.map((item) => (
+            <li class:list={['toc-item', item.depth === 3 && 'is-sub']}>
+              <a class="toc-link" href={`#${item.slug}`} data-toc-link={item.slug}>
+                <span class="toc-n mono-sm" aria-hidden={item.depth === 3 ? 'true' : undefined}>
+                  {item.mark}
+                </span>
+                <span class="toc-label">{item.text}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </details>
     </nav>
-
-    <details class="toc toc-mobile">
-      <summary>{s.toc_title} ({items.length})</summary>
-      <ul class="toc-list">
-        {items.map((h) => (
-          <li class:list={[`toc-depth-${h.depth}`]}>
-            <a href={`#${h.slug}`} data-toc-link data-toc-slug={h.slug}>
-              <span class="toc-marker">{h.marker}</span>
-              <span class="toc-text">{h.text}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </details>
-
-    <script>
-      // Smooth scroll + active-heading highlighting. Runs once per page,
-      // scoped to whichever TOC instance is actually visible via CSS.
-      const links = document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]');
-
-      links.forEach((link) => {
-        link.addEventListener('click', (e) => {
-          const slug = link.dataset.tocSlug;
-          const target = slug ? document.getElementById(slug) : null;
-          if (!target) return;
-          e.preventDefault();
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          history.replaceState(null, '', `#${slug}`);
-          // Collapse the mobile <details> after picking an item.
-          const details = link.closest('details.toc-mobile');
-          if (details instanceof HTMLDetailsElement) details.open = false;
-        });
-      });
-
-      const headingEls = Array.from(
-        document.querySelectorAll<HTMLElement>('.article-body :is(h2, h3)[id]'),
-      );
-
-      if (headingEls.length > 0 && 'IntersectionObserver' in window) {
-        const setActive = (slug: string) => {
-          links.forEach((link) => {
-            link.classList.toggle('is-active', link.dataset.tocSlug === slug);
-          });
-        };
-
-        const visible = new Set<string>();
-        const observer = new IntersectionObserver(
-          (entries) => {
-            for (const entry of entries) {
-              const id = entry.target.id;
-              if (entry.isIntersecting) visible.add(id);
-              else visible.delete(id);
-            }
-            // Prefer the topmost currently-visible heading.
-            for (const h of headingEls) {
-              if (visible.has(h.id)) {
-                setActive(h.id);
-                return;
-              }
-            }
-          },
-          { rootMargin: '-10% 0px -70% 0px', threshold: 0 },
-        );
-
-        headingEls.forEach((h) => observer.observe(h));
-      }
-    </script>
-  </>
-)}
+  )
+}
 
 <style>
-  .toc-title {
-    display: block;
-    font-family: var(--font-display);
-    font-weight: 900;
-    font-size: 0.85rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text);
-    margin-bottom: 0.9rem;
+  .toc {
+    font-size: 14px;
   }
-  .toc-list {
+
+  .toc-shell > summary {
     list-style: none;
-    margin: 0;
-    padding: 0;
+    cursor: default;
   }
-  .toc-list a {
+
+  .toc-shell > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .toc-head {
     display: flex;
-    gap: 0.7rem;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    line-height: 1.45;
-    color: var(--text-secondary);
-    padding: 0.55rem 0.6rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .toc-marker {
-    flex: none;
-    color: var(--text-faint);
-  }
-  .toc-list a:hover {
-    background: var(--bg-raised);
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 3px;
-    text-underline-offset: 4px;
-  }
-  .toc-list a.is-active {
-    background: var(--rule);
-    color: var(--bg);
-    border-bottom-color: var(--rule);
-  }
-  .toc-list a.is-active .toc-marker {
-    color: var(--accent);
-    font-weight: 700;
-  }
-  .toc-depth-3 a {
-    padding-left: 1.5rem;
-    color: var(--text-muted);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-10);
+    min-height: 34px;
+    padding-bottom: var(--sp-10);
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-4);
   }
 
-  /* Stickiness lives on the rail in the article page, so the contents,
-     the author and the actions travel down the page together. */
-  .toc-desktop {
-    padding: 1.6rem 1.1rem;
+  .toc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: var(--sp-10);
   }
 
-  .toc-mobile {
-    display: none;
-  }
-  .toc-mobile summary {
-    cursor: pointer;
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text);
-    background: var(--bg-raised);
-    padding: 0.9rem var(--pad);
-    border-bottom: var(--rule-w) solid var(--rule);
-    list-style: none;
-  }
-  .toc-mobile summary::-webkit-details-marker {
-    display: none;
-  }
-  .toc-mobile summary::after {
-    content: ' \25BE';
-    color: var(--accent);
-    float: right;
-  }
-  .toc-mobile .toc-list {
-    padding: 0.4rem var(--pad) 0.8rem;
-    border-bottom: var(--rule-w) solid var(--rule);
+  .toc-link {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-10);
+    padding: 8px 10px 8px 14px;
+    border-radius: var(--r-item);
+    color: var(--ink-3);
+    line-height: 1.4;
+    transition:
+      color var(--t-toc) var(--ease),
+      background-color var(--t-toc) var(--ease);
   }
 
-  @media (max-width: 1200px) {
-    .toc-desktop {
-      display: none;
+  /* Accentová linka sa plynulo presunie na aktuálnu kapitolu. */
+  .toc-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform var(--t-toc) var(--ease);
+  }
+
+  .toc-item.is-sub .toc-link {
+    padding-left: 28px;
+  }
+
+  @media (hover: hover) {
+    .toc-link:hover {
+      color: var(--ink-2);
     }
-    .toc-mobile {
-      display: block;
+  }
+
+  .toc-link.is-active {
+    color: var(--ink);
+    background: var(--fill-strong);
+  }
+
+  .toc-link.is-active::before {
+    transform: scaleY(1);
+  }
+
+  .toc-n {
+    flex: none;
+    padding-top: 2px;
+    color: var(--ink-4);
+  }
+
+  .toc-link.is-active .toc-n {
+    color: var(--accent-text);
+  }
+
+  .toc-label {
+    min-width: 0;
+  }
+
+  /* Na mobile je obsah rozbaľovací pruh pod nadpisom. */
+  @media (max-width: 1179px) {
+    .toc-shell {
+      border-radius: var(--r-field);
+      background: var(--fill-2);
+      padding: var(--sp-12) var(--sp-14);
+    }
+
+    .toc-shell > summary {
+      cursor: pointer;
+      min-height: var(--touch);
+      display: flex;
+      align-items: center;
+    }
+
+    .toc-head {
+      flex: 1;
+      border-bottom: 0;
+      padding-bottom: 0;
     }
   }
 </style>

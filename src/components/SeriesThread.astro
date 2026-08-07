@@ -1,0 +1,96 @@
+---
+import type { SeriesInfo } from '../utils/articles';
+import { t, type Lang } from '../i18n/dict';
+
+interface Props {
+  lang: Lang;
+  series: SeriesInfo;
+}
+
+const { lang, series } = Astro.props;
+const d = t(lang);
+
+/* Niť sa vykreslí len pri sérii 1 : 1. Pri dvoch a viac pokračovaniach sa
+   číslovanie vypne a namiesto nite je pod textom zoznam Nadväzuje (N). */
+const show = Boolean(series.numbering) && Boolean(series.parent);
+---
+
+{
+  show && series.numbering && (
+    <nav class="thread" aria-label={d.series_label}>
+      <p class="thread-pos mono-sm">
+        {d.series_label} · {series.numbering.position} / {series.numbering.total}
+      </p>
+
+      <ol class="thread-dots" aria-hidden="true">
+        {series.numbering.chain.map((_, index) => (
+          <li class:list={['thread-dot', index + 1 === series.numbering!.position && 'is-here']} />
+        ))}
+      </ol>
+
+      {series.parent && (
+        <p class="thread-link">
+          <span class="mono-sm">{d.series_follows}</span>
+          <a href={series.parent.href}>{series.parent.title}</a>
+        </p>
+      )}
+    </nav>
+  )
+}
+
+<style>
+  .thread {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-14);
+    flex-wrap: wrap;
+    padding: var(--sp-10) var(--sp-14);
+    border-radius: var(--r-pill);
+    background: var(--fill-2);
+  }
+
+  .thread-pos {
+    color: var(--accent-text);
+  }
+
+  .thread-dots {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-6);
+  }
+
+  .thread-dot {
+    width: 14px;
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(244, 242, 236, 0.18);
+  }
+
+  .thread-dot.is-here {
+    background: var(--accent);
+  }
+
+  .thread-link {
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-10);
+    min-width: 0;
+    font-size: 14px;
+    color: var(--ink-3);
+  }
+
+  .thread-link a {
+    color: var(--ink-2);
+    text-decoration: underline;
+    text-decoration-color: rgba(244, 242, 236, 0.24);
+    text-underline-offset: 3px;
+    transition: color var(--t), text-decoration-color var(--t);
+  }
+
+  @media (hover: hover) {
+    .thread-link a:hover {
+      color: var(--ink);
+      text-decoration-color: var(--accent);
+    }
+  }
+</style>

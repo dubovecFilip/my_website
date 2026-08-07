@@ -1,80 +1,54 @@
 ---
-import { getCollection } from 'astro:content';
 import '../styles/global.css';
-import { t, otherLang, languages, langMeta, type Lang } from '../i18n/dict';
+import '../styles/print.css';
+import { ClientRouter } from 'astro:transitions';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import SearchDialog from '../components/SearchDialog.astro';
+import PlaceholderArt from '../components/PlaceholderArt.astro';
+import { t, type Lang } from '../i18n/dict';
+
+export interface Alternate {
+  lang: string;
+  href: string;
+}
 
 interface Props {
   lang: Lang;
-  title: string;
+  title?: string;
   description?: string;
-  translationHref?: string;
-  /** Homepage only: the oversized wordmark block under the top bar. */
-  masthead?: boolean;
-  /** Small path line shown next to the wordmark on inner pages. */
-  breadcrumb?: string;
-  /** Article pages: the reading strip pinned under the bar. */
-  readingProgress?: boolean;
-  /** Article pages: the path cell holds the title and only shows once the
-      real headline has scrolled out of view. */
-  scrollTitle?: boolean;
-  /** Pages that exist outside the language trees hide the switcher. */
-  showLangSwitch?: boolean;
-  /** Tools that need more room than the Full HD reading shell allows. */
-  fullBleed?: boolean;
-  /** Tools that fill the viewport do not want a footer under them. */
-  showFooter?: boolean;
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  alternates?: Alternate[];
+  active?: 'home' | 'archive' | 'about' | null;
+  /** Compose beží bez hlavičky, päty aj prepínača jazyka. */
+  chrome?: boolean;
+  noIndex?: boolean;
+  /** Homepage ukáže značku v hlavičke až po odscrollovaní hero. */
+  brandAfterHero?: boolean;
+  /** Náhľadová obrazovka Compose: skutočná stránka s podstrčeným článkom. */
+  preview?: 'home' | 'archive' | 'article';
 }
 
 const {
   lang,
   title,
-  description = 'MOMENTUM: articles, opinions, and things I like.',
-  translationHref,
-  masthead = false,
-  breadcrumb,
-  readingProgress = false,
-  scrollTitle = false,
-  showLangSwitch = true,
-  fullBleed = false,
-  showFooter = true,
+  description,
+  ogImage,
+  ogType = 'website',
+  alternates = [],
+  active = null,
+  chrome = true,
+  noIndex = false,
+  brandAfterHero = false,
+  preview,
 } = Astro.props;
-const s = t(lang);
-const other = otherLang(lang);
 
-const currentPath = Astro.url.pathname;
-
-/** Same page in another language, or the caller's override for the pair. */
-function pathFor(code: Lang): string {
-  if (translationHref && code === other) return translationHref;
-  return currentPath.replace(`/${lang}/`, `/${code}/`).replace(new RegExp(`/${lang}$`), `/${code}`);
-}
-
-const navItems = [
-  { href: `/${lang}/`, label: s.nav_home },
-  { href: `/${lang}/tags/`, label: s.nav_tags },
-  { href: `/${lang}/gallery/`, label: s.nav_gallery },
-  { href: `/${lang}/about/`, label: s.nav_about },
-];
-
-// A nav item is current when the path matches it, or when it is a section
-// root and the path sits inside that section.
-function isCurrent(href: string): boolean {
-  const path = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
-  if (href === `/${lang}/`) return path === `/${lang}/`;
-  return path.startsWith(href);
-}
-
-// Footer data: latest article link + the full slug list so the "random
-// article" button can pick one client-side without a server round trip.
-const collectionName = lang === 'sk' ? 'articles-sk' : 'articles-en';
-const footerArticles = await getCollection(
-  collectionName as 'articles-sk' | 'articles-en',
-  ({ data }) => !data.draft,
-);
-const footerSorted = footerArticles.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const latestArticle = footerSorted[0];
-const footerSlugs = footerSorted.map((a) => a.id);
-const year = new Date().getFullYear();
+const d = t(lang);
+const pageTitle = title ? `${title} · ${d.site_name}_` : `${d.site_name}_`;
+const pageDescription = description ?? d.site_description;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://boggelino.netlify.app');
+const ogImageUrl = ogImage ? new URL(ogImage, canonical).href : undefined;
 ---
 
 <!doctype html>
@@ -82,712 +56,135 @@ const year = new Date().getFullYear();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/png" href="/images/momentum.png" />
-    <link rel="apple-touch-icon" href="/images/momentum.png" />
-    <title>{title} · MOMENTUM</title>
-    <meta name="description" content={description} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical.href} />
+    {(noIndex || preview) && <meta name="robots" content="noindex" />}
+
+    {
+      alternates.map((alt) => (
+        <link rel="alternate" hreflang={alt.lang} href={new URL(alt.href, canonical).href} />
+      ))
+    }
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title ?? `${d.site_name}_`} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:site_name" content={`${d.site_name}_`} />
+    <meta property="og:locale" content={lang === 'sk' ? 'sk_SK' : 'en_US'} />
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    {ogImageUrl && <meta property="og:image:width" content="1200" />}
+    {ogImageUrl && <meta property="og:image:height" content="630" />}
+    <meta name="twitter:card" content={ogImageUrl ? 'summary_large_image' : 'summary'} />
+
+    <meta name="theme-color" content="#111111" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${d.site_name}_`} href={`/${lang}/rss.xml`} />
+
+    <link
+      rel="preload"
+      href="/fonts/anton-latin-ext-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/inter-latin-ext-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <ClientRouter />
+
     <script is:inline>
-      // Light is the default now, so only an explicit dark choice is applied.
-      const saved = localStorage.getItem('momentum-theme');
-      if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      /* Označí, že JS beží, bez neho ostáva všetok obsah viditeľný a statický. */
+      document.documentElement.classList.add('js');
     </script>
   </head>
-  <body>
-    <a class="skip-link" href="#main">{s.skip_to_content}</a>
 
-    <div class:list={['site-shell', fullBleed && 'is-full']}>
-    <header class="site-header">
-      <div class="bar">
-        <a class="bar-cell brand" href={`/${lang}/`}>MOMENTUM<span class="brand-cursor">_</span></a>
-
-        {breadcrumb && (
-          <div class:list={['bar-cell', 'bar-path', scrollTitle && 'is-scroll-title']} data-scroll-title={scrollTitle ? '' : undefined}>
-            {breadcrumb}
-          </div>
-        )}
-
-        <nav class="bar-nav" aria-label={s.nav_menu}>
-          {navItems.map((item) => (
-            <a href={item.href} class:list={['bar-navlink', isCurrent(item.href) && 'is-current']}>
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        {showLangSwitch && (
-        <div class="bar-cell bar-lang">
-          <details class="lang-drop">
-            <summary aria-label={s.lang_switch}>
-              <span>{lang.toUpperCase()}</span>
-              <span class="lang-caret" aria-hidden="true">&#9662;</span>
-            </summary>
-            <ul class="lang-menu">
-              {languages.map((code) => (
-                <li>
-                  <a
-                    href={pathFor(code)}
-                    hreflang={code}
-                    class:list={['lang-item', code === lang && 'is-current']}
-                    aria-current={code === lang ? 'true' : undefined}
-                  >
-                    <span class="lang-code">{code.toUpperCase()}</span>
-                    <span class="lang-name">{langMeta[code].label}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </details>
-        </div>
-        )}
-
-        <div class="bar-cell bar-theme">
-          <span class="theme-label" data-theme-light>{s.theme_light}</span>
-          <button id="theme-toggle" class="theme-switch" type="button" aria-label={s.theme_toggle} title={s.theme_toggle}>
-            <span class="theme-knob"></span>
-          </button>
-          <span class="theme-label theme-label-off" data-theme-dark>{s.theme_dark}</span>
-        </div>
-
-        <button id="drawer-open" class="bar-cell bar-burger" type="button" aria-label={s.nav_menu} aria-expanded="false" aria-controls="drawer">
-          <span aria-hidden="true">&#9776;</span>
-        </button>
-      </div>
-
-      {masthead && (
-        <div class="masthead">
-          <div class="masthead-word">MOMEN<span class="masthead-tum">TUM</span></div>
-        </div>
+  <body data-preview={preview}>
+    <div class="page">
+      {chrome && <a class="skip-link" href="#obsah">{d.skip_to_content}</a>}
+      {chrome && (
+        <SiteHeader
+          lang={lang}
+          active={active}
+          alternates={alternates}
+          brandAfterHero={brandAfterHero}
+        />
       )}
 
-      {readingProgress && (
-        <div class="progress" aria-hidden="true">
-          <span class="progress-fill" id="reading-progress"></span>
-        </div>
-      )}
-    </header>
+      <main id="obsah" class="page-main" data-page-body>
+        <slot />
+      </main>
 
-    <div class="drawer" id="drawer" hidden>
-      <div class="drawer-bar">
-        <span class="drawer-brand">MOMENTUM</span>
-        <button id="drawer-close" class="drawer-close" type="button" aria-label={s.nav_close}>&times;</button>
-      </div>
-      <nav class="drawer-nav" aria-label={s.nav_menu}>
-        {navItems.map((item) => (
-          <a href={item.href} class:list={['drawer-link', isCurrent(item.href) && 'is-current']}>
-            {item.label}
-          </a>
-        ))}
-      </nav>
-      <div class="drawer-foot">
-        {showLangSwitch && (
-        <div class="drawer-lang">
-          {languages.map((code) => (
-            <a
-              href={pathFor(code)}
-              hreflang={code}
-              class:list={['drawer-lang-opt', code === lang && 'is-current']}
-            >
-              {code.toUpperCase()}
-            </a>
-          ))}
-        </div>
-        )}
-        <div class="drawer-theme">
-          <span>{s.theme_toggle}</span>
-          <button id="drawer-theme-toggle" class="theme-switch" type="button" aria-label={s.theme_toggle}>
-            <span class="theme-knob"></span>
-          </button>
-        </div>
-        <p class="drawer-meta">
-          <a href={`/${lang}/rss.xml`}>{s.footer_rss}</a> &middot; &copy; {year} MOMENTUM
-        </p>
-      </div>
+      {chrome && <SiteFooter lang={lang} />}
     </div>
 
-    <main id="main">
-      <slot />
-    </main>
+    {chrome && <SearchDialog lang={lang} />}
 
-    {showFooter && (
-    <footer class="site-footer">
-      <div class="footer-cols">
-        <div class="footer-col">
-          <h2 class="footer-heading">{s.footer_latest_articles}</h2>
-          <ul class="footer-list">
-            {latestArticle && (
-              <li>
-                <a href={`/${lang}/articles/${latestArticle.id}/`}>{s.footer_latest_article}</a>
-              </li>
-            )}
-            {footerSlugs.length > 0 && (
-              <li>
-                <button type="button" id="footer-random-btn" class="footer-link-btn" data-slugs={JSON.stringify(footerSlugs)} data-lang={lang}>
-                  {s.footer_random_article}
-                </button>
-              </li>
-            )}
-          </ul>
-        </div>
-
-        <div class="footer-col">
-          <h2 class="footer-heading">{s.footer_navigation}</h2>
-          <ul class="footer-list">
-            <li><a href={`/${lang}/tags/`}>{s.nav_tags}</a></li>
-            <li><a href={`/${lang}/gallery/`}>{s.nav_gallery}</a></li>
-            <li><a href={`/${lang}/about/`}>{s.nav_about}</a></li>
-          </ul>
-        </div>
-
-        <div class="footer-col">
-          <h2 class="footer-heading">{s.footer_meta}</h2>
-          <ul class="footer-list">
-            <li><a href={`/${lang}/rss.xml`}>{s.footer_rss}</a></li>
-            <li><span>{s.footer_built_with}</span></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="footer-bar">
-        <span>&copy; {year} MOMENTUM</span>
-        <span>RSS &middot; ASTRO</span>
-      </div>
-    </footer>
-    )}
-    </div>
+    {
+      /* Predloha zástupnej plochy pre náhľad: keď rozpísaný článok nemá
+         obrázok, klonuje sa sem monogram namiesto cudzej fotky. */
+      preview && (
+        <template data-ph-template>
+          <PlaceholderArt ratio="16 / 9" />
+        </template>
+      )
+    }
 
     <script>
-      const randomBtn = document.getElementById('footer-random-btn');
-      randomBtn?.addEventListener('click', () => {
-        try {
-          const slugs = JSON.parse(randomBtn.dataset.slugs || '[]');
-          const lang = randomBtn.dataset.lang || 'en';
-          if (slugs.length === 0) return;
-          const pick = slugs[Math.floor(Math.random() * slugs.length)];
-          window.location.href = `/${lang}/articles/${pick}/`;
-        } catch {
-          // no-op: malformed data attribute, nothing to navigate to
-        }
-      });
+      import { initReveal } from '../scripts/reveal';
+      import { initHeader } from '../scripts/header';
+      import { initSearch } from '../scripts/search';
+      import { initTagOverflow } from '../scripts/tags-overflow';
+      import { initPreview } from '../scripts/preview';
 
-      // Mobile drawer
-      const drawer = document.getElementById('drawer');
-      const openBtn = document.getElementById('drawer-open');
-      const closeBtn = document.getElementById('drawer-close');
-
-      function setDrawer(open: boolean) {
-        if (!drawer) return;
-        drawer.hidden = !open;
-        drawer.classList.toggle('is-open', open);
-        openBtn?.setAttribute('aria-expanded', String(open));
-        document.body.style.overflow = open ? 'hidden' : '';
-        if (open) closeBtn?.focus();
-        else openBtn?.focus();
+      function boot() {
+        /* Náhľad musí podstrčiť obsah skôr, než sa naň naviažu ostatné skripty. */
+        initPreview();
+        initReveal();
+        initHeader();
+        initSearch();
+        initTagOverflow();
       }
 
-      openBtn?.addEventListener('click', () => setDrawer(true));
-      closeBtn?.addEventListener('click', () => setDrawer(false));
-      drawer?.querySelectorAll('a').forEach((link) => {
-        link.addEventListener('click', () => setDrawer(false));
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && drawer && !drawer.hidden) setDrawer(false);
-        if (e.key === 'Escape') {
-          document.querySelectorAll('details.lang-drop[open]').forEach((el) => el.removeAttribute('open'));
-        }
-      });
-
-      document.addEventListener('click', (e) => {
-        document.querySelectorAll('details.lang-drop[open]').forEach((el) => {
-          if (e.target instanceof Node && !el.contains(e.target)) el.removeAttribute('open');
-        });
-      });
+      boot();
+      document.addEventListener('astro:page-load', boot);
     </script>
 
-    <script is:inline>
-      (function () {
-        function apply(isDark) {
-          const html = document.documentElement;
-          if (isDark) html.setAttribute('data-theme', 'dark');
-          else html.removeAttribute('data-theme');
-          localStorage.setItem('momentum-theme', isDark ? 'dark' : 'light');
+    <style is:global>
+      /* Prechod stránok, 260 ms, hlavička a päta ostávajú na mieste. */
+      @keyframes page-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
         }
-        document.querySelectorAll('.theme-switch').forEach(function (btn) {
-          btn.addEventListener('click', function () {
-            apply(document.documentElement.getAttribute('data-theme') !== 'dark');
-          });
-        });
-      })();
-    </script>
-
-    <style>
-      /* The editor is a tool, not a reading page, so it may use the whole
-         screen instead of the Full HD column. */
-      :global(.site-shell.is-full) {
-        max-width: none;
-        border-left: none;
-        border-right: none;
-      }
-
-      .skip-link {
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        z-index: 100;
-        background: var(--accent);
-        color: var(--on-accent);
-        font-family: var(--font-mono);
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        padding: 0.8rem 1rem;
-      }
-      .skip-link:focus {
-        left: 0;
-      }
-
-      /* ---------- Top bar ---------- */
-
-      .site-header {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        background: var(--bg);
-      }
-      .bar {
-        display: flex;
-        align-items: stretch;
-        border-bottom: var(--rule-w) solid var(--rule);
-      }
-      .bar-cell {
-        display: flex;
-        align-items: center;
-        padding: 0.7rem 1rem;
-        border-right: var(--rule-w) solid var(--rule);
-        white-space: nowrap;
-      }
-      .brand {
-        font-family: var(--font-display);
-        font-weight: 900;
-        font-size: 1.05rem;
-        letter-spacing: 0.01em;
-      }
-      .brand-cursor {
-        color: var(--accent);
-      }
-      .brand:hover {
-        background: var(--rule);
-        color: var(--bg);
-      }
-      /* On article pages this cell carries the headline and only appears
-         once the real one has scrolled away. */
-      .bar-path.is-scroll-title {
-        opacity: 0;
-        transition: opacity 0.15s ease;
-        pointer-events: none;
-      }
-      .bar-path.is-scroll-title.is-visible {
-        opacity: 1;
-        pointer-events: auto;
-      }
-      .bar-path {
-        font-family: var(--font-mono);
-        font-size: 0.66rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        border-right: none;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .bar-nav {
-        display: flex;
-        align-items: stretch;
-        margin-left: auto;
-      }
-      .bar-navlink {
-        display: flex;
-        align-items: center;
-        padding: 0.7rem 1.1rem;
-        border-left: var(--rule-w) solid var(--rule);
-        font-family: var(--font-mono);
-        font-size: 0.68rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-      }
-      .bar-navlink:hover {
-        background: var(--rule);
-        color: var(--bg);
-      }
-      .bar-navlink.is-current {
-        color: var(--text);
-        font-weight: 700;
-        box-shadow: inset 0 -3px 0 var(--accent);
-      }
-
-      .bar-lang {
-        gap: 0;
-        padding: 0;
-        border-right: var(--rule-w) solid var(--rule);
-        border-left: var(--rule-w) solid var(--rule);
-      }
-      /* A dropdown rather than one cell per language, so adding a third
-         language is a dict entry and nothing else. */
-      .lang-drop {
-        position: relative;
-        height: 100%;
-      }
-      .lang-drop summary {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        height: 100%;
-        padding: 0.7rem 0.9rem;
-        font-family: var(--font-mono);
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.16em;
-        background: var(--rule);
-        color: var(--bg);
-        cursor: pointer;
-        list-style: none;
-      }
-      .lang-drop summary::-webkit-details-marker {
-        display: none;
-      }
-      .lang-caret {
-        color: var(--accent);
-        font-size: 0.6rem;
-      }
-      .lang-menu {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        z-index: 30;
-        min-width: 190px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        background: var(--bg);
-        border: var(--rule-w) solid var(--rule);
-        border-top: none;
-      }
-      .lang-item {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        padding: 0.75rem 0.9rem;
-        font-family: var(--font-mono);
-        font-size: 0.68rem;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-      }
-      .lang-menu li + li .lang-item {
-        border-top: 2px solid var(--border);
-      }
-      .lang-code {
-        font-weight: 700;
-        color: var(--text);
-      }
-      .lang-item:hover {
-        background: var(--rule);
-        color: var(--bg);
-      }
-      .lang-item:hover .lang-code {
-        color: inherit;
-      }
-      .lang-item.is-current {
-        color: var(--text);
-      }
-      .lang-item.is-current .lang-code {
-        color: var(--accent);
-      }
-
-      .bar-theme {
-        gap: 0.6rem;
-        border-right: none;
-      }
-      .theme-label {
-        font-family: var(--font-mono);
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--text);
-      }
-      .theme-label-off {
-        color: var(--text-faint);
-        font-weight: 400;
-      }
-      :global([data-theme='dark']) .theme-label[data-theme-light] {
-        color: var(--text-faint);
-        font-weight: 400;
-      }
-      :global([data-theme='dark']) .theme-label[data-theme-dark] {
-        color: var(--text);
-        font-weight: 700;
-      }
-      .theme-switch {
-        width: 52px;
-        height: 26px;
-        flex: none;
-        display: flex;
-        align-items: center;
-        padding: 2px;
-        background: var(--bg);
-        border: var(--rule-w) solid var(--rule);
-        border-radius: 0;
-        cursor: pointer;
-      }
-      .theme-knob {
-        width: 18px;
-        height: 100%;
-        background: var(--accent);
-        transition: margin-left 0.12s ease;
-      }
-      :global([data-theme='dark']) .theme-knob {
-        margin-left: auto;
-      }
-
-      .bar-burger {
-        display: none;
-        background: none;
-        border: none;
-        border-left: var(--rule-w) solid var(--rule);
-        border-right: none;
-        color: inherit;
-        font-size: 1.1rem;
-        cursor: pointer;
-        margin-left: auto;
-      }
-
-      .progress {
-        height: 6px;
-        background: var(--bg-raised);
-        border-bottom: var(--rule-w) solid var(--rule);
-      }
-      .progress-fill {
-        display: block;
-        height: 100%;
-        width: 0;
-        background: var(--accent);
-      }
-
-      /* ---------- Homepage masthead ---------- */
-
-      .masthead {
-        border-bottom: var(--rule-w) solid var(--rule);
-      }
-      .masthead-word {
-        font-family: var(--font-display);
-        font-weight: 900;
-        font-size: clamp(3.2rem, 13vw, 9.5rem);
-        line-height: 0.8;
-        letter-spacing: -0.05em;
-        padding: 1.4rem var(--pad) 1rem;
-      }
-      .masthead-tum {
-        color: var(--accent);
-      }
-
-      /* ---------- Drawer ---------- */
-
-      .drawer {
-        position: fixed;
-        inset: 0;
-        z-index: 40;
-        background: var(--bg);
-        display: flex;
-        flex-direction: column;
-      }
-      .drawer[hidden] {
-        display: none;
-      }
-      .drawer-bar {
-        display: flex;
-        align-items: stretch;
-        justify-content: space-between;
-        border-bottom: var(--rule-w) solid var(--rule);
-      }
-      .drawer-brand {
-        padding: 0.75rem 1rem;
-        font-family: var(--font-display);
-        font-weight: 900;
-        font-size: 1.05rem;
-      }
-      .drawer-close {
-        background: var(--accent);
-        color: var(--on-accent);
-        border: none;
-        border-left: var(--rule-w) solid var(--rule);
-        font-size: 1.4rem;
-        line-height: 1;
-        padding: 0 1.1rem;
-        cursor: pointer;
-      }
-      .drawer-nav {
-        display: flex;
-        flex-direction: column;
-        background: var(--inv-bg);
-        color: var(--inv-text);
-        flex: 1;
-      }
-      .drawer-link {
-        padding: 1.1rem 1rem;
-        font-family: var(--font-display);
-        font-weight: 800;
-        font-size: clamp(1.6rem, 8vw, 2.1rem);
-        line-height: 1.1;
-        border-bottom: 2px solid #33322a;
-      }
-      .drawer-link.is-current {
-        color: var(--accent);
-      }
-      .drawer-foot {
-        background: var(--inv-bg);
-        color: var(--inv-text);
-        padding: 1.2rem 1rem 1.6rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      .drawer-lang {
-        display: flex;
-        flex-wrap: wrap;
-        border: var(--rule-w) solid var(--inv-text);
-      }
-      .drawer-lang-opt {
-        flex: 1;
-        text-align: center;
-        padding: 0.75rem;
-        font-family: var(--font-mono);
-        font-size: 0.72rem;
-        letter-spacing: 0.16em;
-      }
-      .drawer-lang-opt + .drawer-lang-opt {
-        border-left: var(--rule-w) solid var(--inv-text);
-      }
-      .drawer-lang-opt.is-current {
-        background: var(--inv-text);
-        color: var(--inv-bg);
-        font-weight: 700;
-      }
-      .drawer-theme {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-family: var(--font-mono);
-        font-size: 0.68rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--inv-text-muted);
-      }
-      .drawer-theme .theme-switch {
-        background: transparent;
-        border-color: var(--inv-text);
-      }
-      .drawer-meta {
-        margin: 0;
-        font-family: var(--font-mono);
-        font-size: 0.66rem;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--inv-text-muted);
-      }
-      .drawer-meta a:hover {
-        color: var(--accent);
-      }
-
-      /* ---------- Footer ---------- */
-
-      /* Same slab as the statement block on the about page. The negative
-         margin lets this rule sit on top of the one the last section already
-         drew, instead of stacking into a double thickness line. */
-      .site-footer {
-        border-top: var(--rule-w) solid var(--rule);
-        margin-top: calc(var(--rule-w) * -1);
-        background: var(--inv-bg);
-        color: var(--inv-text);
-      }
-      .footer-cols {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-      }
-      .footer-col {
-        padding: 1.4rem var(--pad) 1.6rem;
-      }
-      .footer-col + .footer-col {
-        border-left: var(--rule-w) solid var(--inv-text);
-      }
-      .footer-heading {
-        font-family: var(--font-display);
-        font-weight: 900;
-        font-size: 0.95rem;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        margin: 0 0 0.8rem 0;
-      }
-      .footer-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        font-family: var(--font-mono);
-        font-size: 0.72rem;
-        letter-spacing: 0.06em;
-        color: var(--inv-text-muted);
-      }
-      .footer-link-btn {
-        color: inherit;
-        font: inherit;
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        text-align: left;
-      }
-      .footer-list a:hover,
-      .footer-link-btn:hover {
-        color: var(--accent);
-      }
-      .footer-bar {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.9rem var(--pad);
-        border-top: var(--rule-w) solid var(--inv-text);
-        font-family: var(--font-mono);
-        font-size: 0.66rem;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--inv-text-muted);
-      }
-
-      @media (max-width: 900px) {
-        .bar-nav,
-        .bar-theme,
-        .bar-path {
-          display: none;
+        to {
+          opacity: 1;
+          transform: none;
         }
-        .bar-burger {
-          display: flex;
-          align-items: center;
+      }
+      @keyframes page-out {
+        to {
+          opacity: 0;
         }
-        .bar-lang {
-          margin-left: auto;
-          border-left: var(--rule-w) solid var(--rule);
-          border-right: none;
-        }
-        .footer-cols {
-          grid-template-columns: 1fr;
-        }
-        .footer-col + .footer-col {
-          border-left: none;
-          border-top: var(--rule-w) solid var(--inv-text);
+      }
+
+      ::view-transition-old(root) {
+        animation: page-out var(--t-page) var(--ease) both;
+      }
+      ::view-transition-new(root) {
+        animation: page-in var(--t-page) var(--ease) both;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+          animation: none;
         }
       }
     </style>

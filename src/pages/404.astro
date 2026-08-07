@@ -1,51 +1,8 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { dict, defaultLang } from '../i18n/dict';
+/* Netlify servíruje /404.html pri neznámej ceste. Bez jazykového prefixu
+   ukážeme predvolenú mutáciu; skript v komponente ponúkne druhý jazyk. */
+import NotFound from '../screens/NotFound.astro';
+import { defaultLang } from '../i18n/dict';
 ---
 
-<BaseLayout lang={defaultLang} title="404" breadcrumb="404">
-  <section class="not-found">
-    <p class="code">404</p>
-    <h1 class="nf-title">{dict.sk.not_found_title} / {dict.en.not_found_title}</h1>
-    <p class="nf-body">{dict.sk.not_found_body}</p>
-    <p class="nf-body">{dict.en.not_found_body}</p>
-    <div class="links">
-      <a class="btn" href="/sk/">&#8592; Domov (SK)</a>
-      <a class="btn" href="/en/">&#8592; Home (EN)</a>
-    </div>
-  </section>
-</BaseLayout>
-
-<style>
-  .not-found {
-    padding: 4rem var(--pad) 5rem;
-    border-bottom: var(--rule-w) solid var(--rule);
-  }
-  .code {
-    font-family: var(--font-display);
-    font-weight: 900;
-    font-size: clamp(5rem, 22vw, 14rem);
-    line-height: 0.8;
-    letter-spacing: -0.05em;
-    color: var(--accent);
-    margin: 0 0 1rem 0;
-  }
-  .nf-title {
-    font-size: clamp(1.6rem, 4vw, 2.6rem);
-    text-transform: uppercase;
-    margin: 0 0 1.2rem 0;
-  }
-  .nf-body {
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
-    color: var(--text-body);
-    max-width: 52ch;
-    margin: 0 0 0.6rem 0;
-  }
-  .links {
-    display: flex;
-    gap: 1.4rem;
-    flex-wrap: wrap;
-    margin-top: 2.2rem;
-  }
-</style>
+<NotFound lang={defaultLang} />

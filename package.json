@@ -1,7 +1,7 @@
 {
   "name": "momentum",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -14,9 +14,14 @@
   "dependencies": {
     "@astrojs/markdown-remark": "^7.2.2",
     "@astrojs/rss": "^4.0.19",
+    "@resvg/resvg-js": "^2.6.2",
     "astro": "^7.1.6",
-    "marked": "^18.0.7",
-    "simple-icons": "^16.27.1",
+    "satori": "^0.29.0",
     "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0"
   }
 }

@@ -1,81 +1,244 @@
 ---
-import { getCollection, type CollectionEntry } from 'astro:content';
+import PlaceholderArt from './PlaceholderArt.astro';
 import ArticleCard from './ArticleCard.astro';
+import type { Article } from '../utils/articles';
 import { t, type Lang } from '../i18n/dict';
-import { extractFirstImage } from '../utils/extract-image';
-import { countWords, readingTimeMinutes } from '../utils/article-stats';
+import { formatDate, isoDate, readingTimeShort, readingTimeLong } from '../utils/format';
 
 interface Props {
   lang: Lang;
-  currentId: string;
-  currentTags: string[];
+  articles: Article[];
+  /** Zoznam pokračovaní sa zobrazí len pri dvoch a viac. */
+  heading?: string;
+  note?: string;
+  /** Kompaktný riadkový tvar používa len zoznam pokračovaní pod textom. */
+  compact?: boolean;
+  tagRank?: Record<string, number>;
 }
 
-const { lang, currentId, currentTags } = Astro.props;
-const s = t(lang);
-
-const collectionName = lang === 'sk' ? 'articles-sk' : 'articles-en';
-const all = await getCollection(
-  collectionName as 'articles-sk' | 'articles-en',
-  ({ data }) => !data.draft,
-);
-
-type Entry = CollectionEntry<'articles-sk'> | CollectionEntry<'articles-en'>;
-
-function sharedTagCount(tags: string[]): number {
-  const currentSet = new Set(currentTags);
-  return tags.filter((tag) => currentSet.has(tag)).length;
-}
-
-const related = (all as Entry[])
-  .filter((a) => a.id !== currentId)
-  .map((a) => ({ article: a, shared: sharedTagCount(a.data.tags) }))
-  .filter(({ shared }) => shared > 0)
-  .sort((a, b) => {
-    if (b.shared !== a.shared) return b.shared - a.shared;
-    return b.article.data.date.valueOf() - a.article.data.date.valueOf();
-  })
-  .slice(0, 2)
-  .map(({ article }) => article);
+const { lang, articles, heading, note, compact = false, tagRank = {} } = Astro.props;
+const d = t(lang);
+const title = heading ?? d.related_title;
 ---
 
-{related.length > 0 && (
-  <section class="related-articles">
-    <div class="band">
-      <h2 class="band-title">{s.related_articles}</h2>
-    </div>
-    <div class="related-grid">
-      {related.map((article) => {
-        const words = countWords(article.body);
-        return (
-          <ArticleCard
-            lang={lang}
-            variant="compact"
-            slug={article.id}
-            title={article.data.title}
-            description={article.data.description}
-            date={article.data.date}
-            tags={article.data.tags}
-            image={extractFirstImage(article.body)}
-            readingTime={readingTimeMinutes(words)}
-          />
-        );
-      })}
-    </div>
-  </section>
-)}
+{
+  articles.length > 0 && (
+    <section class:list={['related', compact && 'is-compact']} data-related aria-labelledby="related-title">
+      <div class="related-head">
+        <h2 class="section-title" id="related-title">
+          {title}
+        </h2>
+        <p class="mono-sm">{note ?? d.related_note}</p>
+      </div>
+
+      {compact ? (
+        <ul class="related-list">
+          {articles.map((article) => (
+            <li>
+              <a class="related-item" href={article.href}>
+                <span class="related-media">
+                  {article.image ? (
+                    <img src={article.image} alt="" loading="lazy" decoding="async" />
+                  ) : (
+                    <PlaceholderArt ratio="16 / 9" />
+                  )}
+                </span>
+                <span class="related-body">
+                  <span class="related-title">{article.title}</span>
+                  <span class="related-meta mono-sm">
+                    <time datetime={isoDate(article.date)}>{formatDate(article.date)}</time>
+                    <span aria-hidden="true">·</span>
+                    <span class="related-time" aria-label={readingTimeLong(article.readingTime, lang)}>
+                      <svg class="icon-clock" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <circle cx="8" cy="8" r="6.25" />
+                        <path d="M8 4.4V8l2.5 1.6" />
+                      </svg>
+                      {readingTimeShort(article.readingTime, lang)}
+                    </span>
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        /* Rovnaká karta ako na homepage a v archíve, jeden tvar pre celý web. */
+        <div class="related-grid">
+          {articles.map((article) => (
+            <div class="related-cell reveal">
+              <ArticleCard article={article} lang={lang} tagRank={tagRank} />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
 
 <style>
-  .related-articles {
-    border-top: var(--rule-w) solid var(--rule);
+  .related {
+    padding-top: var(--section-gap);
+    border-top: 1px solid var(--line);
   }
+
+  .related-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sp-22);
+    flex-wrap: wrap;
+    margin-bottom: var(--sp-22);
+  }
+
   .related-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+    gap: var(--gap-grid);
   }
-  @media (max-width: 860px) {
+
+  .related-cell {
+    display: flex;
+    min-width: 0;
+  }
+
+  .related-cell > :global(*) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .related-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-6);
+  }
+
+  @media (max-width: 1179px) and (min-width: 768px) {
     .related-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+  }
+
+  @media (max-width: 767px) {
+    .related-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .related-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-10);
+    height: 100%;
+    padding: var(--sp-12);
+    border-radius: var(--r-card);
+    background: var(--surface-2);
+    transition:
+      background-color var(--t-state) var(--ease),
+      transform var(--t-state) var(--ease),
+      box-shadow var(--t-state) var(--ease);
+  }
+
+  @media (hover: hover) {
+    .related-item:hover {
+      background: var(--surface-3);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+  }
+
+  .is-compact .related-item {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-14);
+    border-radius: var(--r-field);
+  }
+
+  .related-media {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--r-field);
+    overflow: hidden;
+    background: var(--grad-placeholder);
+  }
+
+  .is-compact .related-media {
+    flex: none;
+    width: 88px;
+    aspect-ratio: 88 / 58;
+    border-radius: var(--r-item);
+  }
+
+  .related-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .related-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--grad-card);
+  }
+
+  .related-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-6);
+    min-width: 0;
+  }
+
+  .is-compact .related-body {
+    flex: 1;
+  }
+
+  .related-title {
+    font-family: var(--font-display);
+    font-size: 19px;
+    line-height: 1.14;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .related-desc {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-3);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .related-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .icon-clock {
+    width: 11px;
+    height: 11px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .related-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-6);
+    margin-top: auto;
+    color: var(--ink-4);
   }
 </style>
