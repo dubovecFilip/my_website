@@ -135,8 +135,8 @@ const labelText = label === 'pinned' ? d.label_pinned : d.label_latest;
     z-index: 2;
     display: flex;
     flex-direction: column;
-    gap: var(--sp-12);
-    padding: var(--sp-34) var(--sp-38);
+    gap: var(--sp-10);
+    padding: 28px var(--sp-38);
     justify-content: center;
     overflow: hidden;
   }
@@ -175,11 +175,12 @@ const labelText = label === 'pinned' ? d.label_pinned : d.label_latest;
     flex: none;
   }
 
+  /* Do pevnej výšky sa musia zmestiť dva riadky nadpisu aj dva riadky popisu. */
   .feature-title {
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: 56px;
-    line-height: 1.02;
+    font-size: clamp(32px, 3.4vw, 48px);
+    line-height: 1;
     letter-spacing: -0.015em;
     color: var(--ink);
     display: -webkit-box;
@@ -194,34 +195,18 @@ const labelText = label === 'pinned' ? d.label_pinned : d.label_latest;
    * Keď sa nezmestí celý, posledný riadok sa stráca do podkladu, nikdy sa
    * nereže v strede slova (sekcia 09 A).
    */
+  /* Popis má vyhradené dva riadky, aby ho nikdy nezatlačil dlhý nadpis. */
   .feature-desc {
-    position: relative;
-    flex: 0 1 auto;
-    min-height: 0;
+    flex: none;
     font-size: var(--fs-lead);
-    line-height: 1.6;
+    line-height: 1.55;
     color: var(--ink-2);
     max-width: 46ch;
-    max-height: calc(var(--fs-lead) * 1.6 * 3);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-
-  .feature-desc::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 18px;
-    /* Neskorý nábeh, aby krátky popis, ktorý sa celý zmestí, neztmavol. */
-    background: linear-gradient(180deg, rgba(24, 24, 24, 0) 0%, rgba(24, 24, 24, 0) 45%, var(--surface-2) 100%);
-    pointer-events: none;
-  }
-
-  @media (hover: hover) {
-    .feature:hover .feature-desc::after {
-      background: linear-gradient(180deg, rgba(31, 31, 31, 0) 0%, rgba(31, 31, 31, 0) 45%, var(--surface-3) 100%);
-    }
   }
 
   .feature-tags {
@@ -300,11 +285,7 @@ const labelText = label === 'pinned' ? d.label_pinned : d.label_latest;
     }
   }
 
-  @media (max-width: 1179px) {
-    .feature-title {
-      font-size: 44px;
-    }
-  }
+
 
   /* Na mobile sa karta rozdelí na obrázok nad textom. */
   @media (max-width: 767px) {
@@ -331,11 +312,8 @@ const labelText = label === 'pinned' ? d.label_pinned : d.label_latest;
     }
 
     .feature-desc {
-      max-height: none;
-    }
-
-    .feature-desc::after {
-      display: none;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
     }
 
     .feature-media::before {
