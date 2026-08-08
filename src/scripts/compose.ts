@@ -8,6 +8,7 @@
  */
 import { PREVIEW_KEY } from './preview';
 import { firstImage, readingMinutes } from './markdown';
+import { idb, savePreviewMedia, type MediaBag } from './media';
 
 
 type Lang = 'sk' | 'en';
@@ -145,15 +146,6 @@ function parseFile(text: string): { data: Record<string, string | boolean | stri
 
 /* IndexedDB: pamäť na handle priečinka ------------------------------- */
 
-function idb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('momentum-compose', 1);
-    request.onupgradeneeded = () => request.result.createObjectStore('handles');
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
 async function rememberHandle(handle: FileSystemDirectoryHandle): Promise<void> {
   try {
     const db = await idb();
@@ -224,6 +216,8 @@ export function initCompose(): void {
   let lang: Lang = 'sk';
   let listed: Listed[] = [];
   let imageNames: string[] = [];
+  /* Názov súboru → blob: odkaz na obsah z disku. Bez neho by bola fotka slepá. */
+  const imageUrls = new Map<string, string>();
   /* Nový článok je prázdny zámerne, chybu o názve hlásime až keď má čo uložiť. */
   let attemptedSave = false;
   const problems: { level: 'warn' | 'stop'; text: string }[] = [];
@@ -407,19 +401,70 @@ export function initCompose(): void {
     renderList();
   }
 
+  /* --- Obrázky ---------------------------------------------------------
+     Na disk sa zapisuje až pri uložení článku, rovnako ako text. Dovtedy
+     nahratá fotka žije iba v pamäti a dá sa bez stopy zahodiť. Čítame ich
+     z vybraného priečinka, nie z webu: web ich pozná až po builde. Obsah
+     odkladáme aj pre náhľadové stránky, aby v nich fotky bolo vidno hneď. */
+
+  /** Čerstvo nahraté, ešte nezapísané. */
+  const pendingImages = new Map<string, File>();
+  /** Na disku, ale pri uložení pôjdu preč. */
+  const removedImages = new Set<string>();
+
+  function forgetImageUrls(): void {
+    for (const url of imageUrls.values()) URL.revokeObjectURL(url);
+    imageUrls.clear();
+  }
+
+  /** Zoznam pri prepnutí článku: rozrobené zmeny sa nikam neprenášajú. */
   async function loadImages(): Promise<void> {
+    pendingImages.clear();
+    removedImages.clear();
+    await syncImages();
+  }
+
+  /** Poskladá zoznam z disku a z čakajúcich, prekreslí ho a odloží pre náhľad. */
+  async function syncImages(): Promise<void> {
+    forgetImageUrls();
     imageNames = [];
-    if (!dir || !doc.id) return renderImages();
+
+    if (!dir || !doc.id) {
+      await savePreviewMedia({});
+      renderImages();
+      return;
+    }
+
+    const bag: MediaBag = {};
+    const onDisk: string[] = [];
+
     try {
       const folder = await ensureDir(['public', 'images', 'articles', doc.id]);
       for await (const [name, handle] of (
         folder as unknown as { entries: () => AsyncIterable<[string, FileSystemHandle]> }
       ).entries()) {
-        if (handle.kind === 'file') imageNames.push(name);
+        if (handle.kind !== 'file') continue;
+        if (removedImages.has(name) || pendingImages.has(name)) continue;
+        try {
+          const file = await (handle as FileSystemFileHandle).getFile();
+          onDisk.push(name);
+          bag[`/images/articles/${doc.id}/${name}`] = file;
+          imageUrls.set(name, URL.createObjectURL(file));
+        } catch {
+          /* Súbor sa medzitým mohol stratiť; zvyšok kreslíme ďalej. */
+        }
       }
     } catch {
       /* Priečinok obrázkov ešte nemusí existovať. */
     }
+
+    for (const [name, file] of pendingImages) {
+      bag[`/images/articles/${doc.id}/${name}`] = file;
+      imageUrls.set(name, URL.createObjectURL(file));
+    }
+
+    imageNames = [...onDisk, ...pendingImages.keys()].sort((a, b) => a.localeCompare(b, 'sk'));
+    await savePreviewMedia(bag);
     renderImages();
   }
 
@@ -429,17 +474,75 @@ export function initCompose(): void {
 
     for (const name of imageNames) {
       const path = `/images/articles/${doc.id}/${name}`;
-      const cell = document.createElement('button');
-      cell.type = 'button';
-      cell.className = 'cmp-image';
-      cell.title = name;
-      cell.innerHTML = `<img src="${escapeHtml(path)}" alt="" loading="lazy" />
-        <span class="cmp-image-insert">Vložiť</span>`;
-      cell.addEventListener('click', () => {
+      const waiting = pendingImages.has(name);
+
+      const cell = document.createElement('div');
+      cell.className = waiting ? 'cmp-image is-waiting' : 'cmp-image';
+      cell.title = waiting ? `${name} · uloží sa spolu s článkom` : name;
+      cell.innerHTML = `<img src="${escapeHtml(imageUrls.get(name) ?? path)}" alt="" />
+        <button type="button" class="cmp-image-insert" data-insert>Vložiť</button>
+        <button type="button" class="cmp-image-remove" data-remove
+          aria-label="Odstrániť ${escapeHtml(name)}" title="Odstrániť">×</button>
+        ${waiting ? '<span class="cmp-image-flag">čaká</span>' : ''}`;
+
+      cell.querySelector('[data-insert]')!.addEventListener('click', () => {
         insert(`\n![${name.replace(/\.[^.]+$/, '')}](${path})\n`);
       });
+      cell.querySelector('[data-remove]')!.addEventListener('click', () => removeImage(name));
+
       imagesEl.insertBefore(cell, add);
     }
+  }
+
+  /** Čakajúca fotka zmizne rovno, uložená až pri uložení článku. */
+  function removeImage(name: string): void {
+    if (pendingImages.has(name)) {
+      pendingImages.delete(name);
+      say(`Zahodené: ${name}`);
+    } else {
+      removedImages.add(name);
+      say(`${name} sa odstráni pri uložení`);
+    }
+    void syncImages();
+  }
+
+  /** Zápis fotiek na disk. Beží len ako súčasť uloženia článku. */
+  async function flushImages(): Promise<number> {
+    if (!dir || !doc.id) return 0;
+    if (pendingImages.size === 0 && removedImages.size === 0) return 0;
+
+    const folder = await ensureDir(['public', 'images', 'articles', doc.id], true);
+    let touched = 0;
+
+    for (const [name, file] of pendingImages) {
+      const handle = await folder.getFileHandle(name, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(await file.arrayBuffer());
+      await writable.close();
+      touched += 1;
+    }
+    pendingImages.clear();
+
+    if (removedImages.size > 0) {
+      /* Fotka sa nemaže naslepo, kópia ostáva v _to_delete ako pri článkoch. */
+      const trash = await ensureDir(['_to_delete'], true);
+      for (const name of removedImages) {
+        try {
+          const file = await (await folder.getFileHandle(name)).getFile();
+          const out = await trash.getFileHandle(`${doc.id}-${name}`, { create: true });
+          const writable = await out.createWritable();
+          await writable.write(await file.arrayBuffer());
+          await writable.close();
+          await folder.removeEntry(name);
+          touched += 1;
+        } catch {
+          /* Na disku už nie je, niet čo riešiť. */
+        }
+      }
+      removedImages.clear();
+    }
+
+    return touched;
   }
 
   async function removeArticle(id: string): Promise<void> {
@@ -520,8 +623,15 @@ export function initCompose(): void {
         await writeFile(['src', 'content', 'articles', code], `${doc.id}.md`, buildFile(doc, code));
         written += 1;
       }
-      if (!quiet) say(`✓ Uložené · ${written} ${written === 1 ? 'súbor' : 'súbory'}`);
+      /* Fotky idú na disk až tu, spolu s textom. */
+      const photos = await flushImages();
+      if (!quiet) {
+        const files = `${written} ${written === 1 ? 'súbor' : 'súbory'}`;
+        const images = photos > 0 ? ` · ${photos} ${photos === 1 ? 'obrázok' : 'obrázky'}` : '';
+        say(`✓ Uložené · ${files}${images}`);
+      }
       await scan();
+      await syncImages();
       fill();
     } catch (error) {
       say(`Do priečinku sa nedá zapisovať: ${(error as Error).message}`, 'error');
@@ -602,18 +712,76 @@ export function initCompose(): void {
     attemptedSave = false;
     lang = 'sk';
     imageNames = [];
+    pendingImages.clear();
+    removedImages.clear();
+    forgetImageUrls();
+    void savePreviewMedia({});
     renderImages();
     fill();
     renderList();
     fields.title.focus();
   }
 
+  /** Vloží text za kurzor. Označený text nikdy neprepisuje. */
   function insert(text: string): void {
     const area = fields.body;
+    const at = area.selectionEnd;
+    area.value = area.value.slice(0, at) + text + area.value.slice(at);
+    area.selectionStart = area.selectionEnd = at + text.length;
+    area.focus();
+    update();
+  }
+
+  /*
+   * Nadpis, citát a odrážka nie sú obal okolo textu, ale značka na začiatku
+   * riadka. Preto sa nevkladajú, ale predradia sa každému označenému riadku;
+   * text ostáva. Druhý klik značku zase odoberie a značka z iného štýlu sa
+   * vymení, aby nevzniklo „## - text“.
+   */
+  const LINE_MARKS = { h2: '## ', h3: '### ', quote: '> ', list: '- ' } as const;
+  const ANY_MARK = /^\s*(?:#{1,6}\s+|>\s?|[-*+]\s+|\d+\.\s+)/;
+
+  function markLines(kind: keyof typeof LINE_MARKS): void {
+    const area = fields.body;
+    const mark = LINE_MARKS[kind];
+    const value = area.value;
     const start = area.selectionStart;
     const end = area.selectionEnd;
-    area.value = area.value.slice(0, start) + text + area.value.slice(end);
-    area.selectionStart = area.selectionEnd = start + text.length;
+
+    const from = value.lastIndexOf('\n', start - 1) + 1;
+    /* Výber končiaci zalomením nesmie stiahnuť aj nasledujúci riadok. */
+    const stop = end > from && value[end - 1] === '\n' ? end - 1 : end;
+    const to = value.indexOf('\n', stop) === -1 ? value.length : value.indexOf('\n', stop);
+
+    const lines = value.slice(from, to).split('\n');
+    const filled = lines.filter((l) => l.trim() !== '');
+    const off = filled.length > 0 && filled.every((l) => l.startsWith(mark));
+
+    const next = lines
+      .map((line) => (line.trim() === '' ? line : off ? line.slice(mark.length) : mark + line.replace(ANY_MARK, '')))
+      .join('\n');
+
+    /* Bez prázdneho riadka pred blokom by značka splynula s odstavcom. */
+    let lead = '';
+    if (!off && from > 0) {
+      const before = value.slice(value.lastIndexOf('\n', from - 2) + 1, from - 1);
+      const sameKind =
+        (kind === 'list' && /^[-*+]\s+/.test(before)) || (kind === 'quote' && /^>\s?/.test(before));
+      if (before.trim() !== '' && !sameKind) lead = '\n';
+    }
+
+    area.value = value.slice(0, from) + lead + next + value.slice(to);
+
+    if (start === end) {
+      /* Bez výberu skočí kurzor na koniec riadka, na ktorom stál. */
+      const row = value.slice(from, start).split('\n').length;
+      const upto = next.split('\n').slice(0, row).join('\n').length;
+      area.selectionStart = area.selectionEnd = from + lead.length + upto;
+    } else {
+      area.selectionStart = from + lead.length;
+      area.selectionEnd = from + lead.length + next.length;
+    }
+
     area.focus();
     update();
   }
@@ -665,14 +833,39 @@ export function initCompose(): void {
       problems.push({ level: 'stop', text: 'Článok nemôže nadväzovať sám na seba.' });
     }
 
-    /* Chýbajúci obrázok je len varovanie (sekcia 14). */
+    /*
+     * Chýbajúci obrázok je len varovanie (sekcia 14). Kontrolujeme aj
+     * priečinok, nielen názov: preklep v ID článku by inak prešiel ticho
+     * a fotku by nebolo vidno až na hotovom webe.
+     */
     for (const match of draft.body.matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)) {
       const path = match[1];
       if (!path.startsWith('/images/articles/')) continue;
-      const name = path.split('/').pop() ?? '';
-      const belongsHere = path.includes(`/${doc.id}/`);
-      if (belongsHere && doc.id && !imageNames.includes(name)) {
-        problems.push({ level: 'warn', text: `Obrázok <code>${escapeHtml(name)}</code> na disku chýba` });
+
+      const parts = path.split('/');
+      const folder = parts[3] ?? '';
+      const name = parts.slice(4).join('/');
+      if (!doc.id || !name) continue;
+
+      if (folder !== doc.id) {
+        problems.push({
+          level: 'warn',
+          text: `Obrázok <code>${escapeHtml(name)}</code> ukazuje do priečinka
+            <code>${escapeHtml(folder)}</code>, tento článok má <code>${escapeHtml(doc.id)}</code>`,
+        });
+      } else if (!imageNames.includes(name)) {
+        const near = imageNames.find(
+          (n) => n.replace(/[_-]/g, '').toLowerCase() === name.replace(/\.[^.]+$/, '').replace(/[_-]/g, '').toLowerCase()
+            || n.replace(/\.[^.]+$/, '').replace(/[_-]/g, '').toLowerCase() ===
+               name.replace(/\.[^.]+$/, '').replace(/[_-]/g, '').toLowerCase(),
+        );
+        problems.push({
+          level: 'warn',
+          text: near
+            ? `Obrázok <code>${escapeHtml(name)}</code> na disku nie je, ale je tam
+               <code>${escapeHtml(near)}</code>`
+            : `Obrázok <code>${escapeHtml(name)}</code> na disku chýba`,
+        });
       }
     }
 
@@ -850,10 +1043,10 @@ export function initCompose(): void {
   const toolActions: Record<string, () => void> = {
     b: () => wrap('**'),
     i: () => wrap('*'),
-    h2: () => insert('\n## '),
-    h3: () => insert('\n### '),
-    quote: () => insert('\n> '),
-    list: () => insert('\n- '),
+    h2: () => markLines('h2'),
+    h3: () => markLines('h3'),
+    quote: () => markLines('quote'),
+    list: () => markLines('list'),
     link: () => wrap('[', '](https://)'),
     code: () => wrap('`'),
   };
@@ -879,6 +1072,8 @@ export function initCompose(): void {
 
   imageInput.addEventListener('change', async () => {
     if (!dir || !imageInput.files || imageInput.files.length === 0) return;
+    /* Rozpísaný text si odložíme hneď, nižšie sa formulár prekresľuje. */
+    collect();
     if (!doc.id) doc.id = await freshId();
 
     const chosen: { file: File; name: string }[] = [];
@@ -894,15 +1089,14 @@ export function initCompose(): void {
     }
 
     try {
-      const folder = await ensureDir(['public', 'images', 'articles', doc.id], true);
+      /* Na disk nič nepíšeme: fotka počká na uloženie článku, dovtedy sa dá
+         zahodiť bez následkov. V zozname aj v náhľade je vidno hneď. */
       for (const { file, name } of chosen) {
-        const handle = await folder.getFileHandle(name, { create: true });
-        const writable = await handle.createWritable();
-        await writable.write(await file.arrayBuffer());
-        await writable.close();
+        removedImages.delete(name);
+        pendingImages.set(name, file);
       }
-      say(`Uložené: ${chosen.map((c) => c.name).join(', ')}`);
-      await loadImages();
+      say(`Pridané: ${chosen.map((c) => c.name).join(', ')} · uloží sa s článkom`);
+      await syncImages();
       fill();
     } catch (error) {
       say(`Obrázok sa nedá uložiť: ${(error as Error).message}`, 'error');

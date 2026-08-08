@@ -144,9 +144,9 @@ const ogImageUrl = ogImage ? new URL(ogImage, canonical).href : undefined;
       import { initTagOverflow } from '../scripts/tags-overflow';
       import { initPreview } from '../scripts/preview';
 
-      function boot() {
+      async function boot() {
         /* Náhľad musí podstrčiť obsah skôr, než sa naň naviažu ostatné skripty. */
-        initPreview();
+        await initPreview();
         initReveal();
         initHeader();
         initSearch();

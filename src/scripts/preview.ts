@@ -7,6 +7,7 @@
  * náhľad správa rovnako ako ostrý web vrátane zmeny šírky okna.
  */
 import { renderMarkdown, headingsOf, firstImage, readingMinutes, escapeHtml } from './markdown';
+import { previewMediaUrls, applyPreviewMedia, resolveMedia } from './media';
 
 export const PREVIEW_KEY = 'momentum:preview';
 
@@ -155,7 +156,7 @@ function bumpCount(el: Element | null): void {
   el.textContent = /článk|článok/i.test(text) ? `${next} ${word}` : text.replace(match[0], String(next));
 }
 
-export function initPreview(): void {
+export async function initPreview(): Promise<void> {
   const mode = document.body.dataset.preview;
   if (!mode) return;
 
@@ -167,8 +168,20 @@ export function initPreview(): void {
   const draft = readDraft();
   if (!draft) return;
 
+  /*
+   * Obrázky rozpísaného článku ešte nie sú na webe, sú len v priečinku
+   * projektu. Compose nám ich obsah odložil, tak si ho vypýtame skôr, než
+   * začneme kresliť: prehliadač sa tak o neexistujúcu cestu ani nepokúsi.
+   */
+  const media = await previewMediaUrls();
+  render(mode, draft, media);
+  applyPreviewMedia(document, media);
+}
+
+function render(mode: string, draft: PreviewDraft, media: Map<string, string>): void {
   const minutes = readingMinutes(draft.body);
-  const image = firstImage(draft.body);
+  const raw = firstImage(draft.body);
+  const image = raw ? resolveMedia(raw, media) : null;
 
   /* --- Homepage: rozpísaný ide na hlavnú kartu, doterajší do mriežky --- */
   if (mode === 'home') {
@@ -259,7 +272,11 @@ export function initPreview(): void {
     setMeta(document, '.art-status', draft.date, minutes);
 
     const body = document.querySelector('.article-body');
-    if (body) body.innerHTML = renderMarkdown(draft.body);
+    if (body) {
+      body.innerHTML = renderMarkdown(draft.body);
+      /* Hneď, kým je text ešte len v pamäti a nič sa nesťahuje. */
+      applyPreviewMedia(body, media);
+    }
 
     /*
      * Obsah sa poskladá z nadpisov v texte. Položky klonujeme zo serverom

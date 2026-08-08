@@ -942,10 +942,55 @@ const tools = [
     transition: opacity var(--t);
   }
 
+  /* Odstránenie je vedľajší úkon, drží sa v rohu nad väčším „vložiť“. */
+  :global(.cmp-image-remove) {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--r-pill);
+    background: rgba(10, 10, 10, 0.78);
+    color: var(--ink-2);
+    font-size: 15px;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity var(--t), background-color var(--t), color var(--t);
+  }
+
+  :global(.cmp-image:hover .cmp-image-insert),
+  :global(.cmp-image:hover .cmp-image-remove),
+  :global(.cmp-image:focus-within .cmp-image-insert),
+  :global(.cmp-image:focus-within .cmp-image-remove) {
+    opacity: 1;
+  }
+
   @media (hover: hover) {
-    :global(.cmp-image:hover .cmp-image-insert) {
-      opacity: 1;
+    :global(.cmp-image-remove:hover) {
+      background: var(--accent);
+      color: var(--ink);
     }
+  }
+
+  /* Fotka, ktorá ešte nie je na disku. */
+  :global(.cmp-image.is-waiting) {
+    outline: 1px dashed var(--draft);
+    outline-offset: -1px;
+  }
+
+  :global(.cmp-image-flag) {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    padding: 2px 6px;
+    border-radius: var(--r-pill);
+    background: rgba(10, 10, 10, 0.78);
+    color: var(--draft);
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    pointer-events: none;
   }
 
   .cmp-image-add {
